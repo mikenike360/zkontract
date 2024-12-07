@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "clean": "rimraf \"{node_modules,.next,out.cache}\"",
-    "delete-local-modules": "rimraf ./node_modules/@demox-labs/aleo-wallet-adapter-react/node_modules ./node_modules/@demox-labs/aleo-wallet-adapter-reactui/node_modules",
+    "delete-local-modules": "rimraf ./node_modules/@demox-labs/aleo-wallet-adapter-react/node_modules ./node_modules/@demox-labs/aleo-wallet-adapter-reactui/node_modules ./next",
     "configure-program": "tsc ./util/update-program.ts && node ./util/update-program.js",
     "build-program": "cd ./program && leo build",
     "copy-program": "tsc ./util/copy-program.ts && node ./util/copy-program.js",
@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "@demox-labs/aleo-sdk-web": "^0.3.28",
-    "@demox-labs/aleo-wallet-adapter-base": "^0.0.20",
-    "@demox-labs/aleo-wallet-adapter-leo": "^0.0.19",
-    "@demox-labs/aleo-wallet-adapter-react": "^0.0.19",
-    "@demox-labs/aleo-wallet-adapter-reactui": "^0.0.31",
+    "@demox-labs/aleo-wallet-adapter-base": "^0.0.22",
+    "@demox-labs/aleo-wallet-adapter-leo": "^0.0.24",
+    "@demox-labs/aleo-wallet-adapter-react": "^0.0.21",
+    "@demox-labs/aleo-wallet-adapter-reactui": "^0.0.35",
     "@headlessui/react": "1.6.5",
     "@hookform/resolvers": "2.9.1",
     "@tailwindcss/forms": "0.5.2",

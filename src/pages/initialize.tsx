@@ -55,7 +55,7 @@ const Initialize: NextPageWithLayout = () => {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      WalletAdapterNetwork.TestnetBeta,
       NFTProgramId,
       'initialize_collection',
       inputs,

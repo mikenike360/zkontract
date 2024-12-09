@@ -177,7 +177,7 @@ const MintPage: NextPageWithLayout = () => {
       const randomScalar = random(0, 100000000000) + 'scalar';
       aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        WalletAdapterNetwork.TestnetBeta,
         NFTProgramId,
         'open_mint',
         [randomScalar],
@@ -190,7 +190,7 @@ const MintPage: NextPageWithLayout = () => {
       const whitelistRecord = whitelistRecords().find(r => !r.spent);
       aleoTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        WalletAdapterNetwork.TestnetBeta,
         NFTProgramId,
         'mint',
         [whitelistRecord, randomScalar],
@@ -214,7 +214,7 @@ const MintPage: NextPageWithLayout = () => {
         const edition = matchingNft.inputs[1].value;
         aleoTransaction = Transaction.createTransaction(
           publicKey,
-          WalletAdapterNetwork.Testnet,
+          WalletAdapterNetwork.TestnetBeta,
           NFTProgramId,
           'claim_nft',
           [unspentClaimRecord, tokenId, edition],

@@ -56,7 +56,7 @@ const Add: NextPageWithLayout = () => {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      WalletAdapterNetwork.TestnetBeta,
       NFTProgramId,
       'add_nft',
       inputs,

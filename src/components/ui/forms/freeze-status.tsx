@@ -48,7 +48,7 @@ const FreezeStatus = () => {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      WalletAdapterNetwork.TestnetBeta,
       NFTProgramId,
       'update_toggle_settings',
       [newStatus],

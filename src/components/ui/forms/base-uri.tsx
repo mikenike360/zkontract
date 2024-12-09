@@ -44,7 +44,7 @@ const BaseURI = () => {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      WalletAdapterNetwork.TestnetBeta,
       NFTProgramId,
       'update_base_uri',
       [formattedUriInput],

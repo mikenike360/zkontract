@@ -17,8 +17,8 @@ fs.readFile(mainAleoPath, 'utf8')
   .then((mainAleoContents: string) => {
     // wrap the contents in backticks and export as NFTProgram
     const program = mainAleoContents
-      .replace(/leo_nft\.aleo/g, PROGRAM_NAME!)
-      .replace(/aleo1gy3d0s00s2k7rmgqznnx2q8htmjm2p5rk8q40u5yklqhe44utvys0dmzdy/g, ADDRESS!);
+      .replace(/zkoi_test1\.aleo/g, PROGRAM_NAME!)
+      .replace(/aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec/g, ADDRESS!);
   
     const outputContents = `export const NFTProgramId = '${PROGRAM_NAME}';\n\nexport const NFTProgram = \`${program}\`;\n`;
 

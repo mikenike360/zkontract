@@ -65,7 +65,7 @@ const AuthorizeForm = () => {
   const requestAuthorization = async () => {
     const aleoTransaction = Transaction.createTransaction(
       publicKey!,
-      WalletAdapterNetwork.Testnet,
+      WalletAdapterNetwork.TestnetBeta,
       NFTProgramId,
       AUTHORIZE_FUNCTION,
       [{ id: nftId}, '101u64'], // This should be a random number in production, generated on the back end of a DApp

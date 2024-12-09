@@ -44,7 +44,7 @@ const MintBlock = () => {
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.Testnet,
+      WalletAdapterNetwork.TestnetBeta,
       NFTProgramId,
       'set_mint_block',
       [`${block}u128`],

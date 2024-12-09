@@ -32,7 +32,7 @@ const BulkWhitelist = () => {
     const aleoTransactions = inputs.map((input) => {
       return Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        WalletAdapterNetwork.TestnetBeta,
         NFTProgramId,
         'add_minter',
         input,

@@ -6,7 +6,7 @@
     "clean": "rimraf \"{node_modules,.next,out.cache}\"",
     "delete-local-modules": "rimraf ./node_modules/@demox-labs/aleo-wallet-adapter-react/node_modules ./node_modules/@demox-labs/aleo-wallet-adapter-reactui/node_modules ./next",
     "configure-program": "tsc ./util/update-program.ts && node ./util/update-program.js",
-    "build-program": "cd ./program && leo build",
+    "build-program": "cd ./program && /home/mikenike/.cargo/bin/leo build",
     "copy-program": "tsc ./util/copy-program.ts && node ./util/copy-program.js",
     "program": "yarn configure-program && yarn build-program && yarn copy-program",
     "dev": "yarn copy-program && yarn delete-local-modules && next dev",
@@ -19,7 +19,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@demox-labs/aleo-sdk-web": "^0.3.28",
+    "@demox-labs/aleo-sdk-web": "^0.3.30",
     "@demox-labs/aleo-wallet-adapter-base": "^0.0.22",
     "@demox-labs/aleo-wallet-adapter-leo": "^0.0.24",
     "@demox-labs/aleo-wallet-adapter-react": "^0.0.21",

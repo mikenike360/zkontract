@@ -35,7 +35,7 @@ const BulkAdd = () => {
     const aleoTransactions = inputs.map((input) => {
       return Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.Testnet,
+        WalletAdapterNetwork.TestnetBeta,
         NFTProgramId,
         'add_nft',
         input,

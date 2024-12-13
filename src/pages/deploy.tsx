@@ -80,9 +80,11 @@ const Deploy: NextPageWithLayout = () => {
   };
 
   const getControllingAddress = () => {
-    const match = program.match(/(?<=assert.eq self.caller\s+)(.*)(?=;)/);
-    return match ? match[0] : 'none';
-  }
+    // Match the `contract_owner` constant assignment.
+    const match = program.match(/const\s+contract_owner\s*=\s*(.*);/);
+    return match ? match[1].trim() : 'aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec';
+  };
+
 
   const updateProgram = (oldText: string, newText: string) => {
     setProgram(program.replaceAll(oldText, newText));

@@ -24,7 +24,7 @@ const Initialize: NextPageWithLayout = () => {
   let [total, setTotal] = useState(1000);
   let [symbol, setSymbol] = useState('');
   let [url, setUrl] = useState('');
-  let [fee, setFee] = useState<string>('11.65');
+  let [fee, setFee] = useState<string>('15');
   let [transactionId, setTransactionId] = useState<string | undefined>();
   let [status, setStatus] = useState<string | undefined>();
 

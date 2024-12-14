@@ -49,6 +49,7 @@ const BaseURI = () => {
       'update_base_uri',
       [formattedUriInput],
       Math.floor(parseFloat(fee) * 1_000_000),
+      false
     );
 
     const txId =

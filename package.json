@@ -1,5 +1,5 @@
 {
-  "name": "@demox-labs/privacy-pride",
+  "name": "zkoi_test1",
   "private": true,
   "version": "0.0.1",
   "scripts": {
@@ -74,7 +74,7 @@
     "swiper": "8.2.2",
     "swr": "^2.1.5",
     "uuid": "8.3.2",
-    "web3modal": "1.9.6",
+    "web3modal": "^1.9.12",
     "yup": "0.32.11"
   },
   "devDependencies": {

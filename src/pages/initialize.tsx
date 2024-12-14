@@ -60,7 +60,12 @@ const Initialize: NextPageWithLayout = () => {
       'initialize_collection',
       inputs,
       Math.floor(parseFloat(fee)! * 1_000_000),
+      false,
     );
+
+
+  // Log the aleoTransaction object
+    console.log('Aleo Transaction:', aleoTransaction);
 
     const txId =
       (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(

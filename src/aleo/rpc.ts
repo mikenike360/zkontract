@@ -4,7 +4,7 @@ import { bigIntToString, getPublicKeyFromFuture, joinBigIntsToString, parseStrin
 import assert from 'assert';
 
 export const TESTNET3_API_URL = process.env.RPC_URL!;
-const ALEO_URL = 'https://api.explorer.aleo.org/v1/testnet5/';
+const ALEO_URL = 'https://api.explorer.aleo.org/v1/testnet/';
 
 export async function getHeight(apiUrl: string): Promise<number> {
   const client = getClient(apiUrl);

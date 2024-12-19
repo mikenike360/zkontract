@@ -1,4 +1,4 @@
-# zkoi_test1.aleo
+# zkoi_test2.aleo
 
 ## Build Guide
 

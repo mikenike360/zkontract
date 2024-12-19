@@ -1,4 +1,4 @@
-program zkoi_test1.aleo {
+program zkoi_test2.aleo {
     const contract_owner: address = aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec;
     
     struct BaseURI {
@@ -69,9 +69,6 @@ program zkoi_test1.aleo {
         let commitment: field = BHP256::commit_to_field(data_hash, nft_edition);
         return commitment;
     }
-
-
-
 
 
     transition transfer_private(

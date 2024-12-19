@@ -167,38 +167,69 @@ export async function getClaims(apiUrl: string): Promise<any[]> {
   return claimTxMetadata.map((txM: any) => {txM.transaction});
 }
 
-export async function getNFTs(apiUrl: string, fetchProperties: boolean = true): Promise<{ nfts: any[], baseURI: string}> {
-  const baseUri = await getBaseURI(apiUrl);
-  const addNFTTransactionMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'add_nft', apiUrl);
+export async function getNFTs(apiUrl: string, fetchProperties: boolean = true): Promise<{ nfts: any[], baseURI: string }> {
+  try {
+    const baseUri = await getBaseURI(apiUrl);
 
-  let nfts: any[] = addNFTTransactionMetadata.map((txM: any) => {
-    const tx = txM.transaction;
-    const urlBigInts = parseStringToBigIntArray(tx.execution.transitions[0].inputs[0].value);
-    const tokenEditionHash = getPublicKeyFromFuture(tx.execution.transitions[0].outputs[0].value);
-    const relativeUrl = joinBigIntsToString(urlBigInts);
-    return {
-      url: baseUri + relativeUrl,
-      edition: parseInt(tx.execution.transitions[0].inputs[1].value.slice(0, -6)),
-      inputs: tx.execution.transitions[0].inputs,
-      tokenEditionHash
+    if (!baseUri) {
+      console.warn('Base URI not found. Returning empty NFT list.');
+      return { nfts: [], baseURI: '' };
     }
-  });
 
-  nfts = await Promise.all(nfts.map(async (nft: any) => {
-    if (!fetchProperties) {
-      return nft;
+    const addNFTTransactionMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'add_nft', apiUrl);
+
+    // Map NFTs with proper error handling
+    let nfts = addNFTTransactionMetadata.map((txM: any) => {
+      try {
+        const tx = txM.transaction;
+
+        // Parse relative URL from transaction
+        const urlBigInts = parseStringToBigIntArray(tx.execution.transitions[0].inputs[0].value);
+        const relativeUrl = joinBigIntsToString(urlBigInts);
+
+        // Generate token edition hash
+        const tokenEditionHash = getPublicKeyFromFuture(tx.execution.transitions[0].outputs[0].value);
+
+        // Combine base URI and relative URL
+        const fullUrl = baseUri + relativeUrl;
+        if (!fullUrl.startsWith('http')) {
+          throw new Error(`Invalid URL: ${fullUrl}`);
+        }
+
+        return {
+          url: fullUrl,
+          edition: parseInt(tx.execution.transitions[0].inputs[1].value.slice(0, -6)),
+          inputs: tx.execution.transitions[0].inputs,
+          tokenEditionHash
+        };
+      } catch (error) {
+        console.error('Error processing NFT transaction:', error);
+        return null; // Skip invalid NFTs
+      }
+    }).filter((nft: any) => nft !== null); // Remove null values
+
+    // Fetch properties for each NFT (optional)
+    if (fetchProperties) {
+      nfts = await Promise.all(
+        nfts.map(async (nft: any) => {
+          try {
+            const properties = await getJSON(`https://${nft.url}`);
+            return { ...nft, properties };
+          } catch (error) {
+            console.warn(`Failed to fetch properties for NFT: ${nft.url}`, error);
+            return { ...nft, properties: null }; // Fallback to null properties
+          }
+        })
+      );
     }
-    const properties = await getJSON(`https://${nft.url}`);
-    return {
-      ...nft,
-      properties
-    }
-  }));
-  return {
-    baseURI: baseUri,
-    nfts
-  };
+
+    return { nfts, baseURI: baseUri };
+  } catch (error) {
+    console.error('Error in getNFTs:', error);
+    return { nfts: [], baseURI: '' }; // Fallback to empty list
+  }
 }
+
 
 export const getClient = (apiUrl: string) => {
   const client = new JSONRPCClient((jsonRPCRequest: any) =>
@@ -221,7 +252,16 @@ export const getClient = (apiUrl: string) => {
 };
 
 export async function getJSON(url: string): Promise<any> {
-  const response = await fetch(url);
-  const data = await response.json();
-  return data;
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}, URL: ${url}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching JSON from ${url}:`, error);
+    throw error; // Propagate error to handle in the calling function
+  }
 }

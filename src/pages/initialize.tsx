@@ -16,7 +16,6 @@ import { padArray, safeParseInt, splitStringToBigInts, stringToBigInt } from '@/
 import { TESTNET3_API_URL, getTransactionsForProgram } from '@/aleo/rpc';
 import useSWR from 'swr';
 
-
 const Initialize: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
   const { data, error, isLoading } = useSWR('intializeCollection', () => getTransactionsForProgram(NFTProgramId, 'initialize_collection', TESTNET3_API_URL));
@@ -27,6 +26,9 @@ const Initialize: NextPageWithLayout = () => {
   let [fee, setFee] = useState<string>('15');
   let [transactionId, setTransactionId] = useState<string | undefined>();
   let [status, setStatus] = useState<string | undefined>();
+  const [showModal, setShowModal] = useState(false);
+  const [encodedUrl, setEncodedUrl] = useState('');
+  const [decodedUrl, setDecodedUrl] = useState('');
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined;
@@ -44,8 +46,29 @@ const Initialize: NextPageWithLayout = () => {
     };
   }, [transactionId]);
 
-  const handleSubmit = async (event: ChangeEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const decodeUrl = (encodedValues: number[]) => {
+    // Convert encoded numeric values back to string chunks
+    return encodedValues
+      .map(value => BigInt(value).toString(16)) // Convert BigInt to hexadecimal
+      .map(chunk => Buffer.from(chunk, 'hex').toString('utf-8')) // Convert hex to UTF-8 string
+      .join(''); // Join all chunks into the original URL
+  };
+  
+
+  const handlePreview = () => {
+    const urlInputs = padArray(splitStringToBigInts(url), 4);
+    const formattedUrlInput = `{ data0: ${urlInputs[0]}u128, data1: ${urlInputs[1]}u128, data2: ${urlInputs[2]}u128, data3: ${urlInputs[3]}u128 }`;
+    setEncodedUrl(formattedUrlInput);
+
+    // Mock decoding function (adjust as per actual logic)
+    const decoded = decodeUrl(urlInputs);
+
+    setDecodedUrl(decoded);
+
+    setShowModal(true);
+  };
+
+  const handleSubmit = async () => {
     if (!publicKey) throw new WalletNotConnectedError();
 
     const symbolInput = stringToBigInt(symbol);
@@ -63,8 +86,6 @@ const Initialize: NextPageWithLayout = () => {
       false,
     );
 
-
-  // Log the aleoTransaction object
     console.log('Aleo Transaction:', aleoTransaction);
 
     const txId =
@@ -72,6 +93,7 @@ const Initialize: NextPageWithLayout = () => {
         aleoTransaction
       )) || '';
     setTransactionId(txId);
+    setShowModal(false);
   };
 
   const getTransactionStatus = async (txId: string) => {
@@ -98,7 +120,10 @@ const Initialize: NextPageWithLayout = () => {
           <form
             noValidate
             role="search"
-            onSubmit={handleSubmit}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handlePreview();
+            }}
             className="relative flex w-full flex-col rounded-full md:w-auto"
           >
             <label className="flex w-full items-center justify-between py-4">
@@ -143,21 +168,55 @@ const Initialize: NextPageWithLayout = () => {
             </label>
             <div className="flex items-center justify-center">
               <Button
-                disabled={
-                  !publicKey ||
-                  !total ||
-                  !symbol ||
-                  !url ||
-                  fee === undefined
-                }
+                disabled={!publicKey || !total || !symbol || !url || fee === undefined}
                 type="submit"
                 className="shadow-card dark:bg-gray-700 md:h-10 md:px-5 xl:h-12 xl:px-7"
               >
-                {!publicKey ? 'Connect Your Wallet' : 'Submit'}
+                {!publicKey ? 'Connect Your Wallet' : 'Preview'}
               </Button>
             </div>
           </form>
         }
+
+        {showModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-green-700 bg-opacity-90 p-4">
+            <div className="bg-green-500 rounded-lg shadow-lg p-6 w-full max-w-lg overflow-auto">
+              <h2 className="text-lg font-semibold text-white">Confirm Details</h2>
+
+              <p className="mt-4 text-white"><strong>Original URL:</strong></p>
+              <pre className="bg-green-600 text-white p-2 rounded-md mt-2 break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
+                {url}
+              </pre>
+
+              <p className="mt-4 text-white"><strong>Encoded URL:</strong></p>
+              <pre className="bg-green-600 text-white p-2 rounded-md mt-2 break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
+                {encodedUrl}
+              </pre>
+
+              <p className="mt-4 text-white"><strong>Decoded URL (Validation):</strong></p>
+              <pre className="bg-green-600 text-white p-2 rounded-md mt-2 break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
+                {decodedUrl}
+              </pre>
+
+              <div className="flex justify-end mt-4 space-x-2">
+                <Button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 bg-green-700 text-white font-medium rounded-md hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-green-800 text-white font-medium rounded-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400"
+                >
+                  Confirm and Submit
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
 
         {transactionId && (
           <div>

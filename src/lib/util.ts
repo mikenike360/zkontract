@@ -1,3 +1,4 @@
+
 export function getSettingsFromNumber(settingNum: number): { frozen: boolean, active: boolean, whiteList: boolean, initialized: boolean } {
   const bitStringArray = settingNum.toString(2).padStart(32, '0').split('').reverse();
   return {
@@ -56,12 +57,13 @@ export function bigIntToString(bigIntValue: bigint): string {
   return asciiString;
 }
 
-export function splitStringToBigInts(input: string, chunkSize = 16): bigint[] {
+export function splitStringToBigInts(input: string): bigint[] {
+  const chunkSize = 16; // Chunk size to split the string
   const numChunks = Math.ceil(input.length / chunkSize);
   const bigInts: bigint[] = [];
 
   for (let i = 0; i < numChunks; i++) {
-    const chunk = input.slice(i * chunkSize, (i + 1) * chunkSize); // Use slice instead of substr
+    const chunk = input.substr(i * chunkSize, chunkSize);
     const bigIntValue = stringToBigInt(chunk);
     bigInts.push(bigIntValue);
   }
@@ -119,13 +121,6 @@ export function getRandomElement<T>(list: T[]): T {
   return list[randomIndex];
 }
 
-export const removeVisibilitySuffix = (str: unknown): string => {
-  if (typeof str !== 'string') {
-    console.warn('Invalid input to removeVisibilitySuffix:', {
-      value: str,
-      type: typeof str,
-    });
-    return ''; // Return an empty string or handle appropriately
-  }
+export const removeVisibilitySuffix = (str: string): string => {
   return str.replace(/\.public$|\.private$/, '');
 };

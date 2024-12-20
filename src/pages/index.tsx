@@ -182,6 +182,7 @@ const MintPage: NextPageWithLayout = () => {
         'open_mint',
         [randomScalar],
         Math.floor(8_500_000),
+        true
       );
     }
     
@@ -195,6 +196,7 @@ const MintPage: NextPageWithLayout = () => {
         'mint',
         [whitelistRecord, randomScalar],
         Math.floor(7_000_000),
+        true
       );
     };
 
@@ -219,6 +221,7 @@ const MintPage: NextPageWithLayout = () => {
           'claim_nft',
           [unspentClaimRecord, tokenId, edition],
           Math.floor(4_250_000),
+          true
         );
       }
     }

@@ -178,43 +178,7 @@ const Initialize: NextPageWithLayout = () => {
           </form>
         }
 
-        {showModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-green-700 bg-opacity-90 p-4">
-            <div className="bg-green-500 rounded-lg shadow-lg p-6 w-full max-w-lg overflow-auto">
-              <h2 className="text-lg font-semibold text-white">Confirm Details</h2>
-
-              <p className="mt-4 text-white"><strong>Original URL:</strong></p>
-              <pre className="bg-green-600 text-white p-2 rounded-md mt-2 break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
-                {url}
-              </pre>
-
-              <p className="mt-4 text-white"><strong>Encoded URL:</strong></p>
-              <pre className="bg-green-600 text-white p-2 rounded-md mt-2 break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
-                {encodedUrl}
-              </pre>
-
-              <p className="mt-4 text-white"><strong>Decoded URL (Validation):</strong></p>
-              <pre className="bg-green-600 text-white p-2 rounded-md mt-2 break-words whitespace-pre-wrap max-h-40 overflow-y-auto">
-                {decodedUrl}
-              </pre>
-
-              <div className="flex justify-end mt-4 space-x-2">
-                <Button
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-green-700 text-white font-medium rounded-md hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-300"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-green-800 text-white font-medium rounded-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400"
-                >
-                  Confirm and Submit
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+ 
 
 
 

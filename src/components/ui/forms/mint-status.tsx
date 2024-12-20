@@ -53,6 +53,7 @@ const MintStatus = () => {
       'update_toggle_settings',
       [newStatus],
       Math.floor(parseFloat(fee) * 1_000_000),
+      false
     );
 
     const txId =

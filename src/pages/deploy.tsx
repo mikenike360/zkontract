@@ -13,7 +13,7 @@ import {
   WalletNotConnectedError,
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { NFTProgram, NFTProgramId } from '@/aleo/nft-program';
-import { TESTNET3_API_URL, getProgram } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getProgram } from '@/aleo/rpc';
 import debounce from 'lodash.debounce';
 
 
@@ -22,7 +22,7 @@ const Deploy: NextPageWithLayout = () => {
   let [programName, setProgramName] = useState<string>(NFTProgramId.slice(0, NFTProgramId.indexOf('.aleo')));
   let [program, setProgram] = useState(NFTProgram);
 
-  const { data, error, isLoading } = useSWR(programName, () => getProgram(programName + '.aleo', TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR(programName, () => getProgram(programName + '.aleo', TESTNETBETA_API_URL));
 
   let [fee, setFee] = useState<string>('20');
   let [transactionId, setTransactionId] = useState<string | undefined>();

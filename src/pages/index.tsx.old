@@ -5,10 +5,21 @@ import Layout from '@/layouts/_layout';
 import Button from '@/components/ui/button';
 import { ImageSlider } from '@/components/ui/image-slider';
 import useSWR from 'swr';
-import { TESTNETBETA_API_URL, getClaimValue, getClaims, getHeight, getMintBlock, getNFTs, getSettingsStatus } from '@/aleo/rpc';
+import {
+  TESTNETBETA_API_URL,
+  getClaimValue,
+  getHeight,
+  getMintBlock,
+  getNFTs,
+  getSettingsStatus,
+} from '@/aleo/rpc';
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
-import { Transaction, WalletAdapterNetwork, WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
+import {
+  Transaction,
+  WalletAdapterNetwork,
+  WalletNotConnectedError,
+} from '@demox-labs/aleo-wallet-adapter-base';
 import { NFTProgramId } from '@/aleo/nft-program';
 import { getSettingsFromNumber } from '@/lib/util';
 import MintCountdown from '@/components/mint/countdown';
@@ -49,110 +60,116 @@ export function Section({
 const enum MintStep {
   CONNECT = 'CONNECT YOUR WALLET',
   STATUS = 'CHECK YOUR STATUS',
-  OPENMINT = 'MINT AN NFT (Open Mint)',
-  MINT = 'MINT YOUR NFT (Direct Mint)',
+  OPENMINT = 'MINT AN NFT',
   CLAIM = 'CLAIM YOUR NFT',
   WAIT = 'GET READY',
 }
 
 const DEFAULT_IMAGES = [
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_1.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_2.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_3.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_4.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_5.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_6.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_7.png',
-    'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_8.png',
-  ];
-  
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_1.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_2.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_3.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_4.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_5.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_6.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_7.png',
+  'https://gateway.pinata.cloud/ipfs/bafybeifl3emcneoajka45xunehtm6jhpsvempu5upcslsq4vbpv7tqwl6i/zkoi_test_8.png',
+];
 
 const MintPage: NextPageWithLayout = () => {
   const { wallet, publicKey, requestRecords } = useWallet();
-  const { data: settingsNum, error, isLoading } = useSWR('getSettingsStatus', () => getSettingsStatus(TESTNETBETA_API_URL));
-  const { data: height, error: heightError, isLoading: heightIsLoading } = useSWR('height', () => getHeight(TESTNETBETA_API_URL));
-  const { data: mintBlock, error: mintBlockError, isLoading: mintBlockIsLoading } = useSWR('getMintBlock', () => getMintBlock(TESTNETBETA_API_URL));
+  const { data: settingsNum } = useSWR('getSettingsStatus', () =>
+    getSettingsStatus(TESTNETBETA_API_URL)
+  );
+  const { data: height } = useSWR('height', () => getHeight(TESTNETBETA_API_URL));
+  const { data: mintBlock } = useSWR('getMintBlock', () =>
+    getMintBlock(TESTNETBETA_API_URL)
+  );
 
-  let [settings, setSettings] = useState<any | undefined>(settingsNum ? getSettingsFromNumber(settingsNum!) : undefined);
+  // Convert numeric settings to a structured object
+  let [settings, setSettings] = useState<any | undefined>(
+    settingsNum ? getSettingsFromNumber(settingsNum!) : undefined
+  );
+
+  // Track current minted step, sub-messages, etc.
   let [transactionId, setTransactionId] = useState<string | undefined>();
   let [nftImage, setNFTImage] = useState<string | undefined>();
   let [status, setStatus] = useState<string | undefined>();
   let [mintStep, setMintStep] = useState<MintStep>(MintStep.CONNECT);
   let [subMessage, setSubMessage] = useState<string>('');
+
+  // Records from your NFT program (could be claims, minted NFTs, etc.)
   let [nftProgramRecords, setNftProgramRecords] = useState<any[]>([]);
   let [recordsRequested, setRecordsRequested] = useState<boolean>(false);
 
+  // Re-parse settings whenever settingsNum changes
   useEffect(() => {
     setSettings(settingsNum ? getSettingsFromNumber(settingsNum!) : undefined);
   }, [settingsNum]);
 
+  // Main initialization whenever settings, publicKey, or records change
   useEffect(() => {
     initialize();
   }, [settings, publicKey, nftProgramRecords]);
 
-  const mintingActive = (settings: any, height: number | undefined, block: number | undefined) => {
+  // Decide if minting is active based on toggles and block height
+  const mintingActive = (
+    settings: any,
+    height: number | undefined,
+    block: number | undefined
+  ) => {
     return settings?.active && height != undefined && block != undefined && block <= height;
   };
 
+  // Filter for claim records in user wallet
   const claimRecords = () => {
     return nftProgramRecords.filter((record) => record.data.claim != undefined);
   };
 
-  const whitelistRecords = () => {
-    return nftProgramRecords.filter((r) => r.data.amount != undefined);
-  };
-
-  const canWhitelistMint = () => {
-    return whitelistRecords().length > 0 && whitelistRecords().some((r) => {
-      const amountString = r.data.amount as string;
-      const amount = parseInt(amountString.split('u8')[0]);
-      return !r.spent && amount > 0;
-    });
-  }
-
+  // The main init function
   const initialize = async () => {
+    // 1. No wallet? Must connect first
     if (!publicKey) {
       setMintStep(MintStep.CONNECT);
       return;
     }
 
+    // 2. If minting is not active, show WAIT
     if (!mintingActive(settings, height, mintBlock?.block)) {
       setMintStep(MintStep.WAIT);
       setSubMessage('Minting is not active yet.');
       return;
     }
 
+    // 3. If we haven't requested program records yet, do so now
     if (nftProgramRecords.length === 0 && !recordsRequested) {
       const records = await requestRecords!(NFTProgramId);
+      console.log(records);
       setNftProgramRecords(records);
       setRecordsRequested(true);
+      
     }
 
+    // 4. If user has an unspent claim, show CLAIM
     if (claimRecords().length > 0 && claimRecords().some((claim) => !claim.spent)) {
       setMintStep(MintStep.CLAIM);
-      setSubMessage('You have privately minted, now claim your ZK NFT.')
+      setSubMessage('You have privately minted, now claim your ZK NFT.');
       return;
     }
 
+    // 5. If whitelist is OFF, do open_mint
     if (!settings?.whiteList) {
       setMintStep(MintStep.OPENMINT);
-      setSubMessage('Privately mint your ZK NFT!')
+      setSubMessage('Privately mint your ZK NFT!');
       return;
     }
 
-    if (canWhitelistMint()) {
-      setMintStep(MintStep.MINT);
-      setSubMessage('You are on the list! Mint now.')
-    } else {
-      setMintStep(MintStep.WAIT);
-      if (whitelistRecords().length > 0) {
-        setSubMessage('You are on the list, but you have already minted.')
-      } else {
-        setSubMessage('You are not on list or.');
-      }
-    }
-  }
+    // 6. If somehow whitelist is on, just show WAIT (no direct mint)
+    setMintStep(MintStep.WAIT);
+    setSubMessage('Whitelist is enabled, but this front end has no whitelist logic.');
+  };
 
+  // Poll for transaction status if we have a txId
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined;
     setSettings(settingsNum ? getSettingsFromNumber(settingsNum!) : undefined);
@@ -170,46 +187,41 @@ const MintPage: NextPageWithLayout = () => {
     };
   }, [transactionId]);
 
+  // Called when user clicks the main button
   const handleButtonClick = async () => {
     if (!publicKey) throw new WalletNotConnectedError();
     let aleoTransaction: Transaction | null = null;
 
+    // If we're at OPENMINT, call open_mint
     if (mintStep === MintStep.OPENMINT) {
       const randomScalar = random(0, 100000000000) + 'scalar';
       aleoTransaction = Transaction.createTransaction(
         publicKey,
         WalletAdapterNetwork.TestnetBeta,
         NFTProgramId,
-        'open_mint',
+        'mint',
         [randomScalar],
-        Math.floor(4_000_000),
+        Math.floor(1_000_000),
         false
       );
     }
-    
-    if (mintStep === MintStep.MINT) {
-      const randomScalar = random(0, 100000000000) + 'scalar';
-      const whitelistRecord = whitelistRecords().find(r => !r.spent);
-      aleoTransaction = Transaction.createTransaction(
-        publicKey,
-        WalletAdapterNetwork.TestnetBeta,
-        NFTProgramId,
-        'mint',
-        [whitelistRecord, randomScalar],
-        Math.floor(7_000_000),
-        false
-      );
-    };
 
+    // If we're at CLAIM, finalize claim_nft
     if (mintStep === MintStep.CLAIM) {
       const claims = claimRecords();
-      const unspentClaimRecord = claims.find(claim => !claim.spent);
+      const unspentClaimRecord = claims.find((claim) => !claim.spent);
       const claimData = unspentClaimRecord?.data.claim as string;
-      // claim data should be a field.private value
+
+      // Extract the field from e.g. "12345field.private"
       const claimKey = claimData.split('.')[0];
+
+      // Query the back end for matching token info
       const nftData = await getNFTs(TESTNETBETA_API_URL);
-      const tokenEditionHash = (await getClaimValue(claimKey)).replaceAll("\"", "");
-      const matchingNft = nftData.nfts.find((nft) => nft.tokenEditionHash === tokenEditionHash);
+      const tokenEditionHash = (await getClaimValue(claimKey)).replaceAll('"', '');
+      const matchingNft = nftData.nfts.find(
+        (nft: any) => nft.tokenEditionHash === tokenEditionHash
+      );
+
       if (!matchingNft) {
         setSubMessage('No NFT matching claim found.');
       } else {
@@ -221,33 +233,33 @@ const MintPage: NextPageWithLayout = () => {
           NFTProgramId,
           'claim_nft',
           [unspentClaimRecord, tokenId, edition],
-          Math.floor(4_250_000),
+          Math.floor(1_000_000),
           false
         );
       }
     }
 
+    // If we built a transaction, send it
     if (aleoTransaction) {
       const txId =
-      (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
-        aleoTransaction
-      )) || '';
+        (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(aleoTransaction)) || '';
       setTransactionId(txId);
     }
   };
 
+  // Helper to check status from the wallet
   const getTransactionStatus = async (txId: string) => {
-    const status = await (
-      wallet?.adapter as LeoWalletAdapter
-    ).transactionStatus(txId);
+    const status = await (wallet?.adapter as LeoWalletAdapter).transactionStatus(txId);
     setStatus(status);
   };
 
+  // Calculate how long until the block for mint
   let timeToMint = 0;
   if (height && mintBlock) {
     timeToMint = (mintBlock.block - height) * 15_000; // 15 seconds per block
   }
 
+  // For the image slider
   let sliderImages = DEFAULT_IMAGES;
   if (nftImage) {
     sliderImages = [nftImage];
@@ -261,33 +273,36 @@ const MintPage: NextPageWithLayout = () => {
       />
       <div className="mx-auto max-w-md px-4 mt-12 pb-14 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8 xl:px-10 2xl:px-0">
         <h2 className="mb-14 text-lg font-medium uppercase text-center tracking-wider text-gray-900 dark:text-white sm:mb-10 sm:text-2xl">
-          JOIN THE PRIDE
+          Zero Knowledge Koi Fish
         </h2>
         {timeToMint > 0 && (
-          <div className='flex justify-center mb-6'>
+          <div className="flex justify-center mb-6">
             <MintCountdown date={Date.now() + timeToMint} />
           </div>
         )}
         <ImageSlider images={sliderImages} interval={5000} />
+
         {settingsNum !== undefined && (
-          <div className='flex justify-center my-8'>
+          <div className="flex justify-center my-8">
             <Button
               className="text-xl shadow-card dark:bg-gray-700 md:h-10 md:px-5 xl:h-12 xl:px-7"
-              size='large'
+              size="large"
               disabled={!settings?.active || !publicKey || mintStep === MintStep.WAIT}
               onClick={() => handleButtonClick()}
             >
-                {mintStep}
+              {mintStep}
             </Button>
           </div>
         )}
+
         {transactionId && (
-          <div className='text-white text-center'>
+          <div className="text-white text-center">
             <div>{`Transaction status: ${status}`}</div>
           </div>
         )}
+
         {publicKey && !transactionId && (
-          <div className='text-white text-center'>
+          <div className="text-white text-center">
             <div>{subMessage}</div>
           </div>
         )}

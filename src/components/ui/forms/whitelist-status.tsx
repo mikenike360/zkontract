@@ -9,12 +9,12 @@ import {
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { NFTProgramId } from '@/aleo/nft-program';
 import useSWR from 'swr';
-import { TESTNET3_API_URL, getSettingsStatus } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getSettingsStatus } from '@/aleo/rpc';
 import { convertSettingsToNumber, getSettingsFromNumber } from '@/lib/util';
 
 const WhitelistStatus = () => {
   const { wallet, publicKey } = useWallet();
-  const { data, error, isLoading } = useSWR('getSettingsStatus', () => getSettingsStatus(TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR('getSettingsStatus', () => getSettingsStatus(TESTNETBETA_API_URL));
 
   let [fee, setFee] = useState<string>('2');
   let [transactionId, setTransactionId] = useState<string | undefined>();

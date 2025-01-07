@@ -14,14 +14,14 @@ import {
 import { NFTProgramId } from '@/aleo/nft-program';
 import {safeParseInt } from '@/lib/util';
 import useSWR from 'swr';
-import { TESTNET3_API_URL, getMintedNFTs, getWhitelist } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getMintedNFTs, getWhitelist } from '@/aleo/rpc';
 import BulkWhitelist from '@/components/ui/forms/bulk-whitelist';
 import CSVExportButton from '@/components/ui/button/csv-export';
 
 
 const Whitelist: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
-  const { data, error, isLoading } = useSWR('getWhitelist', () => getWhitelist(TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR('getWhitelist', () => getWhitelist(TESTNETBETA_API_URL));
 
   let [address, setAddress] = useState('');
   let [total, setTotal] = useState(1);

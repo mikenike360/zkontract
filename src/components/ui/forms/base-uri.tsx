@@ -3,14 +3,14 @@ import { useWallet } from "@demox-labs/aleo-wallet-adapter-react";
 import { ChangeEvent, useEffect, useState } from "react";
 import Button from "../button";
 import useSWR from "swr";
-import { TESTNET3_API_URL, getBaseURI } from "@/aleo/rpc";
+import { TESTNETBETA_API_URL, getBaseURI } from "@/aleo/rpc";
 import { Transaction, WalletAdapterNetwork, WalletNotConnectedError } from "@demox-labs/aleo-wallet-adapter-base";
 import { NFTProgramId } from "@/aleo/nft-program";
 import { padArray, splitStringToBigInts } from "@/lib/util";
 
 const BaseURI = () => {
   const { wallet, publicKey } = useWallet();
-  const { data, error, isLoading } = useSWR('getBaseURI', () => getBaseURI(TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR('getBaseURI', () => getBaseURI(TESTNETBETA_API_URL));
 
   let [uri, setURI] = useState<string>(data ?? '');
   let [fee, setFee] = useState<string>('5');

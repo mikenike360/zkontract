@@ -13,12 +13,12 @@ import {
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { NFTProgramId } from '@/aleo/nft-program';
 import { padArray, safeParseInt, splitStringToBigInts, stringToBigInt } from '@/lib/util';
-import { TESTNET3_API_URL, getTransactionsForProgram } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getTransactionsForProgram } from '@/aleo/rpc';
 import useSWR from 'swr';
 
 const Initialize: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
-  const { data, error, isLoading } = useSWR('intializeCollection', () => getTransactionsForProgram(NFTProgramId, 'initialize_collection', TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR('intializeCollection', () => getTransactionsForProgram(NFTProgramId, 'initialize_collection', TESTNETBETA_API_URL));
 
   let [total, setTotal] = useState(1000);
   let [symbol, setSymbol] = useState('');
@@ -149,7 +149,7 @@ const Initialize: NextPageWithLayout = () => {
               Url:
               <input
                 className="w-10/12 appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-                placeholder="The base url for your NFTs ie: aleo-public.s3.us-west-2.amazonaws.com/testnet3/"
+                placeholder="The base url for your NFTs ie: aleo-public.s3.us-west-2.amazonaws.com/test/"
                 onChange={(event) => setUrl(event.currentTarget.value)}
                 value={url}
               />

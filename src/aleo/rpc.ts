@@ -3,8 +3,8 @@ import { NFTProgramId } from './nft-program';
 import { bigIntToString, getPublicKeyFromFuture, joinBigIntsToString, parseStringToBigIntArray } from '@/lib/util';
 import assert from 'assert';
 
-export const TESTNET3_API_URL = process.env.RPC_URL!;
-const ALEO_URL = 'https://api.explorer.aleo.org/v1/testnet/';
+export const TESTNETBETA_API_URL = process.env.RPC_URL!;
+const ALEO_URL = 'https://testnetbeta.aleorpc.com/';
 
 export async function getHeight(apiUrl: string): Promise<number> {
   const client = getClient(apiUrl);
@@ -66,7 +66,7 @@ export async function getAleoTransactionsForProgram(programId: string, functionN
 
 
 export const getAleoTransaction = async (id: string): Promise<any> => {
-  const client = getClient(TESTNET3_API_URL);
+  const client = getClient(TESTNETBETA_API_URL);
   return await client.request('aleoTransaction', { id });
 };
 

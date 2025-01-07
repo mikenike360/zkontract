@@ -10,7 +10,7 @@ import {
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { NFTProgram, NFTProgramId } from '@/aleo/nft-program';
 import useSWR from 'swr';
-import { TESTNET3_API_URL, getBaseURI, getJSON, getVerifyingKey } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getBaseURI, getJSON, getVerifyingKey } from '@/aleo/rpc';
 import { joinBigIntsToString, removeVisibilitySuffix } from '@/lib/util';
 import { set } from 'lodash';
 
@@ -47,7 +47,7 @@ const AuthorizeForm = () => {
     const allRecords = await (wallet?.adapter as LeoWalletAdapter).requestRecords(NFTProgramId);
     const nftRecords = allRecords.filter((record: any) => record.data.edition && record.spent === false);
     if (nftRecords.length > 0) {
-      const baseUri = await getBaseURI(TESTNET3_API_URL);
+      const baseUri = await getBaseURI(TESTNETBETA_API_URL);
       for (let i = 0; i < nftRecords.length; i++) {
         let data = [
           BigInt(removeVisibilitySuffix(nftRecords[i].data.data.data1).slice(0, -4)),

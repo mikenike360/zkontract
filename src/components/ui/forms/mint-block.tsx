@@ -9,11 +9,11 @@ import {
 } from '@demox-labs/aleo-wallet-adapter-base';
 import { NFTProgramId } from '@/aleo/nft-program';
 import useSWR from 'swr';
-import { TESTNET3_API_URL, getMintBlock } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getMintBlock } from '@/aleo/rpc';
 
 const MintBlock = () => {
   const { wallet, publicKey } = useWallet();
-  const { data, error, isLoading } = useSWR('getMintBlock', () => getMintBlock(TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR('getMintBlock', () => getMintBlock(TESTNETBETA_API_URL));
 
   let [block, setBlock] = useState<number | undefined>();
   let [fee, setFee] = useState<string>('2.50');

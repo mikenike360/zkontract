@@ -14,14 +14,14 @@ import {
 import { NFTProgramId } from '@/aleo/nft-program';
 import {padArray, safeParseInt, splitStringToBigInts } from '@/lib/util';
 import useSWR from 'swr';
-import { TESTNET3_API_URL, getNFTs } from '@/aleo/rpc';
+import { TESTNETBETA_API_URL, getNFTs } from '@/aleo/rpc';
 import BulkAdd from '@/components/ui/forms/bulk-add';
 import CSVExportButton from '@/components/ui/button/csv-export';
 
 
 const Add: NextPageWithLayout = () => {
   const { wallet, publicKey } = useWallet();
-  const { data, error, isLoading } = useSWR('getAllNFTs', () => getNFTs(TESTNET3_API_URL));
+  const { data, error, isLoading } = useSWR('getAllNFTs', () => getNFTs(TESTNETBETA_API_URL));
 
   let [url, setUrl] = useState('');
   let [editions, setEditions] = useState(0);

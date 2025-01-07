@@ -26,24 +26,20 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
 /program/.env
 
 # Program
-**/program/program.json
-**/build/build
-**/build/program.json
-**/program/.env
-
+/program/program.json
+/build/build
+/build/program.json
 
 # Util
-**/util/update-program.js
-**/util/copy-program.js
+/util/update-program.js
+/util/copy-program.js
 
 # vercel
 .vercel
@@ -52,9 +48,9 @@ yarn-error.log*
 *.tsbuildinfo
 
 # PWA files
-**/public/sw.js
-**/public/workbox-*.js
-**/public/worker-*.js
-**/public/sw.js.map
-**/public/workbox-*.js.map
-**/public/worker-*.js.map
+/public/sw.js
+/public/workbox-*.js
+/public/worker-*.js
+/public/sw.js.map
+/public/workbox-*.js.map
+/public/worker-*.js.map

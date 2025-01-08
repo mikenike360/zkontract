@@ -10,40 +10,40 @@ struct TokenId:
     id0 as u128;
     id1 as u128;
 
-struct NFT_mint:
-    minter_address as address;
-    amount as u8;
-
-struct NFT_claim:
-    claim_owner as address;
-    claim as field;
-
-struct PublicNFT:
-    nft_owner as address;
-    data as TokenId;
-    edition as scalar;
-
 struct approval:
     approver as address;
     spender as address;
 
-struct data:
-    metadata as [field; 4u32];
+struct nft_content:
+    data as TokenId;
+    edition as scalar;
+
+record NFT_mint:
+    owner as address.private;
+    minter_address as address.private;
+    amount as u8.private;
+
+record NFT_claim:
+    owner as address.private;
+    claim_owner as address.private;
+    claim as field.private;
+
+record PublicNFT:
+    owner as address.private;
+    nft_owner as address.public;
+    data as TokenId.private;
+    edition as scalar.private;
 
 record NFT:
     owner as address.private;
-    data as data.private;
+    data as TokenId.private;
     edition as scalar.private;
 
 record NFTView:
     owner as address.private;
-    data as data.private;
+    data as TokenId.private;
     edition as scalar.private;
     is_view as boolean.public;
-
-struct nft_content:
-    data as data;
-    edition as scalar;
 
 mapping toggle_settings:
     key as u8.public;
@@ -84,6 +84,7 @@ mapping nft_contents:
 function transfer_private:
     input r0 as NFT.record;
     input r1 as address.private;
+    assert.eq r0.owner self.caller;
     cast r1 r0.data r0.edition into r2 as NFT.record;
     output r2 as NFT.record;
 
@@ -103,7 +104,7 @@ finalize transfer_priv_to_pub:
     set r0 into nft_owners[r1];
 
 function transfer_public:
-    input r0 as data.private;
+    input r0 as TokenId.private;
     input r1 as scalar.private;
     input r2 as address.public;
     hash.bhp256 r0 into r3 as field;
@@ -123,7 +124,7 @@ finalize transfer_public:
     set r0 into nft_owners[r1];
 
 function transfer_pub_as_signer:
-    input r0 as data.private;
+    input r0 as TokenId.private;
     input r1 as scalar.private;
     input r2 as address.public;
     hash.bhp256 r0 into r3 as field;
@@ -143,7 +144,7 @@ finalize transfer_pub_as_signer:
     set r0 into nft_owners[r1];
 
 function transfer_pub_to_priv:
-    input r0 as data.private;
+    input r0 as TokenId.private;
     input r1 as scalar.private;
     input r2 as address.private;
     hash.bhp256 r0 into r3 as field;
@@ -176,7 +177,7 @@ finalize set_for_all_approval:
 
 function approve_public:
     input r0 as address.private;
-    input r1 as data.private;
+    input r1 as TokenId.private;
     input r2 as scalar.private;
     hash.bhp256 r1 into r3 as field;
     commit.bhp256 r3 r2 into r4 as field;
@@ -196,7 +197,7 @@ finalize approve_public:
 function transfer_from_public:
     input r0 as address.public;
     input r1 as address.public;
-    input r2 as data.private;
+    input r2 as TokenId.private;
     input r3 as scalar.private;
     hash.bhp256 r2 into r4 as field;
     commit.bhp256 r4 r3 into r5 as field;
@@ -239,7 +240,7 @@ finalize update_edition_private:
     set true into nft_commits[r0];
 
 function publish_nft_content:
-    input r0 as data.public;
+    input r0 as TokenId.public;
     input r1 as scalar.public;
     hash.bhp256 r0 into r2 as field;
     commit.bhp256 r2 r1 into r3 as field;
@@ -248,13 +249,13 @@ function publish_nft_content:
 
 finalize publish_nft_content:
     input r0 as field.public;
-    input r1 as data.public;
+    input r1 as TokenId.public;
     input r2 as scalar.public;
     cast r1 r2 into r3 as nft_content;
     set r3 into nft_contents[r0];
 
 function mint:
-    input r0 as data.private;
+    input r0 as TokenId.private;
     input r1 as scalar.private;
     input r2 as address.private;
     hash.bhp256 r0 into r3 as field;
@@ -324,9 +325,9 @@ function add_minter:
     input r0 as address.private;
     input r1 as u8.public;
     assert.eq self.caller aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec;
-    cast r0 r1 into r2 as NFT_mint;
+    cast self.caller r0 r1 into r2 as NFT_mint.record;
     async add_minter into r3;
-    output r2 as NFT_mint.private;
+    output r2 as NFT_mint.record;
     output r3 as zkoi_test2.aleo/add_minter.future;
 
 finalize add_minter:
@@ -395,9 +396,9 @@ function open_mint:
     input r0 as scalar.private;
     hash.bhp256 self.caller into r1 as field;
     commit.bhp256 r1 r0 into r2 as field;
-    cast self.caller r2 into r3 as NFT_claim;
+    cast self.caller self.caller r2 into r3 as NFT_claim.record;
     async open_mint r2 into r4;
-    output r3 as NFT_claim.private;
+    output r3 as NFT_claim.record;
     output r4 as zkoi_test2.aleo/open_mint.future;
 
 finalize open_mint:
@@ -421,14 +422,14 @@ finalize open_mint:
     set r11 into nfts_to_mint[r8];
 
 function claim_nft:
-    input r0 as NFT_claim.private;
+    input r0 as NFT_claim.record;
     input r1 as TokenId.private;
     input r2 as scalar.private;
     hash.bhp256 r1 into r3 as field;
     commit.bhp256 r3 r2 into r4 as field;
-    cast r0.claim_owner r1 r2 into r5 as PublicNFT;
+    cast self.caller r0.claim_owner r1 r2 into r5 as PublicNFT.record;
     async claim_nft r0.claim r4 into r6;
-    output r5 as PublicNFT.private;
+    output r5 as PublicNFT.record;
     output r6 as zkoi_test2.aleo/claim_nft.future;
 
 finalize claim_nft:

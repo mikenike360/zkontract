@@ -1,6 +1,11 @@
 program zkoi_test2.aleo {
+
+    // Constant to define the hardcoded contract owner address.
+    // This ensures that specific administrative tasks are restricted to this address.
     const contract_owner: address = aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec;
-    
+
+    // Struct to define the BaseURI for NFTs.
+    // Typically used to store components of a URI in a structured way.
     struct BaseURI {
         data0: u128,
         data1: u128,
@@ -8,87 +13,162 @@ program zkoi_test2.aleo {
         data3: u128,
     }
 
-    mapping toggle_settings: u8 => u32;
-    mapping general_settings: u8 => u128;
-    mapping nfts_to_mint: u128 => field;
-    mapping claims_to_nfts: field => field;
-
+    // Struct to represent a unique Token ID.
+    // Token IDs are composed of two 128-bit integers.
     struct TokenId {
         id0: u128,
         id1: u128,
     }
 
-    struct NFT_mint {
-        minter_address: address,
-        amount: u8,
-    }
-
-    struct NFT_claim {
-        claim_owner: address,
-        claim: field,
-    }   
-
-    struct PublicNFT {
-        nft_owner: address,
-        data: TokenId,
-        edition: scalar,
-    }   
-
+    // Struct to represent an approval relationship.
+    // This tracks an address granting another address permission to perform specific actions.
     struct approval {
         approver: address,
         spender: address,
     }
 
-    struct data {
-        metadata: [field; 4], // URL of offchain metadata JSON
+    // Struct to represent the content of an NFT.
+    // Includes metadata and the edition information of the NFT.
+    struct nft_content {
+        data: TokenId,
+        edition: scalar
     }
 
+    // Record to store details of an NFT minting process.
+    // Tracks the address of the minter, the amount minted, and the owner of the record.
+    record NFT_mint {
+        private minter_address: address,
+        private amount: u8,
+        private owner: address,
+    }
+
+    // Record to track NFT claims.
+    // Stores the claiming address, the cryptographic claim, and the owner of the record.
+    record NFT_claim {
+        private claim_owner: address,
+        private claim: field,
+        private owner: address,
+    }   
+
+    // Record to represent a publicly visible NFT.
+    // Includes the owner of the NFT, its TokenId, edition, and the record owner.
+    record PublicNFT {
+        public nft_owner: address,   // Public because it needs to be visible
+        private data: TokenId,       // TokenId can remain private
+        private edition: scalar,     // Edition should also be private
+        private owner: address,      // Owner must be private to enforce access control
+    }   
+
+    // Record to represent a private NFT.
+    // Tracks the owner, the NFT's data, and its edition.
     record NFT {
-        owner: address,
-        data: data,
-        edition: scalar,
+        private owner: address,
+        private data: TokenId,
+        private edition: scalar,
     }
 
+    // Record to represent an NFT viewable by the public.
+    // Includes private owner and edition fields, along with a public visibility flag.
     record NFTView {
         private owner: address,
-        private data: data,
+        private data: TokenId,
         private edition: scalar,
-        public is_view: bool
+        public is_view: bool         // Public because it explicitly indicates visibility
     }
 
+
+    // Mapping to store toggle settings for the contract.
+    // The key (`u8`) represents a setting identifier, and the value (`u32`) stores the setting state.
+    mapping toggle_settings: u8 => u32;
+
+    // Mapping to store general settings for the contract.
+    // The key (`u8`) represents a setting identifier, and the value (`u128`) stores the setting value.
+    mapping general_settings: u8 => u128;
+
+    // Mapping to store NFTs available for minting.
+    // The key (`u128`) represents an NFT identifier, and the value (`field`) represents the NFT's metadata or commitment.
+    mapping nfts_to_mint: u128 => field;
+
+    // Mapping to link claims to NFTs.
+    // The key (`field`) represents a claim, and the value (`field`) links to the associated NFT's data or commitment.
+    mapping claims_to_nfts: field => field;
+
+    // Mapping to track NFT commitments.
+    // The key (`field`) represents an NFT commitment, and the value (`bool`) indicates whether the commitment exists.
     mapping nft_commits: field => bool;
+
+    // Mapping to track NFT ownership.
+    // The key (`field`) represents an NFT commitment, and the value (`address`) stores the owner's address.
     mapping nft_owners: field => address;
+
+    // Mapping to store global approval states for NFTs.
+    // The key (`field`) represents an NFT identifier, and the value (`bool`) indicates whether approval is granted for all.
     mapping for_all_approvals: field => bool;
+
+    // Mapping to store individual NFT approvals.
+    // The key (`field`) represents an NFT identifier, and the value (`field`) stores the approval-related data.
     mapping nft_approvals: field => field;
 
+    // Mapping to store additional NFT content.
+    // The key (`field`) represents an NFT identifier, and the value (`nft_content`) contains the associated metadata and edition information.
+    mapping nft_contents: field => nft_content;
+
+
+    // Inline function to generate a cryptographic commitment for an NFT.
+    // Combines the NFT's metadata (`nft_data`) and its edition (`nft_edition`) to produce a unique commitment.
+    //
+    // Inputs:
+    // - `nft_data`: A `TokenId` struct containing the unique identifiers for the NFT.
+    // - `nft_edition`: A scalar value representing the edition number of the NFT.
+    //
+    // Output:
+    // - Returns a `field` representing the cryptographic commitment for the NFT.
     inline commit_nft(
-        nft_data: data,
+        nft_data: TokenId,
         nft_edition: scalar
     ) -> field {
-        let data_hash: field = BHP256::hash_to_field(nft_data);
-        let commitment: field = BHP256::commit_to_field(data_hash, nft_edition);
+        let data_hash: field = BHP256::hash_to_field(nft_data); // Hash the NFT data for integrity and uniqueness.
+        let commitment: field = BHP256::commit_to_field(data_hash, nft_edition); // Create a commitment using the hash and edition.
         return commitment;
     }
 
-    ////
-    //Private NFT transfer transitions
-    ////
 
+    // Transition to transfer an NFT privately.
+    // Assumes frontend validation ensures the NFT is owned by the caller and the recipient (`to`) is valid.
+    // Updates the owner field of the NFT while retaining its original data and edition.
+    //
+    // Inputs:
+    // - `nft`: A private `NFT` record representing the NFT to be transferred.
+    // - `to`: A private `address` specifying the recipient of the NFT.
+    //
+    // Output:
+    // - Returns a new `NFT` record with the updated owner field.
     transition transfer_private(
         private nft: NFT,
         private to: address,
     ) -> NFT {
+        assert_eq(nft.owner, self.caller); // Ensure the caller is the current owner of the NFT.
         return NFT {
-            owner: to,
-            data: nft.data,
-            edition: nft.edition,
+            owner: to,          // Assign the new owner to the recipient address.
+            data: nft.data,     // Retain the original NFT's data.
+            edition: nft.edition // Retain the original NFT's edition.
         };
     }
 
+    // Async transition to transfer a private NFT to a public NFT.
+    // This transition updates the NFT's visibility and transfers ownership to the recipient.
+    //
+    // Inputs:
+    // - `nft`: A private `NFT` record representing the NFT to be transferred.
+    // - `to`: A public `address` specifying the recipient of the NFT.
+    //
+    // Output:
+    // - Returns an `NFTView` (public representation of the NFT) and a `Future` to finalize the transfer.
     async transition transfer_priv_to_pub(
         private nft: NFT,
         public to: address,
     ) -> (NFTView, Future) {
+        assert_eq(nft.owner, self.caller); // Ensure the caller is the current owner of the NFT.
         let nft_commit: field = commit_nft(nft.data, nft.edition);
 
         let nft_view: NFTView = NFTView {
@@ -103,6 +183,7 @@ program zkoi_test2.aleo {
         return (nft_view, transfer_future);
     }
 
+
     async function finalize_transfer_priv_to_pub(
         to: address,
         nft_commit: field,
@@ -111,7 +192,7 @@ program zkoi_test2.aleo {
     }
 
     async transition transfer_public(
-        private nft_data: data,
+        private nft_data: TokenId,
         private nft_edition: scalar,
         public to: address,
     ) -> (NFTView, Future) {
@@ -144,7 +225,7 @@ program zkoi_test2.aleo {
     }
 
     async transition transfer_pub_as_signer(
-        private nft_data: data,
+        private nft_data: TokenId,
         private nft_edition: scalar,
         public to: address,
     ) -> (NFTView, Future) {
@@ -177,7 +258,7 @@ program zkoi_test2.aleo {
     }
 
     async transition transfer_pub_to_priv(
-        private nft_data: data,
+        private nft_data: TokenId,
         private nft_edition: scalar,
         private to: address,
     ) -> (NFT, Future) {
@@ -232,7 +313,7 @@ program zkoi_test2.aleo {
 
     async transition approve_public(
         private spender: address,
-        private nft_data: data,
+        private nft_data: TokenId,
         private nft_edition: scalar,
     ) -> Future {
         let nft_commit: field = commit_nft(nft_data, nft_edition);
@@ -261,7 +342,7 @@ program zkoi_test2.aleo {
     async transition transfer_from_public(
         public from: address,
         public to: address,
-        private nft_data: data,
+        private nft_data: TokenId,
         private nft_edition: scalar,
     ) -> (NFTView, Future) {
         let nft_commit: field = commit_nft(nft_data, nft_edition);
@@ -329,15 +410,8 @@ program zkoi_test2.aleo {
         nft_commits.set(nft_commit, true);
     }
 
-    struct nft_content {
-        data: data,
-        edition: scalar
-    }
-
-    mapping nft_contents: field => nft_content;
-
     async transition publish_nft_content(
-        public nft_data: data,
+        public nft_data: TokenId,
         public nft_edition: scalar,
     ) -> Future {
         let nft_commit: field = commit_nft(nft_data, nft_edition);
@@ -353,7 +427,7 @@ program zkoi_test2.aleo {
 
     async function finalize_publish_nft_content(
         nft_commit: field,
-        nft_data: data,
+        nft_data: TokenId,
         nft_edition: scalar,
     ) {
         let public_data: nft_content = nft_content {
@@ -368,7 +442,7 @@ program zkoi_test2.aleo {
 
     //Custom Mint Function
     async transition mint(
-        private nft_data: data,
+        private nft_data: TokenId,
         private nft_edition: scalar,
         private to: address,
     ) -> (NFT, Future) {
@@ -500,6 +574,7 @@ program zkoi_test2.aleo {
 
         // Create the NFT_mint object.
         let nft_mint: NFT_mint = NFT_mint {
+            owner: self.caller,
             minter_address: minter,
             amount,
         };
@@ -658,6 +733,7 @@ program zkoi_test2.aleo {
 
         // Create the NFT_claim object.
         let nft_claim: NFT_claim = NFT_claim {
+            owner: self.caller,
             claim_owner: self.caller,
             claim,
         };
@@ -718,6 +794,7 @@ program zkoi_test2.aleo {
 
         // Create the PublicNFT object to represent the claimed NFT.
         let public_nft: PublicNFT = PublicNFT {
+            owner: self.caller,
             nft_owner: nft_claim.claim_owner,
             data: tokenId,
             edition,
@@ -743,7 +820,4 @@ program zkoi_test2.aleo {
         // Mark the claim as used by resetting it in the mapping.
         claims_to_nfts.set(claim, 0field);
     }
-
-
-
 }

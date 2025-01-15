@@ -20,26 +20,7 @@ const menuItems = [
     icon: <HomeIcon />,
     href: routes.admin,
   },
-  {
-    name: 'Deploy NFT Program',
-    icon: <Sun />,
-    href: routes.deploy,
-  },
-  {
-    name: 'Initialize Collection',
-    icon: <FarmIcon />,
-    href: routes.initialize,
-  },
-  {
-    name: 'Whitelist',
-    icon: <Verified />,
-    href: routes.whitelist,
-  },
-  {
-    name: 'Add NFT',
-    icon: <Plus />,
-    href: routes.add,
-  },
+
   {
     name: 'Settings',
     icon: <Unlocked />,

@@ -1,11 +1,11 @@
 const routes = {
   admin: '/admin',
-  deploy: '/deploy',
-  initialize: '/initialize',
-  whitelist: '/whitelist',
-  add: '/add',
   settings: '/settings',
   authorize: '/authorize',
+  board: '/boardPage',
+  postBounty: '/post-bounty',
+  dashBoard: '/user-dashboard',
 };
 
 export default routes;
+

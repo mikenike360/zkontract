@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "clean": "rimraf \"{node_modules,.next,out.cache}\"",
-    "delete-local-modules": "rimraf ./node_modules/@demox-labs/aleo-wallet-adapter-react/node_modules ./node_modules/@demox-labs/aleo-wallet-adapter-reactui/node_modules ./next",
+    "delete-local-modules": "rimraf ./node_modules/@demox-labs/aleo-wallet-adapter-react/node_modules ./node_modules/@demox-labs/aleo-wallet-adapter-reactui/node_modules ./.next",
     "configure-program": "tsc ./util/update-program.ts && node ./util/update-program.js",
     "build-program": "cd ./program && /home/mikenike/.cargo/bin/leo build",
     "copy-program": "tsc ./util/copy-program.ts && node ./util/copy-program.js",

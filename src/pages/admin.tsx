@@ -71,12 +71,7 @@ const GettingStartedPage: NextPageWithLayout = () => {
           <br />
           <WalletMultiButton className="bg-[#154bf9]" />
         </Section>
-        <Section title="STEP 4 - DEPLOY YOUR NFT PROGRAM" bgColor="">
-          &bull; Click on the button below to configure and deploy your NFT program <br /> <br />
-          <a href={`${routes.deploy}`}>
-            <Button className="shadow-card dark:bg-gray-700 md:h-10 md:px-5 xl:h-12 xl:px-7">Deploy your collection</Button>
-          </a>
-        </Section>
+
       </div>
     </>
   );

@@ -121,27 +121,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
-        ref={buttonRef}
-        onClick={clickHandler}
-        className={cn(
-          'relative inline-flex shrink-0 items-center justify-center overflow-hidden text-center text-xs font-medium tracking-wider outline-none transition-all sm:text-sm',
-          !disabled
-            ? buttonColorClassNames
-            : 'cursor-not-allowed bg-gray-100 text-brand',
-          disabled || isLoading || variant === 'transparent'
-            ? ''
-            : 'hover:-translate-y-0.5 hover:shadow-large focus:-translate-y-0.5 focus:shadow-large focus:outline-none',
-          isLoading && 'pointer-events-auto cursor-default focus:outline-none',
-          fullWidth && 'w-full',
-          color === 'white' || color === 'gray'
-            ? 'text-gray-900 dark:text-brand'
-            : variants[variant],
-          shapes[shape],
-          shape === 'circle' ? `${sizeClassNames[1]}` : `${sizeClassNames[0]}`,
-          className
-        )}
-        disabled={disabled}
-        {...buttonProps}
+      ref={buttonRef}
+      onClick={clickHandler}
+      className={cn(
+        'relative inline-flex shrink-0 items-center justify-center overflow-hidden text-center text-xs font-medium tracking-wider outline-none transition-all sm:text-sm',
+        className, // Allow `className` to take precedence
+        isLoading
+          ? 'pointer-events-auto cursor-default focus:outline-none'
+          : 'hover:-translate-y-0.5 hover:shadow-large focus:-translate-y-0.5 focus:shadow-large focus:outline-none',
+        fullWidth && 'w-full',
+        shape === 'circle' ? `${sizeClassNames[1]}` : `${sizeClassNames[0]}`
+      )}
+      disabled={disabled}
+      {...buttonProps}
       >
         <span className={cn(isLoading && 'invisible opacity-0')}>
           {children}

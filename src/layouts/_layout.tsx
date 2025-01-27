@@ -1,5 +1,4 @@
 import { useWindowScroll } from '@/lib/hooks/use-window-scroll';
-import Logo from '@/components/ui/logo';
 import { useIsMounted } from '@/lib/hooks/use-is-mounted';
 import React from 'react';
 import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui';
@@ -25,10 +24,10 @@ export function Header() {
 
   return (
     <nav
-      className={`fixed top-0 z-30 flex w-full items-center justify-between px-4 transition-all duration-300 ltr:right-0 rtl:left-0 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 ${
+      className={`fixed top-0 z-30 flex w-full items-center justify-between h-16 px-4 bg-black !important sm:h-24 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 ${
         isMounted && windowScroll.y > 10
           ? 'h-16 bg-gradient-to-b from-white to-white/80 shadow-card backdrop-blur dark:from-dark dark:to-dark/80 sm:h-20'
-          : 'h-16 bg-body bg-black sm:h-24'
+          : 'h-16 bg-black sm:h-24'
       }`}
     >
       <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10 3xl:px-12">

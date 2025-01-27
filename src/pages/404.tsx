@@ -7,8 +7,7 @@ import routes from '@/config/routes';
 import Button from '@/components/ui/button';
 import { useIsMounted } from '@/lib/hooks/use-is-mounted';
 import { useIsDarkMode } from '@/lib/hooks/use-is-dark-mode';
-import ErrorLightImage from '@/assets/images/404-light.svg';
-import ErrorDarkImage from '@/assets/images/404-dark.svg';
+
 
 const ErrorPage: NextPageWithLayout = () => {
   const isMounted = useIsMounted();
@@ -22,12 +21,6 @@ const ErrorPage: NextPageWithLayout = () => {
 
       <div className="flex max-w-full flex-col items-center justify-center text-center">
         <div className="relative w-52 max-w-full sm:w-[400px] xl:w-[450px] 3xl:w-[500px]">
-          {isMounted && !isDarkMode && (
-            <Image src={ErrorLightImage} alt="404 Error" />
-          )}
-          {isMounted && isDarkMode && (
-            <Image src={ErrorDarkImage} alt="404 Error" />
-          )}
         </div>
 
         <h2 className="mt-5 mb-2 text-base font-medium uppercase tracking-wide text-gray-900 dark:text-white sm:mt-10 sm:mb-4 sm:text-xl 3xl:mt-12 3xl:text-2xl">

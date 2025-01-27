@@ -1,70 +1,212 @@
+// pages/bounty/[id].tsx
+
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import Layout from '@/layouts/_layout';
 import BackArrow from '@/components/ui/BackArrow';
+import useSWR from 'swr';
 
-const BOUNTIES = [
-  {
-    id: '1',
-    title: 'Design a Landing Page',
-    description: 'Create a visually appealing landing page for our project.',
-    reward: '10 ALEO',
-    deadline: 'Jan 31, 2025',
-  },
-  {
-    id: '2',
-    title: 'Smart Contract Audit',
-    description: 'Audit our smart contract for vulnerabilities.',
-    reward: '50 ALEO',
-    deadline: 'Feb 15, 2025',
-  },
-  {
-    id: '3',
-    title: 'Build a React Component',
-    description: 'Create a reusable React component for our frontend.',
-    reward: '20 ALEO',
-    deadline: 'Jan 20, 2025',
-  },
-];
+// 1) Import wallet adapter hooks & classes
+import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
+import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
+import {
+  Transaction,
+  WalletAdapterNetwork,
+} from '@demox-labs/aleo-wallet-adapter-base';
+
+// Bounty data type
+type Bounty = {
+  id: number | string;
+  title: string;
+  description: string;
+  reward: string;
+  deadline: string;
+};
+
+// We fetch bounty from S3 via /api/get-bounty?id=<id>
+const fetchBounty = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Failed to fetch bounty');
+  }
+  return res.json() as Promise<Bounty>;
+};
+
+// Contract constants
+const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal';
 
 const BountyPage = () => {
   const router = useRouter();
-  const { id } = router.query;
+  const { id } = router.query; // e.g. /bounty/12345 => id = '12345'
 
+  // 2) Access wallet & publicKey
+  const { wallet, publicKey } = useWallet();
+
+  // 3) SWR fetch for bounty
+  const { data: bounty, error, isLoading } = useSWR<Bounty>(
+    id ? `/api/get-bounty?id=${id}` : null,
+    fetchBounty
+  );
+
+  // Proposal modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proposal, setProposal] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-  const bounty = BOUNTIES.find((b) => b.id === id);
+  // Submission state
+  const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
+  const [txStatus, setTxStatus] = useState<string | null>(null);
 
-  if (!bounty) {
-    return <div className="text-center text-gray-500 dark:text-gray-400">Bounty not found.</div>;
-  }
-
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setProposal('');
-    setUploadedFile(null);
-  };
-
+  // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setUploadedFile(e.target.files[0]);
     }
   };
 
-  const handleSubmitProposal = () => {
-    console.log(`Proposal submitted for bounty ${bounty.id}:`, proposal);
-    console.log('Uploaded File:', uploadedFile);
-    alert('Proposal submitted!');
-    handleCloseModal();
+  // Open/close modal
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setProposal('');
+    setUploadedFile(null);
   };
 
+  // 4) Submit proposal by calling `submit_proposal` on-chain, then uploading to S3
+  const handleSubmitProposal = async () => {
+    if (!wallet || !publicKey) {
+      alert('Please connect your Aleo wallet before submitting a proposal.');
+      return;
+    }
+    if (!id) {
+      alert('No bounty ID found. Invalid route?');
+      return;
+    }
+
+    try {
+      setIsSubmittingProposal(true);
+      setTxStatus(null);
+
+      // Convert "id" from string => number
+      const bountyId = Number(id);
+      // Generate a unique proposalId; contract uses bountyId * 1_000_000 + proposalId
+      // We'll just pick a reasonably sized proposalId
+      const proposalId = Math.floor(Date.now() % 1000000); 
+      // or just Date.now() if you're sure it won't overflow
+
+      // The contract function signature:
+      // submit_proposal(
+      //   caller: address,
+      //   bounty_id: u64,
+      //   proposal_id: u64,
+      //   proposer_address: address
+      // )
+      //
+      // "caller" must match "proposer_address", so we pass the same publicKey both times.
+      const inputs = [
+        publicKey,             // caller
+        `${bountyId}u64`,      // bounty_id
+        `${proposalId}u64`,    // proposal_id
+        publicKey,             // proposer_address
+      ];
+
+      // Create the transaction
+      const proposalTx = Transaction.createTransaction(
+        publicKey,
+        WalletAdapterNetwork.TestnetBeta,
+        BOUNTY_PROGRAM_ID,
+        SUBMIT_PROPOSAL_FUNCTION,
+        inputs,
+        1_000_000, // 1 ALEO credit in microcredits
+        false
+      );
+
+      // Request transaction execution
+      const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
+      console.log('Proposal transaction submitted:', txId);
+
+      // Poll for finalization
+      let finalized = false;
+      const maxRetries = 300;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
+        console.log(`Status check #${attempt + 1}: ${status}`);
+        setTxStatus(status);
+
+        if (status === 'Finalized') {
+          finalized = true;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      if (!finalized) {
+        throw new Error('Transaction did not finalize in time.');
+      }
+
+      // If transaction is finalized, upload proposal data to S3
+
+      const proposalMetadata = {
+        bountyId,
+        proposalId,
+        caller: publicKey,
+        proposerAddress: publicKey,
+        proposalText: proposal,
+        fileName: uploadedFile?.name ?? null,
+        status: "Pending",
+        // optionally, you could do more advanced file uploads
+      };
+
+      const res = await fetch('/api/upload-proposal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalId: proposalId, // key used in S3 filename
+          metadata: proposalMetadata,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to upload proposal (HTTP ${res.status})`);
+      }
+
+      alert('Proposal submitted successfully!');
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error submitting proposal:', error);
+      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSubmittingProposal(false);
+    }
+  };
+
+  // Loading states
+  if (isLoading) {
+    return (
+      <div className="text-center text-gray-500 dark:text-gray-400">
+        Loading bounty...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="text-center text-red-500 dark:text-red-400">
+        Error: {error.message}
+      </div>
+    );
+  }
+  if (!bounty) {
+    return (
+      <div className="text-center text-gray-500 dark:text-gray-400">
+        Bounty not found.
+      </div>
+    );
+  }
+
+  // Rendering the page
   return (
     <>
       <NextSeo
@@ -72,18 +214,23 @@ const BountyPage = () => {
         description={`Details of bounty: ${bounty.title}`}
       />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Back Arrow */}
         <div className="mb-6">
           <BackArrow />
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{bounty.title}</h1>
-        <p className="mt-4 text-gray-700 dark:text-gray-300">{bounty.description}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {bounty.title}
+        </h1>
+        <p className="mt-4 text-gray-700 dark:text-gray-300">
+          {bounty.description}
+        </p>
         <div className="mt-8 flex justify-between items-center">
           <span className="text-lg font-medium text-green-600 dark:text-green-400">
             Reward: {bounty.reward}
           </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">Deadline: {bounty.deadline}</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Deadline: {bounty.deadline}
+          </span>
         </div>
 
         {/* Submit Proposal Button */}
@@ -95,6 +242,13 @@ const BountyPage = () => {
             Submit Proposal
           </button>
         </div>
+
+        {/* Show transaction status (optional) */}
+        {txStatus && (
+          <div className="mt-4 text-center text-sm text-gray-600">
+            Transaction Status: {txStatus}
+          </div>
+        )}
       </div>
 
       {/* Proposal Submission Modal */}
@@ -134,9 +288,10 @@ const BountyPage = () => {
               </button>
               <button
                 onClick={handleSubmitProposal}
+                disabled={isSubmittingProposal}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Submit
+                {isSubmittingProposal ? 'Submitting...' : 'Submit'}
               </button>
             </div>
           </div>
@@ -146,6 +301,7 @@ const BountyPage = () => {
   );
 };
 
+// If you have a custom layout
 BountyPage.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };

@@ -1,5 +1,4 @@
 import cn from 'classnames';
-import Logo from '@/components/ui/logo';
 import { MenuItem } from '@/components/ui/collapsible-menu';
 import Scrollbar from '@/components/ui/scrollbar';
 import Button from '@/components/ui/button';
@@ -47,7 +46,7 @@ export default function Sidebar({ className }: SidebarProps) {
       )}
     >
       <div className="relative flex flex-col items-center justify-between px-6 py-4 2xl:px-8">
-        <Logo />
+        
         <div className="md:hidden">
           <Button
             title="Close"

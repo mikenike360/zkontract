@@ -1,10 +1,10 @@
 {
-    "program": ".aleo",
-    "version": "0.0.2",
-    "description": "",
-    "license": "MIT",
-    "development": {
-      "private_key": "",
-      "address": ""
-    }
+  "program": "zkontractv4.aleo",
+  "version": "0.0.2",
+  "description": "",
+  "license": "MIT",
+  "development": {
+    "private_key": "APrivateKey",
+    "address": "aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec"
   }
+}

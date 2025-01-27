@@ -1,4 +1,4 @@
-zkontractv1 testing
+zkontractv4 testing
 
 The current aleo program compiles but needs additional functionality added.
 

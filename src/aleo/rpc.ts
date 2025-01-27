@@ -1,25 +1,252 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
-import { NFTProgramId } from './nft-program';
-import { bigIntToString, getPublicKeyFromFuture, joinBigIntsToString, parseStringToBigIntArray } from '@/lib/util';
-import assert from 'assert';
 
 export const TESTNETBETA_API_URL = process.env.RPC_URL!;
+export const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+export const CREDITS_PROGRAM_ID = 'credits.aleo';
 const ALEO_URL = 'https://testnetbeta.aleorpc.com/';
 
-export async function getHeight(apiUrl: string): Promise<number> {
-  const client = getClient(apiUrl);
-  const height = await client.request('getHeight', {});
-  return height;
-}
+// Create the JSON-RPC client
+export const client = getClient(TESTNETBETA_API_URL);
 
-export async function getProgram(programId: string, apiUrl: string): Promise<string> {
-  const client = getClient(apiUrl);
-  const program = await client.request('program', {
-    id: programId
+/**
+ * Utility to fetch program transactions
+ */
+export async function getProgramTransactions(
+  functionName: string,
+  page = 0,
+  maxTransactions = 100
+) {
+  return client.request('aleoTransactionsForProgram', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName,
+    page,
+    maxTransactions,
   });
-  return program;
 }
 
+/**
+ * Transfer credits publicly between two accounts.
+ */
+export async function transferPublic(
+  recipient: string,
+  amount: string
+): Promise<string> {
+  const inputs = [
+    `${recipient}.public`, // Recipient's public address
+    `${amount}u64`,    // Amount to transfer
+  ];
+
+  const result = await client.request('executeTransition', {
+    programId: CREDITS_PROGRAM_ID,
+    functionName: 'transfer_public',
+    inputs,
+  });
+
+  if (!result.transactionId) {
+    throw new Error('Transaction failed: No transactionId returned.');
+  }
+  return result.transactionId;
+}
+
+/**
+ * 1. Post Bounty
+ */
+export async function postBounty(
+  caller: string,
+  bountyId: number,
+  reward: number
+): Promise<string> {
+  const inputs = [
+    `${caller}.private`,
+    `${bountyId}.private`,
+    `${caller}.private`,
+    `${reward}.private`,
+  ];
+  const result = await client.request('executeTransition', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: 'post_bounty',
+    inputs,
+  });
+  if (!result.transactionId) {
+    throw new Error('Transaction failed: No transactionId returned.');
+  }
+  return result.transactionId;
+}
+
+/**
+ * 2. View Bounty by ID
+ */
+export async function viewBountyById(
+  bountyId: number
+): Promise<{ payment: number; status: number }> {
+  const inputs = [`${bountyId}.private`];
+  const result = await client.request('executeTransition', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: 'view_bounty_by_id',
+    inputs,
+  });
+
+  // Fetch finalized data from the mappings
+  const payment = await fetchMappingValue('bounty_output_payment', bountyId);
+  const status = await fetchMappingValue('bounty_output_status', bountyId);
+
+  return { payment, status };
+}
+
+/**
+ * 3. Submit Proposal
+ */
+export async function submitProposal(
+  caller: string,
+  bountyId: number,
+  proposalId: number,
+  proposer: string
+): Promise<string> {
+  const inputs = [
+    `${caller}.private`,
+    `${bountyId}.private`,
+    `${proposalId}.private`,
+    `${proposer}.private`,
+  ];
+  const result = await client.request('executeTransition', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: 'submit_proposal',
+    inputs,
+  });
+  return result.transactionId;
+}
+
+/**
+ * 4. Accept Proposal
+ */
+export async function acceptProposal(
+  caller: string,
+  bountyId: number,
+  proposalId: number,
+  creator: string
+): Promise<string> {
+  const inputs = [
+    `${caller}.private`,
+    `${bountyId}.private`,
+    `${proposalId}.private`,
+    `${creator}.private`,
+  ];
+  const result = await client.request('executeTransition', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: 'accept_proposal',
+    inputs,
+  });
+  return result.transactionId;
+}
+
+/**
+ * 5. Delete Bounty
+ */
+export async function deleteBounty(
+  caller: string,
+  bountyId: number
+): Promise<string> {
+  const inputs = [`${caller}.private`, `${bountyId}.private`];
+  const result = await client.request('executeTransition', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: 'delete_bounty',
+    inputs,
+  });
+  return result.transactionId;
+}
+
+/**
+ * 6. Wait for Transaction Finalization
+ */
+export async function waitForTransactionToFinalize(
+  transactionId: string
+): Promise<boolean> {
+  const maxRetries = 30;
+  const delay = 1000; // 1 second
+  let retries = 0;
+
+  while (retries < maxRetries) {
+    try {
+      const status = await client.request('getTransactionStatus', { id: transactionId });
+      if (status === 'finalized') {
+        return true;
+      }
+    } catch (error) {
+      console.error(`Failed to get transaction status: ${error}`);
+    }
+    retries++;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
+  return false; // Return false if transaction is not finalized
+}
+
+
+/**
+ * 7. Transfer Payment
+ */
+export async function transfer(
+  caller: string,
+  receiver: string,
+  amount: number
+): Promise<string> {
+  const inputs = [`${caller}.private`, `${receiver}.private`, `${amount}.private`];
+  const result = await client.request('executeTransition', {
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: 'transfer',
+    inputs,
+  });
+  if (!result.transactionId) {
+    throw new Error('Transaction failed: No transactionId returned.');
+  }
+  return result.transactionId;
+}
+
+
+/**
+ * Helper to Fetch Mapping Values
+ */
+export async function fetchMappingValue(
+  mappingName: string,
+  key: number
+): Promise<any> {
+  try {
+    const result = await client.request('getMappingValue', {
+      programId: BOUNTY_PROGRAM_ID,
+      mappingName,
+      key: `${key}.public`,
+    });
+    return parseInt(result.value, 10);
+  } catch (error) {
+    console.error(`Failed to fetch mapping ${mappingName} for key ${key}: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Utility to Create JSON-RPC Client
+ */
+export function getClient(apiUrl: string): JSONRPCClient {
+  const client: JSONRPCClient = new JSONRPCClient((jsonRPCRequest: any) =>
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(jsonRPCRequest),
+    }).then((response) => {
+      if (response.status === 200) {
+        return response.json().then((jsonRPCResponse) =>
+          client.receive(jsonRPCResponse)
+        );
+      }
+      throw new Error(response.statusText);
+    })
+  );
+  return client;
+}
+
+/**
+ * Get Verifying Key for a Function
+ */
 async function getDeploymentTransaction(programId: string): Promise<any> {
   const response = await fetch(`${ALEO_URL}find/transactionID/deployment/${programId}`);
   const deployTxId = await response.json();
@@ -28,7 +255,10 @@ async function getDeploymentTransaction(programId: string): Promise<any> {
   return tx;
 }
 
-export async function getVerifyingKey(programId: string, functionName: string): Promise<string> {
+export async function getVerifyingKey(
+  programId: string,
+  functionName: string
+): Promise<string> {
   const deploymentTx = await getDeploymentTransaction(programId);
 
   const allVerifyingKeys = deploymentTx.deployment.verifying_keys;
@@ -36,192 +266,10 @@ export async function getVerifyingKey(programId: string, functionName: string): 
   return verifyingKey;
 }
 
-export async function getClaimValue(claim: string): Promise<string> {
-  const response = await fetch(`${ALEO_URL}program/${NFTProgramId}/mapping/claims_to_nfts/${claim}`);
-  return response.text();
-}
-
-export async function getTransactionsForProgram(programId: string, functionName: string, apiUrl: string): Promise<any> {
+export async function getProgram(programId: string, apiUrl: string): Promise<string> {
   const client = getClient(apiUrl);
-  const transaction = await client.request('transactionsForProgram', {
-      programId,
-      functionName,
-      "page": 0,
-      "maxTransactions": 1000
+  const program = await client.request('program', {
+    id: programId
   });
-  return transaction;
-}
-
-export async function getAleoTransactionsForProgram(programId: string, functionName: string, apiUrl: string, page = 0, maxTransactions = 1000): Promise<any> {
-  const client = getClient(apiUrl);
-  const result = await client.request('aleoTransactionsForProgram', {
-      programId,
-      functionName,
-      page,
-      maxTransactions
-  });
-  
-  return result;
-}
-
-
-export const getAleoTransaction = async (id: string): Promise<any> => {
-  const client = getClient(TESTNETBETA_API_URL);
-  return await client.request('aleoTransaction', { id });
-};
-
-// Handle the case where a whitelist operation is done twice for the same address
-export async function getWhitelist(apiUrl: string): Promise<any> {
-  const addMinterTransactionMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'add_minter', apiUrl);
-  const whitelist = addMinterTransactionMetadata.map((txM: any) => {
-    return {
-      address: txM.transaction.execution.transitions[0].inputs[0].value,
-      amount: parseInt(txM.transaction.execution.transitions[0].inputs[1].value.slice(0, -2))
-    }
-  }).reverse();
-
-  // Filter out duplicates
-  const uniqueMap = new Map<string, any>();
-  for (const item of whitelist) {
-    if (!uniqueMap.has(item.address)) {
-      uniqueMap.set(item.address, item);
-    }
-  }
-  const uniqueWhitelist = Array.from(uniqueMap.values());
-
-  return uniqueWhitelist;
-}
-
-export async function getMintedNFTs(apiUrl: string): Promise<any> {
-  const mintTransactionsMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'mint', apiUrl);
-  const mintedNFTs = mintTransactionsMetadata.map((txM: any) => {
-    const urlBigInts = parseStringToBigIntArray(txM.transaction.execution.transitions[0].inputs[0].value);
-    const relativeUrl = joinBigIntsToString(urlBigInts);
-    return {
-      url: relativeUrl,
-      edition: parseInt(txM.transaction.execution.transitions[0].inputs[1].value.slice(0, -6)),
-      inputs: txM.transaction.execution.transitions[0].inputs
-    }
-  });
-  return mintedNFTs;
-}
-
-export async function getInitializedCollection(apiUrl: string): Promise<any> {
-  const initializedTransactionMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'initialize_collection', apiUrl);
-  assert(initializedTransactionMetadata.length === 1, 'There should only be one initialize_collection transaction');
-  const transactionMetadata = initializedTransactionMetadata[0];
-
-  const total = parseInt(transactionMetadata.transaction.execution.transitions[0].inputs[1].value.slice(0, -2));
-  const symbol = bigIntToString(BigInt(transactionMetadata.transaction.execution.transitions[0].inputs[1].value.slice(0, -4)));
-  const urlBigInts = parseStringToBigIntArray(transactionMetadata.transaction.execution.transitions[0].inputs[2].value);
-  const baseUri = joinBigIntsToString(urlBigInts);
-  return {
-    total,
-    symbol,
-    baseUri
-  }
-}
-
-export async function getBaseURI(apiUrl: string): Promise<any> {
-  const { baseUri } = await getInitializedCollection(apiUrl);
-  if (!baseUri) {
-    return;
-  }
-  
-  const updateTxsMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'update_base_uri', apiUrl);
-  const transactionIds = updateTxsMetadata.map((txM: any) => txM.transaction.id);
-  if (transactionIds.length === 0) {
-    return baseUri;
-  }
-
-  const transaction = await getAleoTransaction(transactionIds[transactionIds.length - 1]);
-  const urlBigInts = parseStringToBigIntArray(transaction.transaction.execution.transitions[0].inputs[0].value);
-  return joinBigIntsToString(urlBigInts);
-}
-
-export async function getSettingsStatus(apiUrl: string): Promise<number> {
-  const transactions = await getTransactionsForProgram(NFTProgramId, 'update_toggle_settings', apiUrl);
-  const transactionIds = transactions.map((transactionId: any) => transactionId.transaction_id);
-  if (transactionIds.length === 0) {
-    return 5;
-  }
-
-  const transaction = await getAleoTransaction(transactionIds[transactionIds.length - 1]);
-  const status: string = transaction.transaction.execution.transitions[0].inputs[0].value;
-  return parseInt(status.slice(0, status.indexOf('u32')));
-};
-
-export async function getMintBlock(apiUrl: string): Promise<{ block: number }> {
-  const transactionMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'set_mint_block', apiUrl);
-  if (transactionMetadata.length === 0) {
-    return { block: 0 };
-  }
-
-  const transaction = transactionMetadata[transactionMetadata.length - 1].transaction;
-  const block = parseInt(transaction.execution.transitions[0].inputs[0].value.slice(0, -4));
-  return { block };
-}
-
-export async function getClaims(apiUrl: string): Promise<any[]> {
-  const claimTxMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'open_mint', apiUrl);
-  return claimTxMetadata.map((txM: any) => {txM.transaction});
-}
-
-export async function getNFTs(apiUrl: string, fetchProperties: boolean = true): Promise<{ nfts: any[], baseURI: string}> {
-  const baseUri = await getBaseURI(apiUrl);
-  const addNFTTransactionMetadata = await getAleoTransactionsForProgram(NFTProgramId, 'add_nft', apiUrl);
-
-  let nfts: any[] = addNFTTransactionMetadata.map((txM: any) => {
-    const tx = txM.transaction;
-    const urlBigInts = parseStringToBigIntArray(tx.execution.transitions[0].inputs[0].value);
-    const tokenEditionHash = getPublicKeyFromFuture(tx.execution.transitions[0].outputs[0].value);
-    const relativeUrl = joinBigIntsToString(urlBigInts);
-    return {
-      url: baseUri + relativeUrl,
-      edition: parseInt(tx.execution.transitions[0].inputs[1].value.slice(0, -6)),
-      inputs: tx.execution.transitions[0].inputs,
-      tokenEditionHash
-    }
-  });
-
-  nfts = await Promise.all(nfts.map(async (nft: any) => {
-    if (!fetchProperties) {
-      return nft;
-    }
-    const properties = await getJSON(`https://${nft.url}`);
-    return {
-      ...nft,
-      properties
-    }
-  }));
-  return {
-    baseURI: baseUri,
-    nfts
-  };
-}
-
-export const getClient = (apiUrl: string) => {
-  const client = new JSONRPCClient((jsonRPCRequest: any) =>
-    fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({ ...jsonRPCRequest })
-    }).then((response: any) => {
-      if (response.status === 200) {
-        // Use client.receive when you received a JSON-RPC response.
-        return response.json().then((jsonRPCResponse: any) => client.receive(jsonRPCResponse));
-      } else if (jsonRPCRequest.id !== undefined) {
-        return Promise.reject(new Error(response.statusText));
-      }
-    })
-  );
-  return client;
-};
-
-export async function getJSON(url: string): Promise<any> {
-  const response = await fetch(url);
-  const data = await response.json();
-  return data;
+  return program;
 }

@@ -1,198 +1,189 @@
 import { NextSeo } from 'next-seo';
 import Layout from '@/layouts/_layout';
 import BackArrow from '@/components/ui/BackArrow';
+import useSWR from 'swr';
+import ProposalItem from '@/components/ui/ProposalItem';
+import { ProposalData } from '@/components/ui/ProposalItem';
+import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
+import { useEffect, useState } from 'react';
+import { handleAcceptSolution, handleDenySolution } from '@/utils/proposalActions';
 
-const submittedProposals = [
-  {
-    id: 'p1',
-    bountyTitle: 'Design a Landing Page',
-    proposalText: 'A fully responsive landing page created using React.',
-    submittedAt: 'Jan 10, 2025',
-    status: 'pending', // Status can be 'pending', 'denied', or 'accepted'
-  },
-  {
-    id: 'p2',
-    bountyTitle: 'Build a React Component',
-    proposalText: 'A reusable React component with hooks.',
-    submittedAt: 'Jan 12, 2025',
-    status: 'accepted',
-  },
-];
 
-const postedBounties = [
-  {
-    id: 'b1',
-    title: 'Create a Logo Design',
-    reward: '5 ALEO',
-    deadline: 'Feb 1, 2025',
-    proposals: [
-      {
-        id: 'p3',
-        proposer: 'Alice',
-        completedWork: 'A logo design concept based on modern aesthetics.',
-        submittedAt: 'Jan 15, 2025',
-        status: 'pending',
-      },
-      {
-        id: 'p4',
-        proposer: 'Bob',
-        completedWork: 'A clean and minimalistic logo design.',
-        submittedAt: 'Jan 16, 2025',
-        status: 'denied',
-      },
-    ],
-  },
-  {
-    id: 'b2',
-    title: 'Develop a Smart Contract',
-    reward: '15 ALEO',
-    deadline: 'Feb 15, 2025',
-    proposals: [
-      {
-        id: 'p5',
-        proposer: 'Charlie',
-        completedWork: 'A secure and efficient smart contract for your needs.',
-        submittedAt: 'Jan 20, 2025',
-        status: 'accepted',
-      },
-    ],
-  },
-];
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return (
-        <span className="px-2 py-1 text-xs text-yellow-800 bg-yellow-200 rounded-md">
-          Pending
-        </span>
-      );
-    case 'accepted':
-      return (
-        <span className="px-2 py-1 text-xs text-green-800 bg-green-200 rounded-md">
-          Accepted & Paid
-        </span>
-      );
-    case 'denied':
-      return (
-        <span className="px-2 py-1 text-xs text-red-800 bg-red-200 rounded-md">
-          Denied
-        </span>
-      );
-    default:
-      return null;
-  }
+// Types for your bounty data
+type BountyData = {
+  id: number; // e.g. 12345
+  title: string;
+  reward: string;
+  deadline: string;
+  creatorAddress: string;
+  proposals?: ProposalData[];
 };
 
-const UserDashboard = () => {
-  const handleAcceptSolution = (proposalId: string) => {
-    console.log(`Solution accepted for proposal ${proposalId}`);
-    alert('Solution accepted and payment sent!');
-    // Add logic to integrate with your smart contract
+// The combined dashboard data returned from /api/my-dashboard
+type DashboardData = {
+  myBounties: BountyData[];
+  myProposals: ProposalData[];
+};
+
+// For contract calls
+const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+const ACCEPT_PROPOSAL_FUNCTION = 'accept_proposal';
+
+export default function UserDashboard() {
+  const { wallet, publicKey } = useWallet();
+  const [txStatus, setTxStatus] = useState<string | null>(null);
+
+  // 1) Fetch "my-dashboard" data
+  const fetchDashboard = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Failed to load dashboard');
+    }
+    return res.json() as Promise<DashboardData>;
   };
 
-  return (
-    <>
-      <NextSeo
-        title="zKontract | My Dashboard"
-        description="View your submitted proposals and posted bounties."
-      />
+  const { data, error, isLoading, mutate } = useSWR<DashboardData>(
+    publicKey ? `/api/my-dashboard?publicKey=${publicKey}` : null,
+    fetchDashboard
+  );
 
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
-          
-            <div className="mb-6">
-              <BackArrow />
-            </div>
+  // 2) Local state: individually fetched bounties
+  const [fetchedBounties, setFetchedBounties] = useState<Record<number, BountyData>>({});
+
+  // 3) For each proposal, fetch the bounty if not in fetchedBounties
+  useEffect(() => {
+    if (data?.myProposals) {
+      const uniqueBountyIds = Array.from(new Set(data.myProposals.map((p) => p.bountyId)));
+
+      uniqueBountyIds.forEach(async (bountyId) => {
+        if (!fetchedBounties[bountyId]) {
+          try {
+            const res = await fetch(`/api/get-bounty?id=${bountyId}`);
+            if (res.ok) {
+              const bounty = (await res.json()) as BountyData;
+              setFetchedBounties((prev) => ({ ...prev, [bountyId]: bounty }));
+            } else {
+              console.error(`Error fetching bounty ${bountyId}:`, await res.text());
+            }
+          } catch (err) {
+            console.error(`Error fetching bounty ${bountyId}:`, err);
+          }
+        }
+      });
+    }
+  }, [data?.myProposals, fetchedBounties]);
+
+  return (
+    <Layout>
+      <NextSeo title="zKontract | My Dashboard" description="View or manage your bounties and proposals." />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-6">
+          <BackArrow />
         </div>
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-2xl font-bold text-white text-center mb-8">
           My Dashboard
         </h1>
 
-        {/* Submitted Proposals Section */}
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold text-white mb-4">Submitted Proposals</h2>
-          {submittedProposals.length > 0 ? (
-            <ul className="space-y-4">
-              {submittedProposals.map((proposal) => (
-                <li
-                  key={proposal.id}
-                  className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow"
-                >
-                  <h3 className="text-lg font-medium text-black">{proposal.bountyTitle}</h3>
-                  <p className="mt-2 text-sm text-black">{proposal.proposalText}</p>
-                  <p className="mt-2 text-xs text-black">Submitted on: {proposal.submittedAt}</p>
-                  <div className="mt-2">{getStatusBadge(proposal.status)}</div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-black">You haven’t submitted any proposals yet.</p>
-          )}
-        </div>
+        {isLoading && <p className="text-center text-gray-400">Loading...</p>}
+        {error && (
+          <p className="text-center text-red-400">Error: {error.message}</p>
+        )}
 
-        {/* Posted Bounties Section */}
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Posted Bounties</h2>
-          {postedBounties.length > 0 ? (
-            <ul className="space-y-4">
-              {postedBounties.map((bounty) => (
-                <li
-                  key={bounty.id}
-                  className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow"
-                >
-                  <h3 className="text-lg font-medium text-black">{bounty.title}</h3>
-                  <p className="mt-2 text-sm text-black">Reward: {bounty.reward}</p>
-                  <p className="mt-2 text-xs text-black">Deadline: {bounty.deadline}</p>
+        {data && (
+          <div className="space-y-12">
+            {/* (A) My Proposals */}
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Submitted Proposals
+              </h2>
+              {data.myProposals.length > 0 ? (
+                <ul className="space-y-4">
+                  {data.myProposals.map((prop) => {
+                    const matchingBounty = fetchedBounties[prop.bountyId];
 
-                  {/* Submitted Proposals for the Bounty */}
-                  <div className="mt-4">
-                    <h4 className="text-sm font-semibold text-black mb-2">Submitted Proposals:</h4>
-                    {bounty.proposals.length > 0 ? (
-                      <ul className="space-y-3">
-                        {bounty.proposals.map((proposal) => (
-                          <li
-                            key={proposal.id}
-                            className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md"
-                          >
-                            <p className="text-sm text-black">
-                              <span className="font-bold">{proposal.proposer}:</span>{' '}
-                              {proposal.completedWork}
-                            </p>
-                            <p className="text-xs text-black">
-                              Submitted on: {proposal.submittedAt}
-                            </p>
-                            <div className="mt-2">{getStatusBadge(proposal.status)}</div>
-                            <button
-                              onClick={() => handleAcceptSolution(proposal.id)}
-                              className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-md shadow hover:bg-green-700"
-                            >
-                              Accept Solution & Send Payment
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-black">
-                        No proposals have been submitted for this bounty yet.
+                    return (
+                      <ProposalItem
+                        key={`${prop.bountyId}-${prop.proposalId}`}
+                        proposal={prop}
+                        bounty={matchingBounty}
+                        showActions={false}
+                      />
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-black dark:text-white">
+                  You haven’t submitted any proposals yet.
+                </p>
+              )}
+            </div>
+
+            {/* (B) My Bounties Section */}
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Posted Bounties
+              </h2>
+              {data.myBounties.length > 0 ? (
+                <ul className="space-y-4">
+                  {data.myBounties.map((bounty) => (
+                    <li
+                      key={bounty.id}
+                      className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow"
+                    >
+                      <h3 className="text-lg font-medium text-black dark:text-black">
+                        {bounty.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-black dark:text-black">
+                        Reward: {bounty.reward}
                       </p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-black">You haven’t posted any bounties yet.</p>
-          )}
-        </div>
+                      <p className="text-xs text-black dark:text-gray-400">
+                        Deadline: {bounty.deadline}
+                      </p>
+
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-black dark:text-black mb-2">
+                          Submitted Proposals:
+                        </h4>
+                        {bounty.proposals && bounty.proposals.length > 0 ? (
+                          <ul className="space-y-3">
+                            {bounty.proposals.map((p) => (
+                              <ProposalItem
+                                key={p.proposalId}
+                                proposal={p}
+                                bounty={bounty}
+                                onAccept={(bounty, proposal) => handleAcceptSolution(wallet, publicKey, bounty, proposal, setTxStatus, mutate)}
+                                onDeny={(bounty, proposal) => handleDenySolution(publicKey, bounty, proposal, mutate)}
+                                showActions={true}
+                              />
+
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-black">
+                            No proposals for this bounty yet.
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-black dark:text-white">
+                  You haven’t posted any bounties yet.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {txStatus && (
+          <div className="text-center text-sm text-gray-300 mt-4">
+            Transaction Status: {txStatus}
+          </div>
+        )}
       </div>
-    </>
+    </Layout>
   );
-};
-
-UserDashboard.getLayout = function getLayout(page: React.ReactNode) {
-  return <Layout>{page}</Layout>;
-};
-
-export default UserDashboard;
+}

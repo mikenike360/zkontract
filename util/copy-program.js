@@ -15,7 +15,7 @@ fs.readFile(mainAleoPath, 'utf8')
     .then(function (mainAleoContents) {
     // wrap the contents in backticks and export as NFTProgram
     var program = mainAleoContents
-        .replace(/zkontractv1\.aleo/g, PROGRAM_NAME)
+        .replace(/4\.aleo/g, PROGRAM_NAME)
         .replace(/aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec/g, ADDRESS);
     var outputContents = "export const NFTProgramId = '".concat(PROGRAM_NAME, "';\n\nexport const NFTProgram = `").concat(program, "`;\n");
     // write the updated data to a new file

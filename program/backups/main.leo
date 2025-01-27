@@ -4,19 +4,17 @@ program zkontractv4.aleo {
 
     const BOUNTY_STATUS_OPEN: u8 = 0u8;
     const BOUNTY_STATUS_COMPLETED: u8 = 1u8;
-
     const PROPOSAL_STATUS_PENDING: u8 = 0u8;
     const PROPOSAL_STATUS_ACCEPTED: u8 = 1u8;
 
     mapping bounty_creator: u64 => address;
     mapping bounty_payment: u64 => u64;
     mapping bounty_status: u64 => u8;
-
     mapping proposal_bounty_id: u64 => u64;
     mapping proposal_proposer: u64 => address;
     mapping proposal_status: u64 => u8;
     mapping all_bounties: u64 => bool;
-    mapping bounty_output_payment: u64 => u64;
+    mapping bounty_output_payment: u64 => u64; 
     mapping bounty_output_status: u64 => u8;
     mapping account: address => u64;
 

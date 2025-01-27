@@ -1,0 +1,71 @@
++-----------------------------+
+|       Frontend UI           |
+|  - List active bounties     |
+|  - View details             |
+|  - Submit proposals         |
++-----------------------------+
+            |
+            v
++-----------------------------+
+|       Off-Chain Storage     |
+|  - S3 bucket for:           |
+|    - Bounty Descriptions    |
+|    - Proposal Details       |
+|  - Links referenced by IDs  |
++-----------------------------+
+            |
+            v
++-----------------------------+
+|      Aleo Smart Contract    |
+|  - Metadata for bounties    |
+|  - Metadata for proposals   |
+|  - Status and access checks |
++-----------------------------+
+
+
+Revised Plan: Focus on Integration
+
+1. Backend Priorities
+Finalize the Aleo smart contract:
+Ensure transitions are ready for posting bounties, listing active bounties, viewing details, and submitting proposals.
+Test contract functionality thoroughly using aleo run or similar tools.
+
+Integrate off-chain storage:
+Set up S3 (or equivalent) for storing bounty descriptions and proposal details.
+Add logic in the frontend to generate and manage bounty_id and proposal_id references to these off-chain details.
+
+2. Frontend Integration
+Modify your existing frontend to:
+
+Fetch active bounty summaries:
+Use a transition like list_active_bounties to retrieve public metadata (title, payment, status).
+
+Fetch bounty details:
+Call the view_bounty_details transition with a selected bounty_id to fetch metadata.
+Use the bounty_id to fetch long-form descriptions from S3.
+
+Submit proposals:
+Use the submit_proposal transition to store proposal metadata on-chain.
+Upload the actual proposal content to S3, referenced by proposal_id.
+
+Key Tasks
+
+A. Backend Integration
+Smart Contract Testing:
+
+Deploy your contract locally or on a testnet.
+Use aleo run to simulate all transitions:
+Posting bounties.
+Fetching active bounties.
+Viewing details.
+Submitting proposals.
+
+API Layer (Optional):
+
+If needed, create a backend service to act as an intermediary between the frontend and the Aleo blockchain.
+Example stack: Node.js + Express + Axios for handling blockchain and S3 requests.
+
+
+
+
+http://api.explorer.aleo.org/v1/testnet

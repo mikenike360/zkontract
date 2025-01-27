@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
 
 const s3 = new AWS.S3({
@@ -6,7 +7,10 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
 });
 
-export default async function handler(req, res) {
+export default async function handler(
+  _req: NextApiRequest, 
+  res: NextApiResponse
+) {
   try {
     const bucketName = 'zkontract';
     const bountiesPrefix = 'metadata/bounties/';
@@ -38,7 +42,10 @@ export default async function handler(req, res) {
           if (!proposalObj.Key || !proposalObj.Key.endsWith('.json')) return null;
 
           const proposalData = JSON.parse(
-            (await s3.getObject({ Bucket: bucketName, Key: proposalObj.Key }).promise()).Body.toString()
+            (await s3.getObject({
+              Bucket: bucketName,
+              Key: proposalObj.Key,
+            }).promise()).Body.toString()
           );
 
           return proposalData;
@@ -46,7 +53,9 @@ export default async function handler(req, res) {
       );
 
       // Check if any proposal has status "accepted"
-      const hasAcceptedProposal = proposals.some((proposal) => proposal?.status === 'accepted');
+      const hasAcceptedProposal = proposals.some(
+        (proposal) => proposal?.status === 'accepted'
+      );
 
       // Only include bounties without accepted proposals
       if (!hasAcceptedProposal) {

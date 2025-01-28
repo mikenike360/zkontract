@@ -301,9 +301,5 @@ const BountyPage = () => {
   );
 };
 
-// If you have a custom layout
-BountyPage.getLayout = function getLayout(page) {
-  return <Layout>{page}</Layout>;
-};
 
 export default BountyPage;

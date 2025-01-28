@@ -154,7 +154,7 @@ export default function UserDashboard() {
                                 proposal={p}
                                 bounty={bounty}
                                 onAccept={(bounty, proposal) => handleAcceptSolution(wallet, publicKey, bounty, proposal, setTxStatus, mutate)}
-                                onDeny={(bounty, proposal) => handleDenySolution(publicKey, bounty, proposal, mutate)}
+                                onDeny={(bounty, proposal) => handleDenySolution(bounty, proposal)}
                                 showActions={true}
                               />
 

@@ -10,7 +10,7 @@ const TRANSFER_PUBLIC_FUNCTION = 'transfer_public'
 
 export async function handleAcceptSolution(
   wallet: any,
-  publicKey: string,
+  publicKey: string | null,
   bounty: BountyData,
   proposal: ProposalData,
   setTxStatus: (status: string | null) => void,

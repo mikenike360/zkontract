@@ -18,12 +18,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!proposalId || !metadata) {
       return res.status(400).json({ error: 'Missing proposalId or metadata' });
     }
-    const bountyId = metadata.bountyId;
+
+    // Parse metadata if it is a string
+    let parsedMetadata = metadata;
+    if (typeof metadata === 'string') {
+      try {
+        parsedMetadata = JSON.parse(metadata);
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid metadata JSON' });
+      }
+    }
+
+    const bountyId = parsedMetadata.bountyId;
+    if (!bountyId) {
+      return res.status(400).json({ error: 'Missing bountyId in metadata' });
+    }
 
     const params = {
       Bucket: 'zkontract', // your S3 bucket
       Key: `metadata/proposals/${bountyId}/${proposalId}.json`,
-      Body: JSON.stringify(metadata),
+      Body: JSON.stringify(parsedMetadata),
       ContentType: 'application/json',
     };
 

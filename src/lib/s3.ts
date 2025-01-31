@@ -42,15 +42,25 @@ export async function uploadFileToS3(
   fileBuffer: Buffer,
   contentType: string
 ): Promise<void> {
+
+  const validatedContentType = contentType || 'application/octet-stream';
+
   const params = {
     Bucket: bucketName,
-    Key: key, // The name of the file in the bucket
-    Body: fileBuffer, // The binary data to upload
-    ContentType: contentType, // e.g., 'image/png', 'application/pdf'
+    Key: key,
+    Body: fileBuffer,
+    ContentType: validatedContentType,
   };
 
-  await s3.upload(params).promise();
-  console.log(`Uploaded file ${key} to ${bucketName}`);
+  console.log('Uploading file to S3 with params:', params);
+
+  try {
+    const uploadResult = await s3.upload(params).promise();
+    console.log(`Upload successful:`, uploadResult);
+  } catch (error) {
+    console.error('S3 Upload Error:', error);
+    throw error; // Rethrow to handle it at a higher level
+  }
 }
 
 /**

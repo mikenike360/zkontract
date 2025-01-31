@@ -32,15 +32,9 @@ export async function fetchMappingValueRaw(
   key: string
 ): Promise<string> {
   try {
-    // If your mapping is keyed by u64, you'll want to append `u64` to the numeric value.
-    // Adjust as needed if your mapping expects a different type (e.g. address).
-    const keyString = `${key}u64`;
-    console.log(`Fetching mapping:`, {
-      mappingName,
-      key: keyString,
-    });
 
-    // IMPORTANT: use the exact field names expected by Aleo RPC:
+    const keyString = `${key}u64`;
+
     const result = await client.request("getMappingValue", {
       program_id: BOUNTY_PROGRAM_ID,
       mapping_name: mappingName,
@@ -53,12 +47,6 @@ export async function fetchMappingValueRaw(
       );
     }
 
-    console.log(`Mapping result for ${mappingName}:`, result);
-
-    // Depending on how your RPC library structures the response,
-    // you may need to adjust how you extract `result` vs. `result.value`.
-    // If `result` is already the string, just `return result;`.
-    // If it's an object with a `value` field, then `return result.value`.
     return result;
   } catch (error) {
     console.error(`Failed to fetch mapping "${mappingName}" with key "${key}":`, error);
@@ -69,25 +57,22 @@ export async function fetchMappingValueRaw(
 
 export async function fetchBountyStatusAndReward(bountyId: string) {
   try {
-    // If your bounty is keyed by a `u64`, append "u64" to the numeric bounty ID
+ 
     const keyU64 = `${bountyId}u64`;
 
-    // Fetch the bounty's status from the `bounty_status` mapping
+
     const statusResult = await client.request('getMappingValue', {
       program_id: 'zkontractv5.aleo',
       mapping_name: 'bounty_status',
       key: keyU64,
     });
 
-    // Fetch the bounty's reward from the `bounty_reward` mapping
     const rewardResult = await client.request('getMappingValue', {
       program_id: 'zkontractv5.aleo',
       mapping_name: 'bounty_reward',
       key: keyU64,
     });
 
-    // Each mapping call may return either a simple string (e.g. "12345u64")
-    // or an object with a `.value`. Adjust as needed based on your RPC library response shape.
     return {
       status: statusResult?.value ?? statusResult ?? null,
       reward: rewardResult?.value ?? rewardResult ?? null,

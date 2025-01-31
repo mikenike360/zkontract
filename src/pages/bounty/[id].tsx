@@ -75,109 +75,137 @@ const BountyPage = () => {
     setUploadedFile(null);
   };
 
-  // 4) Submit proposal by calling `submit_proposal` on-chain, then uploading to S3
-  const handleSubmitProposal = async () => {
-    if (!wallet || !publicKey) {
-      alert('Please connect your Aleo wallet before submitting a proposal.');
-      return;
-    }
-    if (!id) {
-      alert('No bounty ID found. Invalid route?');
-      return;
-    }
+// 4) Submit proposal by calling `submit_proposal` on-chain, then uploading to S3
+const handleSubmitProposal = async () => {
+  if (!wallet || !publicKey) {
+    alert('Please connect your Aleo wallet before submitting a proposal.');
+    return;
+  }
+  if (!id) {
+    alert('No bounty ID found. Invalid route?');
+    return;
+  }
 
-    try {
-      setIsSubmittingProposal(true);
-      setTxStatus(null);
+  try {
+    setIsSubmittingProposal(true);
+    setTxStatus(null);
 
-      // Convert "id" from string => number
-      const bountyId = Number(id);
-      // Generate a unique proposalId; contract uses bountyId * 1_000_000 + proposalId
-      // We'll just pick a reasonably sized proposalId
-      const proposalId = Math.floor(Date.now() % 1000000); 
+    // Convert "id" from string => number
+    const bountyId = Number(id);
+    // Generate a unique proposalId; contract uses bountyId * 1_000_000 + proposalId
+    // We'll just pick a reasonably sized proposalId
+    const proposalId = Math.floor(Date.now() % 1000000);
 
-      const inputs = [
-        publicKey,             // caller
-        `${bountyId}u64`,      // bounty_id
-        `${proposalId}u64`,    // proposal_id
-        publicKey,             // proposer_address
-      ];
+    const inputs = [
+      publicKey,             // caller
+      `${bountyId}u64`,      // bounty_id
+      `${proposalId}u64`,    // proposal_id
+      publicKey,             // proposer_address
+    ];
 
-      // Create the transaction
-      const proposalTx = Transaction.createTransaction(
-        publicKey,
-        WalletAdapterNetwork.TestnetBeta,
-        BOUNTY_PROGRAM_ID,
-        SUBMIT_PROPOSAL_FUNCTION,
-        inputs,
-        1_000_000, // 1 ALEO credit in microcredits
-        false
-      );
+    // Create the transaction
+    const proposalTx = Transaction.createTransaction(
+      publicKey,
+      WalletAdapterNetwork.TestnetBeta,
+      BOUNTY_PROGRAM_ID,
+      SUBMIT_PROPOSAL_FUNCTION,
+      inputs,
+      1_000_000, // 1 ALEO credit in microcredits
+      false
+    );
 
-      // Request transaction execution
-      const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
-      console.log('Proposal transaction submitted:', txId);
+    // Request transaction execution
+    const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
+    console.log('Proposal transaction submitted:', txId);
 
-      // Poll for finalization
-      let finalized = false;
-      const maxRetries = 300;
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
-        console.log(`Status check #${attempt + 1}: ${status}`);
-        setTxStatus(status);
+    // Poll for finalization
+    let finalized = false;
+    const maxRetries = 300;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
+      console.log(`Status check #${attempt + 1}: ${status}`);
+      setTxStatus(status);
 
-        if (status === 'Finalized') {
-          finalized = true;
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (status === 'Finalized') {
+        finalized = true;
+        break;
       }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
 
-      if (!finalized) {
-        throw new Error('Transaction did not finalize in time.');
-      }
+    if (!finalized) {
+      throw new Error('Transaction did not finalize in time.');
+    }
 
-      // If transaction is finalized, upload proposal data to S3 via /api/upload-file
+    // Prepare the proposal metadata
+    const proposalMetadata = {
+      bountyId,
+      proposalId,
+      caller: publicKey,
+      proposerAddress: publicKey,
+      proposalText: proposal,
+      status: "Pending",
+      // Additional fields can be added here if needed
+    };
 
-      const proposalMetadata = {
-        bountyId,
-        proposalId,
-        caller: publicKey,
-        proposerAddress: publicKey,
-        proposalText: proposal,
-        status: "Pending",
-        // You can add more metadata fields as needed
-      };
+    let fileUrl: string | undefined;
+    let fileName: string | undefined;
 
-      // Create a FormData object to send to /api/upload-file
+    // If a file is attached, upload it via /api/upload-file
+    // Note: We are NOT sending metadata here because the file endpoint only handles files.
+    if (uploadedFile) {
       const formData = new FormData();
       formData.append('proposalId', proposalId.toString());
-      formData.append('metadata', JSON.stringify(proposalMetadata));
-      if (uploadedFile) {
-        formData.append('file', uploadedFile);
-      }
+      formData.append('file', uploadedFile, uploadedFile.name);
 
-      const res = await fetch('/api/upload-file', {
+      const fileRes = await fetch('/api/upload-file', {
         method: 'POST',
         body: formData,
-        // Do not set 'Content-Type'; the browser will set it automatically with the correct boundary
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to upload proposal');
+      const fileData = await fileRes.json();
+      if (!fileRes.ok) {
+        throw new Error(fileData.error || 'Failed to upload file');
       }
-
-      alert('Proposal submitted successfully!');
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error submitting proposal:', error);
-      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsSubmittingProposal(false);
+      fileUrl = fileData.url;
+      fileName = uploadedFile.name;
     }
-  };
+
+    // Merge the file URL and file name into the metadata if a file was uploaded
+    const completeMetadata = {
+      ...proposalMetadata,
+      ...(fileUrl ? { fileUrl, fileName } : {}),
+    };
+
+    // Upload the proposal metadata via /api/upload-proposal.
+    // Both proposalId and metadata are sent as strings.
+    const metaRes = await fetch('/api/upload-proposal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        proposalId: proposalId.toString(),
+        metadata: JSON.stringify(completeMetadata),
+      }),
+    });
+    const metaData = await metaRes.json();
+    if (!metaRes.ok) {
+      throw new Error(metaData.error || 'Failed to upload proposal metadata');
+    }
+
+    alert('Proposal submitted successfully!');
+    handleCloseModal();
+  } catch (error) {
+    console.error('Error submitting proposal:', error);
+    alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    setIsSubmittingProposal(false);
+  }
+};
+
+
+
+
 
   // Loading states
   if (isLoading) {
@@ -295,6 +323,10 @@ const BountyPage = () => {
       )}
     </>
   );
+};
+
+BountyPage.getLayout = function getLayout(page) {
+  return <Layout>{page}</Layout>;
 };
 
 

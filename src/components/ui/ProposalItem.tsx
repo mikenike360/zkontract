@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchMappingValueRaw } from '../../aleo/rpc'; // Replace with actual path
+import { fetchMappingValueRaw } from '../../aleo/rpc'; 
 
 export type ProposalData = {
   bountyId: number;
@@ -7,6 +7,7 @@ export type ProposalData = {
   proposerAddress: string;
   proposalText?: string;
   fileName?: string;
+  fileUrl?: string; // NEW: URL of the uploaded file
   status?: string;
 };
 
@@ -24,7 +25,6 @@ const PROPOSAL_STATUS_MAP: { [key: number]: string } = {
   1: 'accepted',
   2: 'denied',
 };
-
 
 type ProposalItemProps = {
   proposal: ProposalData;
@@ -96,10 +96,7 @@ export default function ProposalItem({
 
   return (
     <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
-      {/* Proposal details */}
-      <p className="text-sm text-black dark:text-black">
-        <strong>Proposer:</strong> {proposal.proposerAddress}
-      </p>
+
       <p className="text-sm text-black dark:text-black mt-1">
         {displayedText}
       </p>
@@ -119,10 +116,26 @@ export default function ProposalItem({
           Collapse
         </button>
       )}
+      
+      {/* If fileName is available, display it */}
       {proposal.fileName && (
         <p className="text-xs text-black dark:text-gray-400 mt-1">
           File: {proposal.fileName}
         </p>
+      )}
+
+      {/* NEW: If a fileUrl exists, render a link to view or download the file */}
+      {proposal.fileUrl && (
+        <div className="mt-1">
+          <a
+            href={proposal.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline hover:text-blue-800 text-xs"
+          >
+            View / Download Attachment
+          </a>
+        </div>
       )}
 
       {/* Status badge */}

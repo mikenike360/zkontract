@@ -35,7 +35,7 @@ const fetchBounty = async (url: string) => {
 };
 
 // Contract constants
-const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
 const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal';
 
 const BountyPage = () => {
@@ -95,17 +95,7 @@ const BountyPage = () => {
       // Generate a unique proposalId; contract uses bountyId * 1_000_000 + proposalId
       // We'll just pick a reasonably sized proposalId
       const proposalId = Math.floor(Date.now() % 1000000); 
-      // or just Date.now() if you're sure it won't overflow
 
-      // The contract function signature:
-      // submit_proposal(
-      //   caller: address,
-      //   bounty_id: u64,
-      //   proposal_id: u64,
-      //   proposer_address: address
-      // )
-      //
-      // "caller" must match "proposer_address", so we pass the same publicKey both times.
       const inputs = [
         publicKey,             // caller
         `${bountyId}u64`,      // bounty_id
@@ -147,7 +137,7 @@ const BountyPage = () => {
         throw new Error('Transaction did not finalize in time.');
       }
 
-      // If transaction is finalized, upload proposal data to S3
+      // If transaction is finalized, upload proposal data to S3 via /api/upload-file
 
       const proposalMetadata = {
         bountyId,
@@ -155,22 +145,28 @@ const BountyPage = () => {
         caller: publicKey,
         proposerAddress: publicKey,
         proposalText: proposal,
-        fileName: uploadedFile?.name ?? null,
         status: "Pending",
-        // optionally, you could do more advanced file uploads
+        // You can add more metadata fields as needed
       };
 
-      const res = await fetch('/api/upload-proposal', {
+      // Create a FormData object to send to /api/upload-file
+      const formData = new FormData();
+      formData.append('proposalId', proposalId.toString());
+      formData.append('metadata', JSON.stringify(proposalMetadata));
+      if (uploadedFile) {
+        formData.append('file', uploadedFile);
+      }
+
+      const res = await fetch('/api/upload-file', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          proposalId: proposalId, // key used in S3 filename
-          metadata: proposalMetadata,
-        }),
+        body: formData,
+        // Do not set 'Content-Type'; the browser will set it automatically with the correct boundary
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error(`Failed to upload proposal (HTTP ${res.status})`);
+        throw new Error(data.error || 'Failed to upload proposal');
       }
 
       alert('Proposal submitted successfully!');
@@ -275,7 +271,7 @@ const BountyPage = () => {
               />
               {uploadedFile && (
                 <p className="mt-2 text-sm text-green-600">
-                  Uploaded: {uploadedFile.name}
+                  Selected File: {uploadedFile.name}
                 </p>
               )}
             </div>

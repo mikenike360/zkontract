@@ -1,12 +1,140 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
 
 export const TESTNETBETA_API_URL = process.env.RPC_URL!;
-export const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+export const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 const ALEO_URL = 'https://testnetbeta.aleorpc.com/';
 
 // Create the JSON-RPC client
 export const client = getClient(TESTNETBETA_API_URL);
+
+
+// returns a string for address-based mappings
+export async function fetchMappingValueString(
+  mappingName: string,
+  key: number
+): Promise<string> {
+  try {
+    const result = await client.request('getMappingValue', {
+      programId: BOUNTY_PROGRAM_ID,
+      mappingName,
+      key: `${key}.public`,
+    });
+    return result.value; // The address is stored as string in 'result.value'
+  } catch (error) {
+    console.error(`Failed to fetch mapping ${mappingName} with key ${key}:`, error);
+    throw error;
+  }
+}
+
+export async function fetchMappingValueRaw(
+  mappingName: string,
+  key: string
+): Promise<string> {
+  try {
+    // If your mapping is keyed by u64, you'll want to append `u64` to the numeric value.
+    // Adjust as needed if your mapping expects a different type (e.g. address).
+    const keyString = `${key}u64`;
+    console.log(`Fetching mapping:`, {
+      mappingName,
+      key: keyString,
+    });
+
+    // IMPORTANT: use the exact field names expected by Aleo RPC:
+    const result = await client.request("getMappingValue", {
+      program_id: BOUNTY_PROGRAM_ID,
+      mapping_name: mappingName,
+      key: keyString,
+    });
+
+    if (!result) {
+      throw new Error(
+        `No result returned for mapping "${mappingName}" and key "${keyString}"`
+      );
+    }
+
+    console.log(`Mapping result for ${mappingName}:`, result);
+
+    // Depending on how your RPC library structures the response,
+    // you may need to adjust how you extract `result` vs. `result.value`.
+    // If `result` is already the string, just `return result;`.
+    // If it's an object with a `value` field, then `return result.value`.
+    return result;
+  } catch (error) {
+    console.error(`Failed to fetch mapping "${mappingName}" with key "${key}":`, error);
+    throw error;
+  }
+}
+
+
+export async function fetchBountyStatusAndReward(bountyId: string) {
+  try {
+    // If your bounty is keyed by a `u64`, append "u64" to the numeric bounty ID
+    const keyU64 = `${bountyId}u64`;
+
+    // Fetch the bounty's status from the `bounty_status` mapping
+    const statusResult = await client.request('getMappingValue', {
+      program_id: 'zkontractv5.aleo',
+      mapping_name: 'bounty_status',
+      key: keyU64,
+    });
+
+    // Fetch the bounty's reward from the `bounty_reward` mapping
+    const rewardResult = await client.request('getMappingValue', {
+      program_id: 'zkontractv5.aleo',
+      mapping_name: 'bounty_reward',
+      key: keyU64,
+    });
+
+    // Each mapping call may return either a simple string (e.g. "12345u64")
+    // or an object with a `.value`. Adjust as needed based on your RPC library response shape.
+    return {
+      status: statusResult?.value ?? statusResult ?? null,
+      reward: rewardResult?.value ?? rewardResult ?? null,
+    };
+  } catch (error) {
+    console.error('Error fetching bounty status/reward from chain:', error);
+    throw new Error('Failed to fetch chain data');
+  }
+}
+
+export async function readBountyMappings(bountyId: string) {
+  // Fetch raw strings for all mappings
+  const creator = await fetchMappingValueRaw('bounty_creator', bountyId);
+  const payment = await fetchMappingValueRaw('bounty_payment', bountyId);
+  const status = await fetchMappingValueRaw('bounty_status', bountyId);
+
+  return {
+    creator,  
+    payment,  
+    status,   
+  };
+}
+
+export async function readProposalMappings(bountyId: number, proposalId: number) {
+  // Ensure safe arithmetic using BigInt
+  const compositeProposalId = (BigInt(bountyId) * BigInt(1_000_000) + BigInt(proposalId)).toString();
+
+  console.log("Fetching data for Composite Proposal ID:", compositeProposalId);
+
+  try {
+    // Fetch all mappings related to the proposal
+    const proposalBountyId = await fetchMappingValueRaw("proposal_bounty_id", compositeProposalId);
+    const proposalProposer = await fetchMappingValueRaw("proposal_proposer", compositeProposalId);
+    const proposalStatus = await fetchMappingValueRaw("proposal_status", compositeProposalId);
+
+    return {
+      proposalBountyId,
+      proposalProposer,
+      proposalStatus,
+    };
+  } catch (error) {
+    console.error("Error fetching proposal mappings:", error);
+    throw error;
+  }
+}
+
+
 
 /**
  * Utility to fetch program transactions
@@ -123,13 +251,15 @@ export async function acceptProposal(
   caller: string,
   bountyId: number,
   proposalId: number,
-  creator: string
+  creator: string,
+  reward: number
 ): Promise<string> {
   const inputs = [
     `${caller}.private`,
     `${bountyId}.private`,
     `${proposalId}.private`,
     `${creator}.private`,
+    `${reward}.private`,
   ];
   const result = await client.request('executeTransition', {
     programId: BOUNTY_PROGRAM_ID,
@@ -208,17 +338,24 @@ export async function transfer(
  */
 export async function fetchMappingValue(
   mappingName: string,
-  key: number
-): Promise<any> {
+  key: string | number // Allow both string and number
+): Promise<number> {
   try {
+    // Convert `key` to string if it's a number
+    const keyString = typeof key === 'number' ? `${key}.public` : `${key}.public`;
+
     const result = await client.request('getMappingValue', {
       programId: BOUNTY_PROGRAM_ID,
       mappingName,
-      key: `${key}.public`,
+      key: keyString, // Always pass as a string
     });
-    return parseInt(result.value, 10);
+
+    return parseInt(result.value, 10); // Parse as integer
   } catch (error) {
-    console.error(`Failed to fetch mapping ${mappingName} for key ${key}: ${error}`);
+    console.error(
+      `Failed to fetch mapping ${mappingName} with key ${key}:`,
+      error
+    );
     throw error;
   }
 }
@@ -272,4 +409,27 @@ export async function getProgram(programId: string, apiUrl: string): Promise<str
     id: programId
   });
   return program;
+}
+
+
+//Deny a proposal
+
+export async function denyProposal(
+  caller: string,
+  bountyId: number,
+  proposalId: number
+): Promise<string> {
+  const inputs = [
+    `${caller}.private`,   
+    `${bountyId}.private`, 
+    `${proposalId}.private` 
+  ];
+    
+    const result = await client.request('executeTransition', {
+      programId: BOUNTY_PROGRAM_ID,
+      functionName: 'deny_proposal', 
+      inputs, 
+    });
+
+    return result.transactionId;
 }

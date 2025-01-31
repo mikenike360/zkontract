@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchMappingValueRaw } from '../../aleo/rpc'; // Replace with actual path
 
 export type ProposalData = {
   bountyId: number;
@@ -16,6 +17,14 @@ export type BountyData = {
   deadline: string;
   creatorAddress: string;
 };
+
+// Define a mapping from numeric status to string labels
+const PROPOSAL_STATUS_MAP: { [key: number]: string } = {
+  0: 'pending',
+  1: 'accepted',
+  2: 'denied',
+};
+
 
 type ProposalItemProps = {
   proposal: ProposalData;
@@ -46,7 +55,34 @@ export default function ProposalItem({
   showActions = false, // Default to false
 }: ProposalItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const [blockchainStatus, setBlockchainStatus] = useState<string | null>(null);
   const maxChars = 300;
+
+  useEffect(() => {
+    async function fetchStatus() {
+      try {
+        // Construct the compositeProposalId as before
+        const compositeProposalId = (BigInt(proposal.bountyId) * BigInt(1_000_000) + BigInt(proposal.proposalId)).toString();
+        
+        // Fetch the raw status from the blockchain
+        const rawStatus = await fetchMappingValueRaw('proposal_status', compositeProposalId);
+        
+        // Parse the raw status to a number
+        const numericStatus = parseInt(rawStatus, 10);
+        
+        // Map the numeric status to a string label
+        const statusLabel = PROPOSAL_STATUS_MAP[numericStatus] || 'pending';
+        
+        // Update the state with the mapped status label
+        setBlockchainStatus(statusLabel);
+      } catch (error) {
+        console.error('Failed to fetch status from blockchain:', error);
+        setBlockchainStatus('pending'); // Fallback to 'pending' on error
+      }
+    }
+    fetchStatus();
+  }, [proposal.bountyId, proposal.proposalId]);
+  
 
   const shouldTruncate = proposal.proposalText
     ? proposal.proposalText.length > maxChars
@@ -90,7 +126,7 @@ export default function ProposalItem({
       )}
 
       {/* Status badge */}
-      <div className="mt-2">{getStatusBadge(proposal.status)}</div>
+      <div className="mt-2">{getStatusBadge(blockchainStatus)}</div>
 
       {/* Accept/Deny buttons (only if handlers and bounty are provided, and if showActions is true) */}
       {showActions && onAccept && onDeny && bounty && (
@@ -98,14 +134,14 @@ export default function ProposalItem({
           <button
             onClick={() => onAccept(bounty, proposal)}
             className="px-4 py-2 bg-green-600 text-white text-sm rounded-md shadow hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={proposal.status === 'accepted' || proposal.status === 'denied'}
+            disabled={blockchainStatus === 'accepted' || blockchainStatus === 'denied'}
           >
             Accept
           </button>
           <button
             onClick={() => onDeny(bounty, proposal)}
             className="px-4 py-2 bg-red-600 text-white text-sm rounded-md shadow hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={proposal.status === 'accepted' || proposal.status === 'denied'}
+            disabled={blockchainStatus === 'accepted' || blockchainStatus === 'denied'}
           >
             Deny
           </button>

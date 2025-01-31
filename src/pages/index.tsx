@@ -42,7 +42,7 @@ const MainPage: NextPageWithLayout = () => {
         <h1 className="text-5xl font-extrabold text-center tracking-tight text-white sm:text-6xl">
           zKontract
         </h1>
-        <p className="mt-4 text-lg text-center text-gray-200 max-w-lg">
+        <p className="mt-4 text-lg text-center text-white-200 max-w-lg">
           A Zero Knowledge Bounty Board – Hire and Work Anonymously
         </p>
 
@@ -56,7 +56,7 @@ const MainPage: NextPageWithLayout = () => {
             </Button>
           ) : (
             <Button
-              className="px-6 py-3 text-lg font-semibold bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600"
+              className="px-6 py-3 text-lg font-semibold bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600"
               onClick={handleButtonClick}
             >
               Enter App

@@ -95,7 +95,7 @@ export default function ProposalItem({
     : '';
 
   return (
-    <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+    <div className="p-3 bg-white rounded-md">
 
       <p className="text-sm text-black dark:text-black mt-1">
         {displayedText}
@@ -119,7 +119,7 @@ export default function ProposalItem({
       
       {/* If fileName is available, display it */}
       {proposal.fileName && (
-        <p className="text-xs text-black dark:text-gray-400 mt-1">
+        <p className="text-xs text-black mt-1">
           File: {proposal.fileName}
         </p>
       )}

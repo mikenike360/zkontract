@@ -22,15 +22,14 @@ module.exports = {
     },
     extend: {
       colors: {
-        // Requires Tailwind 3.2+ for the <alpha-value> usage
+     
         brand: 'rgb(var(--color-brand) / <alpha-value>)',
 
-        // If you want to override or extend Tailwind's built-in `gray`:
+    
         gray: {
           ...colors.gray, // keep default Tailwind gray
           200: '#59657C', // override the 200 value
           400: '#969EAD',
-          // etc.
         },
 
         body: '#fcfcfc',

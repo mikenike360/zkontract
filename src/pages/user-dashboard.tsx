@@ -92,33 +92,36 @@ export default function UserDashboard() {
         )}
 
         {data && (
-          <div className="space-y-12">
+          <div className="space-y-12 ">
             {/* (A) My Proposals */}
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Submitted Proposals
-              </h2>
-              {data.myProposals.length > 0 ? (
-                <ul className="space-y-4">
-                  {data.myProposals.map((prop) => {
-                    const matchingBounty = fetchedBounties[prop.bountyId];
-
-                    return (
+            <div className="p-4 rounded-lg bg-blue">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Submitted Proposals
+            </h2>
+            {data.myProposals.length > 0 ? (
+              <ul className="space-y-4">
+                {data.myProposals.map((prop) => {
+                  const matchingBounty = fetchedBounties[prop.bountyId];
+                  return (
+                    <div
+                      key={`${prop.bountyId}-${prop.proposalId}`}
+                      className=" p-2 rounded"
+                    >
                       <ProposalItem
-                        key={`${prop.bountyId}-${prop.proposalId}`}
                         proposal={prop}
                         bounty={matchingBounty}
                         showActions={false}
                       />
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="text-black dark:text-white">
-                  You haven’t submitted any proposals yet.
-                </p>
-              )}
-            </div>
+                    </div>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-black dark:text-white">
+                You haven’t submitted any proposals yet.
+              </p>
+            )}
+          </div>
 
             {/* (B) My Bounties Section */}
             <div>
@@ -130,7 +133,7 @@ export default function UserDashboard() {
                   {data.myBounties.map((bounty) => (
                     <li
                       key={bounty.id}
-                      className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow"
+                      className="p-4 bg-white rounded-lg shadow"
                     >
                       <h3 className="text-lg font-medium text-black dark:text-black">
                         {bounty.title}

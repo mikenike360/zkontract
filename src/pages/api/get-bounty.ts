@@ -1,6 +1,9 @@
 // pages/api/get-bounty.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
+import { readBountyMappings } from '../../aleo/rpc';
+import { parseBountyChainData } from '@/utils/parseBountyChainData';
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,7 +13,8 @@ const s3 = new AWS.S3({
 
 /**
  * GET /api/get-bounty?id=<bountyId>
- * Returns the single bounty stored in zkontract/metadata/bounties/<id>.json
+ * Returns the single bounty stored in zkontract/metadata/bounties/<id>.json,
+ * but overrides "creatorAddress", "reward", and "status" from on-chain data.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -26,18 +30,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const bucketName = 'zkontract';
     const key = `metadata/bounties/${id}.json`;
 
-    // Fetch the file from S3
+    // 1. Fetch from S3
     const getResult = await s3.getObject({ Bucket: bucketName, Key: key }).promise();
-
     if (!getResult.Body) {
       return res.status(404).json({ error: 'Bounty file not found or empty' });
     }
 
-    // Convert buffer/stream to string
     const fileContent = getResult.Body.toString('utf-8');
-    // Parse JSON
     const bountyData = JSON.parse(fileContent);
 
+    // 2. Fetch on-chain data
+    const chainDataRaw = await readBountyMappings(id);
+    // chainDataRaw = { creator: "aleo1...", payment: "15u64", status: "0u8" }
+
+    // 3. Parse on-chain data
+    const chainData = parseBountyChainData(chainDataRaw);
+    // chainData = { creator: "aleo1...", payment: 15, status: "Open" }
+
+    // 4. Merge/overwrite S3 data with chain data
+    bountyData.creatorAddress = chainData.creator;
+    bountyData.reward = chainData.payment;    // Assuming 'reward' is a number in your BountyData type
+    bountyData.status = chainData.status;     // e.g., "Open"
+
+    // 5. Return merged data
     return res.status(200).json(bountyData);
   } catch (error) {
     console.error('Error fetching bounty:', error);

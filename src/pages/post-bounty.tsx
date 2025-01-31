@@ -14,7 +14,7 @@ import {
   WalletNotConnectedError,
 } from '@demox-labs/aleo-wallet-adapter-base';
 
-const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
 const POST_BOUNTY_FUNCTION = 'post_bounty';
 
 function PostBountyPage() {

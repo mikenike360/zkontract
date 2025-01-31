@@ -1,4 +1,4 @@
-program zkontractv4.aleo {
+program zkontractv5.aleo {
 
     const contract_owner: address = aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec;
 
@@ -7,6 +7,7 @@ program zkontractv4.aleo {
 
     const PROPOSAL_STATUS_PENDING: u8 = 0u8;
     const PROPOSAL_STATUS_ACCEPTED: u8 = 1u8;
+    const PROPOSAL_STATUS_DENIED: u8 = 2u8;
 
     mapping bounty_creator: u64 => address;
     mapping bounty_payment: u64 => u64;
@@ -15,6 +16,7 @@ program zkontractv4.aleo {
     mapping proposal_bounty_id: u64 => u64;
     mapping proposal_proposer: u64 => address;
     mapping proposal_status: u64 => u8;
+
     mapping all_bounties: u64 => bool;
     mapping bounty_output_payment: u64 => u64;
     mapping bounty_output_status: u64 => u8;
@@ -128,6 +130,28 @@ program zkontractv4.aleo {
         return accept_proposal_future;
         
     }
+
+    // Async function to finalize proposal denial
+    async function finalize_deny_proposal(
+        composite_proposal_id: u64
+    ) {
+        assert(proposal_bounty_id.contains(composite_proposal_id)); // Ensure the proposal exists.
+
+        proposal_status.set(composite_proposal_id, PROPOSAL_STATUS_DENIED);
+    }
+
+    // Transition function to deny a proposal
+    async transition deny_proposal(
+        caller: address,
+        bounty_id: u64,
+        proposal_id: u64
+    ) -> Future {
+        let composite_proposal_id: u64 = bounty_id * 1000000u64 + proposal_id;
+
+        let deny_proposal_future: Future = finalize_deny_proposal(composite_proposal_id);
+        return deny_proposal_future;
+    }
+
 
     // Async function to finalize bounty deletion
     async function finalize_delete_bounty(bounty_id: u64) {

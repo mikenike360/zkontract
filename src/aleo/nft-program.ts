@@ -1,6 +1,6 @@
-export const NFTProgramId = 'zkontractv4.aleo';
+export const NFTProgramId = 'zkontractv5.aleo';
 
-export const NFTProgram = `program zkontractvzkontractv4.aleo;
+export const NFTProgram = `program zkontractv5.aleo;
 
 mapping bounty_creator:
     key as u64.public;
@@ -49,7 +49,7 @@ function post_bounty:
     input r3 as u64.private;
     assert.eq r0 r2;
     async post_bounty r1 r2 r3 into r4;
-    output r4 as zkontractvzkontractv4.aleo/post_bounty.future;
+    output r4 as zkontractv5.aleo/post_bounty.future;
 
 finalize post_bounty:
     input r0 as u64.public;
@@ -66,7 +66,7 @@ finalize post_bounty:
 function view_bounty_by_id:
     input r0 as u64.private;
     async view_bounty_by_id r0 into r1;
-    output r1 as zkontractvzkontractv4.aleo/view_bounty_by_id.future;
+    output r1 as zkontractv5.aleo/view_bounty_by_id.future;
 
 finalize view_bounty_by_id:
     input r0 as u64.public;
@@ -86,7 +86,7 @@ function submit_proposal:
     mul r1 1000000u64 into r4;
     add r4 r2 into r5;
     async submit_proposal r5 r1 r3 into r6;
-    output r6 as zkontractvzkontractv4.aleo/submit_proposal.future;
+    output r6 as zkontractv5.aleo/submit_proposal.future;
 
 finalize submit_proposal:
     input r0 as u64.public;
@@ -110,7 +110,7 @@ function accept_proposal:
     mul r1 1000000u64 into r5;
     add r5 r2 into r6;
     async accept_proposal r1 r6 into r7;
-    output r7 as zkontractvzkontractv4.aleo/accept_proposal.future;
+    output r7 as zkontractv5.aleo/accept_proposal.future;
 
 finalize accept_proposal:
     input r0 as u64.public;
@@ -122,11 +122,26 @@ finalize accept_proposal:
     set 1u8 into bounty_status[r0];
     set 1u8 into proposal_status[r1];
 
+function deny_proposal:
+    input r0 as address.private;
+    input r1 as u64.private;
+    input r2 as u64.private;
+    mul r1 1000000u64 into r3;
+    add r3 r2 into r4;
+    async deny_proposal r4 into r5;
+    output r5 as zkontractv5.aleo/deny_proposal.future;
+
+finalize deny_proposal:
+    input r0 as u64.public;
+    contains proposal_bounty_id[r0] into r1;
+    assert.eq r1 true;
+    set 2u8 into proposal_status[r0];
+
 function delete_bounty:
     input r0 as address.private;
     input r1 as u64.private;
     async delete_bounty r1 into r2;
-    output r2 as zkontractvzkontractv4.aleo/delete_bounty.future;
+    output r2 as zkontractv5.aleo/delete_bounty.future;
 
 finalize delete_bounty:
     input r0 as u64.public;

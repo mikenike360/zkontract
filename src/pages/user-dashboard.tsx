@@ -26,7 +26,7 @@ type DashboardData = {
 };
 
 // For contract calls
-const BOUNTY_PROGRAM_ID = 'zkontractv4.aleo';
+const BOUNTY_PROGRAM_ID = 'zkontract5.aleo';
 const ACCEPT_PROPOSAL_FUNCTION = 'accept_proposal';
 
 export default function UserDashboard() {
@@ -154,7 +154,7 @@ export default function UserDashboard() {
                                 proposal={p}
                                 bounty={bounty}
                                 onAccept={(bounty, proposal) => handleAcceptSolution(wallet, publicKey, bounty, proposal, setTxStatus, mutate)}
-                                onDeny={(bounty, proposal) => handleDenySolution(bounty, proposal)}
+                                onDeny={(bounty, proposal) => handleDenySolution(wallet, publicKey, bounty, proposal, setTxStatus, mutate)}
                                 showActions={true}
                               />
 

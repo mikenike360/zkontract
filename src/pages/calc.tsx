@@ -8,12 +8,18 @@ const CREDITS_PROGRAM_ID = 'credits.aleo';
 const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
 
 // Example fee in microcredits (adjust as needed)
-const fee = '100000';
+const fee = '1000000';
 
 const TransferPrivateExample: React.FC = () => {
   const { wallet, publicKey } = useWallet();
   const [txStatus, setTxStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
+
+  // Helper function to extract numeric value from a string like "18923u64.private" or "5000000u64"
+  const extractValue = (valueStr: string): number => {
+    const match = valueStr.match(/^(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
 
   // Example function to perform a transfer_private transaction
   const handleTransferPrivate = async () => {
@@ -36,9 +42,10 @@ const TransferPrivateExample: React.FC = () => {
       }
       console.log("All fetched records:", records);
 
-      // Log each record's spent status
+      // Log each record's spent status and value
       records.forEach((record: any, index: number) => {
-        console.log(`Record ${index}: id=${record.id}, spent=${record.spent}`);
+        const recordValue = extractValue(record.data.microcredits);
+        console.log(`Record ${index}: id=${record.id}, spent=${record.spent}, value=${recordValue}`);
       });
 
       // 2. Filter for unspent records.
@@ -48,33 +55,72 @@ const TransferPrivateExample: React.FC = () => {
         throw new Error('No unspent records available');
       }
 
-      // 3. Choose the record you want to use (for simplicity, use the first unspent record).
-      const selectedRecord = unspentRecords[0];
+      // 3. Calculate the total amount required (transfer + fee)
+      // Remove the type suffix from transferAmount (e.g., "5000000u64" -> 5000000)
+      const transferAmount = "5000000u64";
+      const transferAmountValue = extractValue(transferAmount);
+      const feeValue = parseInt(fee, 10);
+      const totalRequired = transferAmountValue + feeValue;
+      console.log(`Transfer amount: ${transferAmountValue}, Fee: ${feeValue}, Total required: ${totalRequired}`);
+
+      // 4. From the unspent records, pick the record with enough funds and the smallest surplus
+      const candidateRecords = unspentRecords.filter((record: any) => {
+        const recordValue = extractValue(record.data.microcredits);
+        return recordValue >= totalRequired;
+      });
+
+      if (candidateRecords.length === 0) {
+        throw new Error(
+          "No unspent record has enough funds for the transaction. " +
+          `Please ensure you have a record with at least ${totalRequired} microcredits.`
+        );
+      }
+
+      const selectedRecord = candidateRecords.reduce((prev: any, curr: any) => {
+        const prevValue = extractValue(prev.data.microcredits);
+        const currValue = extractValue(curr.data.microcredits);
+        // Compare surpluses (record value minus the total required amount)
+        return (currValue - totalRequired) < (prevValue - totalRequired) ? curr : prev;
+      });
       console.log("Selected unspent record:", selectedRecord);
 
-      // 4. Define the destination private address and amount (u64.private) to transfer.
+      // 5. Calculate change (if any)
+      const selectedRecordValue = extractValue(selectedRecord.data.microcredits);
+      const changeValue = selectedRecordValue - totalRequired;
+      // Format change with type suffix if change exists
+      const changeParam = changeValue > 0 ? `${changeValue}u64` : null;
+      if (changeParam) {
+        console.log(`Calculated change: ${changeValue} microcredits`);
+      } else {
+        console.log('No change output needed.');
+      }
+
+      // 6. Define the destination private address.
       const destinationPrivateAddress = "aleo1dv6fre2y82gzw58aqga20v8mkjcjm8dj77s8fjfnnflcuhhx6y8qp9ml66";
-      const transferAmount = "10000000u64"; // amount as string representing microcredits
       console.log("Destination address:", destinationPrivateAddress, "Transfer amount:", transferAmount);
 
-      // 5. Build the transaction calling transfer_private.
+      // 7. Build the transaction.
+      // Prepare inputs: if there's change, add it as an extra parameter.
+      const txInputs = [selectedRecord, destinationPrivateAddress, transferAmount];
+
+
       const transTX = Transaction.createTransaction(
         publicKey,                                  // caller public key
         WalletAdapterNetwork.TestnetBeta,           // network
         CREDITS_PROGRAM_ID,                         // program id (credits.aleo)
         TRANSFER_PRIVATE_FUNCTION,                  // function name (transfer_private)
-        [selectedRecord, destinationPrivateAddress, transferAmount],  // inputs
+        txInputs,                                   // inputs (record, destination, transfer amount, [optional change])
         fee,                                        // fee in microcredits
         true                                        // true for a private transaction
       );
       console.log("Created transaction object:", transTX);
 
-      // 6. Submit the transaction using requestTransaction.
+      // 8. Submit the transaction using requestTransaction.
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(transTX);
       console.log("Transaction submitted with txId:", txId);
       setTxStatus(`Transaction submitted: ${txId}`);
 
-      // 7. Poll for finalization (optional)
+      // 9. Poll for finalization (optional)
       let finalized = false;
       for (let attempt = 0; attempt < 60; attempt++) {
         const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);

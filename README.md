@@ -10,8 +10,6 @@ The modified base was extracted from my forked project of art-factory zkoi. http
 
 The app is currently deployed on vercel: https://zkontractv4.vercel.app/
 
-The current transfer function uses transfer_public to send the bounty reward to the poster. The next update to be pushed will be the transfer_private update!
-
 Goals for the future:
 
 1. Create an escrow contract to handle bounty payments

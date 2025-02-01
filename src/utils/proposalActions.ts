@@ -22,7 +22,7 @@ export async function handleAcceptSolution(
     return;
   }
 
-  const rewardAmount = `${bounty.reward}0000u64`;
+  const rewardAmount = `${bounty.reward}00000u64`;
 
   try {
   
@@ -74,7 +74,7 @@ export async function handleAcceptSolution(
     console.log("Transfer inputs for transfer_private:", transferInputs);
 
     // Define the fee as a string.
-    const fee = '100000';
+    const fee = '1000000';
 
     // Create the transaction using transfer_private.
     const transTX = Transaction.createTransaction(

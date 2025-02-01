@@ -54,7 +54,7 @@ const TransferPrivateExample: React.FC = () => {
 
       // 4. Define the destination private address and amount (u64.private) to transfer.
       const destinationPrivateAddress = "aleo1dv6fre2y82gzw58aqga20v8mkjcjm8dj77s8fjfnnflcuhhx6y8qp9ml66";
-      const transferAmount = "100000u64"; // amount as string representing microcredits
+      const transferAmount = "10000000u64"; // amount as string representing microcredits
       console.log("Destination address:", destinationPrivateAddress, "Transfer amount:", transferAmount);
 
       // 5. Build the transaction calling transfer_private.

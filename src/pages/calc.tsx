@@ -109,8 +109,8 @@ const TransferPrivateExample: React.FC = () => {
         WalletAdapterNetwork.TestnetBeta,           // network
         CREDITS_PROGRAM_ID,                         // program id (credits.aleo)
         TRANSFER_PRIVATE_FUNCTION,                  // function name (transfer_private)
-        txInputs,                                   // inputs (record, destination, transfer amount, [optional change])
-        fee,                                        // fee in microcredits
+        txInputs,
+        fee,                                   // inputs (record, destination, transfer amount, [optional change])                                       // fee in microcredits
         true                                        // true for a private transaction
       );
       console.log("Created transaction object:", transTX);

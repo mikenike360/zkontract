@@ -10,5 +10,5 @@ The current transfer function uses transfer_public to send the bounty reward to 
 
 Goals for the future:
 
-1. Create and escrow contract to handle bounty payments
+1. Create an escrow contract to handle bounty payments
 2. Create a reputation system for bounty posters

@@ -17,3 +17,4 @@ Goals for the future:
 1. Create an escrow contract to handle bounty payments
 2. Create a reputation system for bounty posters
 3. Enhance the UI
+4. User private transers

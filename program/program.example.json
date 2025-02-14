@@ -4,7 +4,7 @@
   "description": "",
   "license": "MIT",
   "development": {
-    "private_key": "REMOVED1zkpJbibS3AuSzY54wmh8m39Bu4isSdJZ6UYQobrhgUzpt6q",
+    "private_key": "",
     "address": "aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec"
   }
 }

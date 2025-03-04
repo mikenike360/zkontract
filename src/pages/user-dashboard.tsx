@@ -7,9 +7,9 @@ import { ProposalData } from '@/components/ui/ProposalItem';
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { useEffect, useState } from 'react';
 import { handleAcceptSolution, handleDenySolution } from '@/utils/proposalActions';
+import { handleDeleteBounty } from '@/utils/deleteBounty';
+import Button from '@/components/ui/button';
 
-
-// Types for your bounty data
 type BountyData = {
   id: number; // e.g. 12345
   title: string;
@@ -19,15 +19,10 @@ type BountyData = {
   proposals?: ProposalData[];
 };
 
-// The combined dashboard data returned from /api/my-dashboard
 type DashboardData = {
   myBounties: BountyData[];
   myProposals: ProposalData[];
 };
-
-// For contract calls
-const BOUNTY_PROGRAM_ID = 'zkontract5.aleo';
-const ACCEPT_PROPOSAL_FUNCTION = 'accept_proposal';
 
 export default function UserDashboard() {
   const { wallet, publicKey } = useWallet();
@@ -43,19 +38,19 @@ export default function UserDashboard() {
     return res.json() as Promise<DashboardData>;
   };
 
+  // 2) Load data with SWR
   const { data, error, isLoading, mutate } = useSWR<DashboardData>(
     publicKey ? `/api/my-dashboard?publicKey=${publicKey}` : null,
     fetchDashboard
   );
 
-  // 2) Local state: individually fetched bounties
+  // 3) Keep track of individually fetched bounties (if needed)
   const [fetchedBounties, setFetchedBounties] = useState<Record<number, BountyData>>({});
 
-  // 3) For each proposal, fetch the bounty if not in fetchedBounties
+  // 4) For each proposal, fetch the bounty if not in fetchedBounties
   useEffect(() => {
     if (data?.myProposals) {
       const uniqueBountyIds = Array.from(new Set(data.myProposals.map((p) => p.bountyId)));
-
       uniqueBountyIds.forEach(async (bountyId) => {
         if (!fetchedBounties[bountyId]) {
           try {
@@ -74,115 +69,196 @@ export default function UserDashboard() {
     }
   }, [data?.myProposals, fetchedBounties]);
 
+  // Helper: group proposals by their bountyId
+  function groupProposalsByBounty(proposals: ProposalData[]) {
+    return proposals.reduce<Record<number, ProposalData[]>>((acc, proposal) => {
+      const { bountyId } = proposal;
+      if (!acc[bountyId]) {
+        acc[bountyId] = [];
+      }
+      acc[bountyId].push(proposal);
+      return acc;
+    }, {});
+  }
+
   return (
     <Layout>
-      <NextSeo title="zKontract | My Dashboard" description="View or manage your bounties and proposals." />
+      <NextSeo
+        title="zKontract | My Dashboard"
+        description="View or manage your bounties and proposals."
+      />
+
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
           <BackArrow />
         </div>
 
-        <h1 className="text-2xl font-bold text-white text-center mb-8">
+        <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           My Dashboard
         </h1>
 
-        {isLoading && <p className="text-center text-gray-400">Loading...</p>}
-        {error && (
-          <p className="text-center text-red-400">Error: {error.message}</p>
-        )}
+        <h3 className="text-1xl text-primary-content text-center mb-8">
+          Note: Please verify you have enought public Aleo to cover transaction fees!
+        </h3>
 
+        {isLoading && <p className="text-center text-info">Loading...</p>}
+        {error && <p className="text-center text-error">Error: {error.message}</p>}
+
+        {/* Only render the main content if data is available */}
         {data && (
-          <div className="space-y-12 ">
-            {/* (A) My Proposals */}
-            <div className="p-4 rounded-lg bg-blue">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Submitted Proposals
-            </h2>
-            {data.myProposals.length > 0 ? (
-              <ul className="space-y-4">
-                {data.myProposals.map((prop) => {
-                  const matchingBounty = fetchedBounties[prop.bountyId];
+          <div className="space-y-12">
+            {/* (A) My Submitted Proposals */}
+            <div>
+              <h2 className="text-xl font-semibold text-primary-content mb-4">
+                My Submitted Proposals
+              </h2>
+              {data.myProposals.length > 0 ? (
+                (() => {
+                  const proposalsByBounty = groupProposalsByBounty(data.myProposals);
                   return (
-                    <div
-                      key={`${prop.bountyId}-${prop.proposalId}`}
-                      className=" p-2 rounded"
-                    >
-                      <ProposalItem
-                        proposal={prop}
-                        bounty={matchingBounty}
-                        showActions={false}
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-base-content">
+                      {Object.entries(proposalsByBounty).map(([bountyId, proposals]) => {
+                        const bounty = fetchedBounties[+bountyId];
+                        return (
+                          <div
+                            key={bountyId}
+                            className="card rounded-lg shadow p-4 bg-base-100 border"
+                          >
+                            <p className="font-semibold mb-2">Bounty ID: {bountyId}</p>
+                            {bounty ? (
+                              <p className="mb-2">Bounty Title: {bounty.title}</p>
+                            ) : (
+                              <p className="mb-2 italic">Loading bounty info...</p>
+                            )}
+                            <ul className="space-y-2">
+                              {proposals.map((prop) => (
+                                <li key={`${prop.bountyId}-${prop.proposalId}`}>
+                                  <ProposalItem
+                                    proposal={prop}
+                                    bounty={bounty}
+                                    showActions={false}
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
-                })}
-              </ul>
-            ) : (
-              <p className="text-black dark:text-white">
-                You haven’t submitted any proposals yet.
-              </p>
-            )}
-          </div>
-
-            {/* (B) My Bounties Section */}
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Posted Bounties
-              </h2>
-              {data.myBounties.length > 0 ? (
-                <ul className="space-y-4">
-                  {data.myBounties.map((bounty) => (
-                    <li
-                      key={bounty.id}
-                      className="p-4 bg-white rounded-lg shadow"
-                    >
-                      <h3 className="text-lg font-medium text-black dark:text-black">
-                        {bounty.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-black dark:text-black">
-                        Reward: {bounty.reward}
-                      </p>
-                      <p className="text-xs text-black dark:text-gray-400">
-                        Deadline: {bounty.deadline}
-                      </p>
-
-                      <div className="mt-4">
-                        <h4 className="text-sm font-semibold text-black dark:text-black mb-2">
-                          Submitted Proposals:
-                        </h4>
-                        {bounty.proposals && bounty.proposals.length > 0 ? (
-                          <ul className="space-y-3">
-                            {bounty.proposals.map((p) => (
-                              <ProposalItem
-                                key={p.proposalId}
-                                proposal={p}
-                                bounty={bounty}
-                                onAccept={(bounty, proposal) => handleAcceptSolution(wallet, publicKey, bounty, proposal, setTxStatus, mutate)}
-                                onDeny={(bounty, proposal) => handleDenySolution(wallet, publicKey, bounty, proposal, setTxStatus, mutate)}
-                                showActions={true}
-                              />
-
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-black">
-                            No proposals for this bounty yet.
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                })()
               ) : (
-                <p className="text-black dark:text-white">
-                  You haven’t posted any bounties yet.
+                <p className="text-primary-content">
+                  You haven’t submitted any proposals yet.
                 </p>
               )}
             </div>
+
+            {/* (B) My Posted Bounties */}
+            <div>
+              <h2 className="text-xl font-semibold text-primary-content mb-4">
+                My Posted Bounties
+              </h2>
+              {data.myBounties.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-primary-content">
+                    {data.myBounties.map((bounty) => {
+                      // Check if any proposal for this bounty has an accepted status
+                      const hasAcceptedProposal =
+                        bounty.proposals && bounty.proposals.some((p) => p.status === "accepted");
+
+                      return (
+                        <div
+                          key={bounty.id}
+                          className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content"
+                        >
+                          {/* Bounty title + ID */}
+                          <h3 className="text-lg font-medium text-base-content mb-1">
+                            {bounty.title} (ID: {bounty.id})
+                          </h3>
+                          <p className="text-sm text-base-content mb-1">
+                            Reward: {bounty.reward} Aleo
+                          </p>
+                          <p className="text-sm text-base-content">
+                            Deadline: {bounty.deadline}
+                          </p>
+
+                          <div className="mt-4">
+                            <h4 className="text-sm font-semibold text-base-content mb-2">
+                              Proposals For Review:
+                            </h4>
+                            {bounty.proposals && bounty.proposals.length > 0 ? (
+                              <div className="p-2 rounded space-y-3">
+                                {bounty.proposals.map((p) => (
+                                  <ProposalItem
+                                    key={p.proposalId}
+                                    proposal={p}
+                                    bounty={bounty}
+                                    onAccept={(b, proposal) =>
+                                      handleAcceptSolution(
+                                        wallet,
+                                        publicKey,
+                                        b,
+                                        proposal,
+                                        setTxStatus,
+                                        mutate
+                                      )
+                                    }
+                                    onDeny={(b, proposal) =>
+                                      handleDenySolution(
+                                        wallet,
+                                        publicKey,
+                                        b,
+                                        proposal,
+                                        setTxStatus,
+                                        mutate
+                                      )
+                                    }
+                                    showActions={true}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-base-content">
+                                No proposals for this bounty yet.
+                              </p>
+                            )}
+                            {/* Show Delete Data button only if an accepted proposal exists */}
+                            {hasAcceptedProposal && (
+                              <div className="flex justify-center mt-2">
+                                <Button
+                                  onClick={() =>
+                                    handleDeleteBounty(wallet, publicKey, bounty, setTxStatus, mutate)
+                                  }
+                                  className="btn btn-error text-sm"
+                                  size="small"
+                                >
+                                  Delete Data
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Tip section moved OUTSIDE the grid */}
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-primary-content">
+                      <strong>Tip:</strong> If your dashboard is loading slow, delete old bounties.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <p className="text-base-content">You haven’t posted any bounties yet.</p>
+              )}
+            </div>
+
           </div>
         )}
 
         {txStatus && (
-          <div className="text-center text-sm text-gray-300 mt-4">
+          <div className="text-center text-sm text-primary-content mt-4">
             Transaction Status: {txStatus}
           </div>
         )}

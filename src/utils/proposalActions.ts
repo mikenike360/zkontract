@@ -38,7 +38,7 @@ export async function handleAcceptSolution(
       `${rewardAmountforTransfer}`,
     ];
 
-    const fee = 100000;
+    const fee = 1000000;
 
     // Create the transaction
     const transTX = Transaction.createTransaction(
@@ -83,7 +83,7 @@ export async function handleAcceptSolution(
 
     console.log(acceptInputs);
 
-    const acceptFee = 100000; // Fixed fee for accepting the proposal
+    const acceptFee = 1000000; // Fixed fee for accepting the proposal
     const acceptTx = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.TestnetBeta,
@@ -177,7 +177,7 @@ export async function handleDenySolution(
     console.log('Deny Inputs:', denyInputs);
 
     // Define the fee for denying the proposal (adjust if necessary)
-    const denyFee = 100000; // Fixed fee for denying the proposal
+    const denyFee = 10000000; // Fixed fee for denying the proposal
 
     // Create the transaction for the `deny_proposal` transition
     const denyTx = Transaction.createTransaction(

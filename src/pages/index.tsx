@@ -7,7 +7,7 @@ import { WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 
-// Dynamically import glslCanvas component (no SSR)
+// Dynamically import GLSLBackground (no SSR)
 const GLSLBackground = dynamic(() => import('../utils/GLSLBackground'), {
   ssr: false,
 });
@@ -37,27 +37,27 @@ const MainPage: NextPageWithLayout = () => {
       {/* Render the GLSL background behind everything */}
       <GLSLBackground />
 
-      {/* Main Hero Section: remove the gradient so the GLSL background is visible */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-16">
-        <h1 className="text-5xl font-extrabold text-center tracking-tight text-white sm:text-6xl">
+      {/* Main Hero Section */}
+      <div className="bg-primary bg-opacity-80 relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-16">
+        <h1 className="text-5xl font-extrabold text-center tracking-tight text-primary-content sm:text-6xl">
           zKontract
         </h1>
-        <p className="mt-4 text-lg text-center text-white-200 max-w-lg">
+        <p className="mt-4 text-lg text-center text-primary-content max-w-lg">
           A Zero Knowledge Bounty Board – Hire and Work Anonymously
         </p>
 
         <div className="flex flex-col items-center mt-10 space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
           {!publicKey ? (
             <Button
-              className="px-6 py-3 text-lg font-semibold bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
               onClick={handleButtonClick}
+              className="btn btn-primary px-6 py-3 text-lg font-semibold"
             >
               Connect Wallet
             </Button>
           ) : (
             <Button
-              className="px-6 py-3 text-lg font-semibold bg-blue-600 text-white rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600"
               onClick={handleButtonClick}
+              className="btn btn-primary px-6 py-3 text-lg font-semibold"
             >
               Enter App
             </Button>

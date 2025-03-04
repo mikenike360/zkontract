@@ -1,4 +1,4 @@
-// Import Next.js and React dependencies
+// _app.tsx
 import type { AppProps } from 'next/app';
 import type { NextPageWithLayout } from '@/types';
 import { useState } from 'react';
@@ -26,8 +26,7 @@ import '@demox-labs/aleo-wallet-adapter-reactui/styles.css';
 // Initialize the wallet adapters outside the component
 const wallets = [
   new LeoWalletAdapter({
-    appName: 'zKoi NFT',
-    
+    appName: 'zKontract',
   }),
 ];
 
@@ -36,34 +35,23 @@ type AppPropsWithLayout = AppProps & {
 };
 
 function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
-  // QueryClient setup for React Query
   const [queryClient] = useState(() => new QueryClient());
-
-  // Fallback layout for components without a custom layout
   const getLayout = Component.getLayout ?? ((page) => page);
 
   return (
     <>
       <Head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Head>
       <QueryClientProvider client={queryClient}>
         <Hydrate state={pageProps.dehydratedState}>
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.UponRequest}
-            autoConnect // Automatically connect if a wallet is detected
+            autoConnect
           >
             <WalletModalProvider>
-              <ThemeProvider
-                attribute="class"
-                enableSystem={true}
-                defaultTheme="dark"
-              >
-                {/* Layout-wrapped Component */}
+              <ThemeProvider attribute="data-theme" enableSystem={true} defaultTheme="dark">
                 {getLayout(<Component {...pageProps} />)}
               </ThemeProvider>
             </WalletModalProvider>

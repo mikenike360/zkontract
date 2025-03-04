@@ -1,12 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require('tailwindcss/defaultTheme');
-const colors = require('tailwindcss/colors');
 
 module.exports = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx}',
     './src/components/**/*.{js,ts,jsx,tsx}',
     './src/layouts/**/*.{js,ts,jsx,tsx}',
+  ],
+  // Add a safelist so Tailwind doesn't purge these classes
+  safelist: [
+    'wallet-adapter-button',
+    'wallet-adapter-dropdown',
+    'btn',
+    'btn-secondary',
+    'bg-secondary',
+    'text-primary-content',
   ],
   darkMode: 'class',
   theme: {
@@ -21,21 +29,7 @@ module.exports = {
       '4xl': '2160px',
     },
     extend: {
-      colors: {
-     
-        brand: 'rgb(var(--color-brand) / <alpha-value>)',
-
-    
-        gray: {
-          ...colors.gray, // keep default Tailwind gray
-          200: '#59657C', // override the 200 value
-          400: '#969EAD',
-        },
-
-        body: '#fcfcfc',
-        dark: '#0F000F',
-        'light-dark': '#2b1e2e',
-      },
+      // Removed custom color overrides so DaisyUI themes take full effect
       spacing: {
         13: '3.375rem',
       },
@@ -64,8 +58,7 @@ module.exports = {
         large: '0px 8px 16px rgba(43, 24, 39, 0.1)',
         card: '0px 2px 6px rgba(0, 0, 0, 0.06)',
         transaction: '0px 8px 16px rgba(43, 24, 39, 0.06)',
-        button:
-          '0px 2px 4px rgba(0, 0, 0, 0.06), 0px 4px 6px rgba(0, 0, 0, 0.1)',
+        button: '0px 2px 4px rgba(0, 0, 0, 0.06), 0px 4px 6px rgba(0, 0, 0, 0.1)',
       },
       dropShadow: {
         main: '0px 4px 8px rgba(0, 0, 0, 0.08)',
@@ -88,36 +81,16 @@ module.exports = {
           '100%': { opacity: 0.2 },
         },
         expand: {
-          '0%': {
-            opacity: 0,
-            transform: 'scale(1)',
-          },
-          '30%': {
-            opacity: 1,
-          },
-          '80%': {
-            opacity: 0.5,
-          },
-          '100%': {
-            transform: 'scale(30)',
-            opacity: 0,
-          },
+          '0%': { opacity: 0, transform: 'scale(1)' },
+          '30%': { opacity: 1 },
+          '80%': { opacity: 0.5 },
+          '100%': { transform: 'scale(30)', opacity: 0 },
         },
         'expand-large': {
-          '0%': {
-            opacity: 0,
-            transform: 'scale(1)',
-          },
-          '30%': {
-            opacity: 1,
-          },
-          '80%': {
-            opacity: 0.5,
-          },
-          '100%': {
-            transform: 'scale(96)',
-            opacity: 0,
-          },
+          '0%': { opacity: 0, transform: 'scale(1)' },
+          '30%': { opacity: 1 },
+          '80%': { opacity: 0.5 },
+          '100%': { transform: 'scale(96)', opacity: 0 },
         },
         moveUp: {
           '0%': { transform: 'translateY(0)' },
@@ -135,7 +108,26 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'), 
-    require('@tailwindcss/forms')
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/forms'),
+    require('daisyui'),
   ],
+  daisyui: {
+    themes: [
+      'light',
+      'dark',
+      'cupcake',
+      'bumblebee',
+      'emerald',
+      'forest',
+      'aqua',
+      'lofi',
+      'pastel',
+      'fantasy',
+      'wireframe',
+      'black',
+      'luxury',
+      'dracula',
+    ],
+  },
 };

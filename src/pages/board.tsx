@@ -1,4 +1,3 @@
-// pages/board.tsx
 import { useRouter } from 'next/router';
 import { NextPageWithLayout } from '@/types';
 import { NextSeo } from 'next-seo';
@@ -38,28 +37,32 @@ const BountyCard = ({ bounty }: { bounty: Bounty }) => {
       : bounty.description;
 
   return (
-    <div
-      className="rounded-lg shadow-lg bg-white p-4 cursor-pointer hover:shadow-xl transition-shadow"
-      onClick={handleViewDetails}
-    >
-      <h3 className="text-lg font-medium text-black">{bounty.title}</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-        {shortDescription}
-      </p>
-      <div className="mt-4 flex justify-between items-center">
-        <span className="text-sm font-medium text-green-600 dark:text-green-400">
-          Reward: {bounty.reward}
-        </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {bounty.deadline}
-        </span>
+    <div className="card bg-base-100 shadow-lg p-4 hover:shadow-xl transition-shadow flex flex-col min-h-[220px]">
+      {/* Top Section: Title and Description */}
+      <div>
+        <h3 className="text-lg font-medium text-base-content">{bounty.title}</h3>
+        <p className="text-sm text-base-content opacity-80 mt-2">
+          {shortDescription}
+        </p>
       </div>
-      <Button
-        className="mt-4 w-full text-sm bg-blue-600 text-black rounded-md hover:bg-blue-800"
-        size="small"
-      >
-        View Details
-      </Button>
+      {/* Footer Section: Reward, Deadline, and Button */}
+      <div className="mt-auto">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium text-success">
+            Reward: {bounty.reward}
+          </span>
+          <span className="text-xs text-neutral">
+            {bounty.deadline}
+          </span>
+        </div>
+        <Button
+          onClick={handleViewDetails}
+          className="mt-4 w-full btn btn-primary text-sm"
+          size="small"
+        >
+          View Details
+        </Button>
+      </div>
     </div>
   );
 };
@@ -83,14 +86,15 @@ const BoardPage: NextPageWithLayout = () => {
       <NextSeo
         title="zKontract | Active Bounties"
         description="Browse all active bounties in the zKontract system."
+        
       />
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="mx-auto bg-primary max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Arrow */}
         <div className="mb-6">
           <BackArrow />
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
+        <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           zKontract Bounty Board
         </h1>
 
@@ -98,13 +102,13 @@ const BoardPage: NextPageWithLayout = () => {
         <div className="flex flex-wrap justify-center gap-4 mb-10">
           <Button
             onClick={handleAddBounty}
-            className="px-6 py-2 text-sm bg-blue-600 text-white rounded-md shadow hover:bg-blue-800"
+            className="px-6 py-2 btn btn-secondary-content text-sm"
           >
             Add Bounty
           </Button>
           <Button
             onClick={handleDashboard}
-            className="px-6 py-2 text-sm bg-blue-600 text-white rounded-md shadow hover:bg-blue-800"
+            className="px-6 py-2 btn btn-secondary-content text-sm"
           >
             My Profile
           </Button>
@@ -112,13 +116,13 @@ const BoardPage: NextPageWithLayout = () => {
 
         {/* Bounty List Section */}
         {error && (
-          <div className="text-center text-red-500 dark:text-red-400">
+          <div className="text-center text-error text-primary-content">
             Error loading bounties: {error.message}
           </div>
         )}
 
         {isLoading && (
-          <div className="text-center text-gray-500 dark:text-gray-400">
+          <div className="text-center text-info text-primary-content">
             Loading bounties...
           </div>
         )}
@@ -131,7 +135,7 @@ const BoardPage: NextPageWithLayout = () => {
           </div>
         ) : (
           !isLoading && (
-            <div className="text-center text-gray-500 dark:text-gray-400">
+            <div className="text-center text-primary-content">
               No active bounties at the moment.
             </div>
           )

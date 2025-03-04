@@ -153,21 +153,21 @@ function PostBountyPage() {
         title="zKontract | Post a Bounty"
         description="Post a new bounty to the zKontract system."
       />
-      <div className="text-black mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="text-primary-content mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
           <BackArrow />
         </div>
 
-        <h1 className="text-2xl font-bold text-white dark:text-white text-center mb-8">
+        <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           Post a Bounty
         </h1>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+          className="bg-secondary p-6 rounded-lg shadow-lg"
         >
           <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-black">
+            <label htmlFor="title" className="block text-sm font-medium">
               Title
             </label>
             <input
@@ -177,11 +177,11 @@ function PostBountyPage() {
               value={formData.title}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-black">
+            <label htmlFor="description" className="block text-sm font-medium text-secondary-content">
               Description
             </label>
             <textarea
@@ -190,11 +190,11 @@ function PostBountyPage() {
               value={formData.description}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="reward" className="block text-sm font-medium text-black">
+            <label htmlFor="reward" className="block text-sm font-medium text-secondary-content">
               Reward (ALEO)
             </label>
             <input
@@ -204,11 +204,11 @@ function PostBountyPage() {
               value={formData.reward}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="deadline" className="block text-sm font-medium text-black">
+            <label htmlFor="deadline" className="block text-sm font-medium text-secondary-content">
               Deadline
             </label>
             <input
@@ -218,12 +218,12 @@ function PostBountyPage() {
               value={formData.deadline}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
             />
           </div>
           <Button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-black rounded-md shadow hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="w-full py-2 px-4 bg-primary text-primary-content rounded-md shadow hover:bg-accent"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Submitting...' : 'Post Bounty'}

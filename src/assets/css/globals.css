@@ -1,13 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
     --color-brand: 43 24 39;
   }
   html,
   body {
-    @apply antialiased bg-body font-body dark:bg-dark dark:text-white;
+    @apply antialiased bg-base-100 font-body text-base-content;
   }
   .dynamic-html h6 {
     @apply font-medium uppercase;
@@ -49,23 +50,6 @@ input.spin-button-hidden::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-* {
-  box-sizing: border-box;
-} */
-
 /*================================================================
 Styles for Swiper slider
 ================================================================*/
@@ -90,7 +74,7 @@ Styles for Swiper slider
 }
 
 .swiper-scrollbar-drag {
-  @apply relative bg-gray-900 rounded dark:bg-light-dark;
+  @apply relative bg-gray-900 rounded dark:bg-gray-700;
 }
 
 .swiper-horizontal .swiper-scrollbar-drag {
@@ -123,4 +107,8 @@ Styles for Swiper slider
 /* React Share button custom styles */
 .product-share .react-share__ShareButton {
   @apply flex flex-col items-center justify-center;
+}
+
+.wallet-adapter-dropdown .wallet-adapter-button {
+  @apply bg-base-100 text-base-content ;
 }

@@ -26,6 +26,19 @@ const PROPOSAL_STATUS_MAP: { [key: number]: string } = {
   2: 'denied',
 };
 
+export function getStatusBadge(status?: string) {
+  const current = status || 'pending';
+  switch (current) {
+    case 'accepted':
+      return <span className="badge badge-success text-xs">Accepted</span>;
+    case 'denied':
+      return <span className="badge badge-error text-xs">Denied</span>;
+    case 'pending':
+    default:
+      return <span className="badge badge-warning text-xs">Pending</span>;
+  }
+}
+
 type ProposalItemProps = {
   proposal: ProposalData;
   bounty?: BountyData; // Optional bounty data for context
@@ -34,25 +47,12 @@ type ProposalItemProps = {
   showActions?: boolean; // Controls whether Accept/Deny buttons should show
 };
 
-export function getStatusBadge(status?: string) {
-  const current = status || 'pending';
-  switch (current) {
-    case 'accepted':
-      return <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Accepted</span>;
-    case 'denied':
-      return <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">Denied</span>;
-    case 'pending':
-    default:
-      return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">Pending</span>;
-  }
-}
-
 export default function ProposalItem({
   proposal,
   bounty,
   onAccept,
   onDeny,
-  showActions = false, // Default to false
+  showActions = false,
 }: ProposalItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [blockchainStatus, setBlockchainStatus] = useState<string | null>(null);
@@ -61,33 +61,25 @@ export default function ProposalItem({
   useEffect(() => {
     async function fetchStatus() {
       try {
-        // Construct the compositeProposalId as before
-        const compositeProposalId = (BigInt(proposal.bountyId) * BigInt(1_000_000) + BigInt(proposal.proposalId)).toString();
-        
-        // Fetch the raw status from the blockchain
+        // Composite ID for the proposal
+        const compositeProposalId = (
+          BigInt(proposal.bountyId) * BigInt(1_000_000) + BigInt(proposal.proposalId)
+        ).toString();
+
+        // Fetch raw status from the blockchain
         const rawStatus = await fetchMappingValueRaw('proposal_status', compositeProposalId);
-        
-        // Parse the raw status to a number
         const numericStatus = parseInt(rawStatus, 10);
-        
-        // Map the numeric status to a string label
         const statusLabel = PROPOSAL_STATUS_MAP[numericStatus] || 'pending';
-        
-        // Update the state with the mapped status label
         setBlockchainStatus(statusLabel);
       } catch (error) {
         console.error('Failed to fetch status from blockchain:', error);
-        setBlockchainStatus('pending'); // Fallback to 'pending' on error
+        setBlockchainStatus('pending');
       }
     }
     fetchStatus();
   }, [proposal.bountyId, proposal.proposalId]);
-  
 
-  const shouldTruncate = proposal.proposalText
-    ? proposal.proposalText.length > maxChars
-    : false;
-
+  const shouldTruncate = proposal.proposalText ? proposal.proposalText.length > maxChars : false;
   const displayedText = proposal.proposalText
     ? (!shouldTruncate || expanded)
       ? proposal.proposalText
@@ -95,15 +87,14 @@ export default function ProposalItem({
     : '';
 
   return (
-    <div className="p-3 bg-white rounded-md">
-
-      <p className="text-sm text-black dark:text-black mt-1">
+    <div className="card bg-primary shadow p-3">
+      <p className="text-sm text-primary-content mt-1">
         {displayedText}
       </p>
       {shouldTruncate && !expanded && (
         <button
           onClick={() => setExpanded(true)}
-          className="text-blue-500 text-xs mt-1"
+          className="btn btn-link btn-xs text-primary mt-1"
         >
           Expand
         </button>
@@ -111,49 +102,45 @@ export default function ProposalItem({
       {expanded && (
         <button
           onClick={() => setExpanded(false)}
-          className="text-blue-500 text-xs mt-1"
+          className="btn btn-link btn-xs text-primary mt-1"
         >
           Collapse
         </button>
       )}
       
-      {/* If fileName is available, display it */}
       {proposal.fileName && (
-        <p className="text-xs text-black mt-1">
+        <p className="text-xs text-base-content mt-1">
           File: {proposal.fileName}
         </p>
       )}
 
-      {/* NEW: If a fileUrl exists, render a link to view or download the file */}
       {proposal.fileUrl && (
         <div className="mt-1">
           <a
             href={proposal.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 underline hover:text-blue-800 text-xs"
+            className="link link-primary text-xs underline"
           >
             View / Download Attachment
           </a>
         </div>
       )}
 
-      {/* Status badge */}
       <div className="mt-2">{getStatusBadge(blockchainStatus)}</div>
 
-      {/* Accept/Deny buttons (only if handlers and bounty are provided, and if showActions is true) */}
       {showActions && onAccept && onDeny && bounty && (
         <div className="mt-2 flex items-center space-x-2">
           <button
             onClick={() => onAccept(bounty, proposal)}
-            className="px-4 py-2 bg-green-600 text-white text-sm rounded-md shadow hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="btn btn-success btn-sm"
             disabled={blockchainStatus === 'accepted' || blockchainStatus === 'denied'}
           >
             Accept
           </button>
           <button
             onClick={() => onDeny(bounty, proposal)}
-            className="px-4 py-2 bg-red-600 text-white text-sm rounded-md shadow hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="btn btn-error btn-sm"
             disabled={blockchainStatus === 'accepted' || blockchainStatus === 'denied'}
           >
             Deny

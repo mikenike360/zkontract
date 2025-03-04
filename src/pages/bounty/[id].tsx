@@ -278,7 +278,7 @@ const handleSubmitProposal = async () => {
       {/* Proposal Submission Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+          <div className="bg-primary p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-lg font-bold text-black dark:text-black mb-4">
               Submit Proposal
             </h2>

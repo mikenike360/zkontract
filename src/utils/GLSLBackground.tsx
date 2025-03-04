@@ -118,7 +118,7 @@ export default function GLSLBackground() {
       ref={canvasRef}
       width={1920} // or lower for performance
       height={1080}
-      className="fixed top-0 left-0 w-full h-full -z-10 block"
+      className="fixed top-0 left-0 w-full h-full pt-24"
     />
   );
 }

@@ -14,7 +14,7 @@ const BackArrow = ({ href }: { href?: string }) => {
   return (
     <button
       onClick={handleBack}
-      className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
+      className="flex items-center text-base-100 hover:text-base-300 py-6"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

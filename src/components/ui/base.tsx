@@ -63,7 +63,7 @@ export default function Base({ children }: React.PropsWithChildren<{}>) {
   }, [currentPath]);
   return (
     <div className="pt-8 text-sm xl:pt-10">
-      <div className="mx-auto w-full rounded-lg bg-white p-5 pt-4 shadow-card dark:bg-light-dark xs:p-6 xs:pt-5">
+      <div className="mx-auto w-full rounded-lg bg-primary p-5 pt-4 shadow-card dark:bg-light-dark xs:p-6 xs:pt-5">
         <AnimatePresence exitBeforeEnter>
           <motion.div
             initial="exit"

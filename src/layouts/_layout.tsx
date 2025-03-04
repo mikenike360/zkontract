@@ -71,32 +71,47 @@ export function Header() {
 
   return (
     <nav
-      className={`fixed top-0 z-30 flex w-full items-center justify-between h-16 px-4 sm:h-24 sm:px-6 lg:px-8 xl:px-10 3xl:px-12 ${
-        isMounted && windowScroll.y > 10
-          ? 'h-16 shadow-card backdrop-blur sm:h-20'
-          : 'h-16 sm:h-24'
+      className={`fixed top-0 z-30 w-full bg-base-200 transition-all duration-300 ${
+        isMounted && windowScroll.y > 10 ? 'shadow-card backdrop-blur' : ''
       }`}
     >
-      <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10 3xl:px-12">
-        {process.env.URL && (
-          <a className="mx-2 bg-base-300 bg-opacity-20 rounded-full p-2" href={`${process.env.URL}`}>
-            <HomeIcon />
-          </a>
-        )}
-        {process.env.TWITTER && (
-          <a className="mx-2 bg-base-300 bg-opacity-20 rounded-full p-2" href={`${process.env.TWITTER}`}>
-            <Twitter width="18" height="18" />
-          </a>
-        )}
-        {process.env.DISCORD && (
-          <a className="mx-2 bg-base-300 bg-opacity-20 rounded-full p-2" href={`${process.env.DISCORD}`}>
-            <Discord width="18" height="18" />
-          </a>
-        )}
+      <div className="flex flex-wrap items-center justify-between px-8 py-8 sm:px-6 lg:px-8 xl:px-10 3xl:px-12">
+        <div className="flex items-center space-x-2">
+          {process.env.URL && (
+            <a
+              className="bg-base-300 bg-opacity-20 rounded-full p-2"
+              href={`${process.env.URL}`}
+            >
+              <HomeIcon />
+            </a>
+          )}
+          {process.env.TWITTER && (
+            <a
+              className="bg-base-300 bg-opacity-20 rounded-full p-2"
+              href={`${process.env.TWITTER}`}
+            >
+              <Twitter width="18" height="18" />
+            </a>
+          )}
+          {process.env.DISCORD && (
+            <a
+              className="bg-base-300 bg-opacity-20 rounded-full p-2"
+              href={`${process.env.DISCORD}`}
+            >
+              <Discord width="18" height="18" />
+            </a>
+          )}
+        </div>
+        {/* Added a wrapper div with margin-left to create more space */}
+        <div className="ml-2 mt-2">
+          <HeaderRightArea />
+        </div>
       </div>
-      <HeaderRightArea />
     </nav>
   );
+  
+  
+  
 }
 
 interface LayoutProps {}

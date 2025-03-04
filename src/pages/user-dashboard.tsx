@@ -88,17 +88,12 @@ export default function UserDashboard() {
         description="View or manage your bounties and proposals."
       />
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <BackArrow />
-        </div>
-
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12 mt-24 sm:mt-16">
         <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           My Dashboard
         </h1>
-
-        <h3 className="text-1xl text-primary-content text-center mb-8">
-          Note: Please verify you have enought public Aleo to cover transaction fees!
+        <h3 className="text-xl text-primary-content text-center mb-8">
+          Note: Please verify you have enough public Aleo to cover transaction fees!
         </h3>
 
         {isLoading && <p className="text-center text-info">Loading...</p>}
@@ -124,11 +119,15 @@ export default function UserDashboard() {
                             key={bountyId}
                             className="card rounded-lg shadow p-4 bg-base-100 border"
                           >
-                            <p className="font-semibold mb-2">Bounty ID: {bountyId}</p>
+                            <p className="font-semibold mb-2">
+                              Bounty ID: {bountyId}
+                            </p>
                             {bounty ? (
                               <p className="mb-2">Bounty Title: {bounty.title}</p>
                             ) : (
-                              <p className="mb-2 italic">Loading bounty info...</p>
+                              <p className="mb-2 italic">
+                                Loading bounty info...
+                              </p>
                             )}
                             <ul className="space-y-2">
                               {proposals.map((prop) => (
@@ -165,8 +164,8 @@ export default function UserDashboard() {
                     {data.myBounties.map((bounty) => {
                       // Check if any proposal for this bounty has an accepted status
                       const hasAcceptedProposal =
-                        bounty.proposals && bounty.proposals.some((p) => p.status === "accepted");
-
+                        bounty.proposals &&
+                        bounty.proposals.some((p) => p.status === "accepted");
                       return (
                         <div
                           key={bounty.id}
@@ -179,10 +178,9 @@ export default function UserDashboard() {
                           <p className="text-sm text-base-content mb-1">
                             Reward: {bounty.reward} Aleo
                           </p>
-                          <p className="text-sm text-base-content">
+                          <p className="text-xs text-primary-content opacity-70">
                             Deadline: {bounty.deadline}
                           </p>
-
                           <div className="mt-4">
                             <h4 className="text-sm font-semibold text-base-content mb-2">
                               Proposals For Review:
@@ -228,7 +226,13 @@ export default function UserDashboard() {
                               <div className="flex justify-center mt-2">
                                 <Button
                                   onClick={() =>
-                                    handleDeleteBounty(wallet, publicKey, bounty, setTxStatus, mutate)
+                                    handleDeleteBounty(
+                                      wallet,
+                                      publicKey,
+                                      bounty,
+                                      setTxStatus,
+                                      mutate
+                                    )
                                   }
                                   className="btn btn-error text-sm"
                                   size="small"
@@ -242,7 +246,6 @@ export default function UserDashboard() {
                       );
                     })}
                   </div>
-                  {/* Tip section moved OUTSIDE the grid */}
                   <div className="mt-6 text-center">
                     <p className="text-sm text-primary-content">
                       <strong>Tip:</strong> If your dashboard is loading slow, delete old bounties.
@@ -250,18 +253,24 @@ export default function UserDashboard() {
                   </div>
                 </>
               ) : (
-                <p className="text-base-content">You haven’t posted any bounties yet.</p>
+                <p className="text-base-content">
+                  You haven’t posted any bounties yet.
+                </p>
               )}
             </div>
-
           </div>
         )}
-
+  
         {txStatus && (
           <div className="text-center text-sm text-primary-content mt-4">
             Transaction Status: {txStatus}
           </div>
         )}
+  
+        {/* Add a BackArrow at the bottom of the page */}
+        <div className="mt-8 text-center">
+          <BackArrow />
+        </div>
       </div>
     </Layout>
   );

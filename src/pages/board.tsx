@@ -88,11 +88,8 @@ const BoardPage: NextPageWithLayout = () => {
         description="Browse all active bounties in the zKontract system."
         
       />
-      <div className="mx-auto bg-primary max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Back Arrow */}
-        <div className="mb-6">
-          <BackArrow />
-        </div>
+      <div className="mx-auto bg-primary max-w-6xl px-4 sm:px-6 lg:px-8 py-36">
+
 
         <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           zKontract Bounty Board
@@ -140,6 +137,11 @@ const BoardPage: NextPageWithLayout = () => {
             </div>
           )
         )}
+
+                {/* Back Arrow */}
+                <div className="mb-6">
+          <BackArrow />
+        </div>
       </div>
     </>
   );

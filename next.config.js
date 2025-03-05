@@ -57,6 +57,15 @@ module.exports = withPWA({
     // Handle nextjs bug with wasm static files
     patchWasmModuleImport(config, options.isServer);
 
+    // In next.config.js, inside your webpack function:
+  config.module.rules.push({
+    test: /\.wasm$/,
+    include: /node_modules[\\/]@demox-labs[\\/]aleo-sdk-web/,
+    type: 'javascript/auto',
+    loader: 'file-loader',
+  });
+
+
     return config;
   },
 });

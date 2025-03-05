@@ -162,6 +162,51 @@ export async function transferPublic(
 }
 
 /**
+ * Transfer credits privately between two accounts.
+ *
+ * This function calls the on-chain "transfer_private" transition,
+ * which exactly expects three inputs in the following order:
+ *  - r0: Sender's credits record (credits.record)
+ *  - r1: Recipient's address with a ".private" suffix (address.private)
+ *  - r2: Transfer amount with a "u64.private" suffix (u64.private)
+ *
+ * It returns two credits records:
+ *  - The first output is the recipient's updated credits record.
+ *  - The second output is the sender's updated credits record.
+ */
+export async function transferPrivate(
+  senderRecord: string,
+  recipient: string,
+  amount: string
+): Promise<{ recipientRecord: string; senderRecord: string }> {
+  // Exactly matching the expected input types:
+  const inputs = [
+    `${senderRecord}`,         // r0: credits.record
+    `${recipient}.private`,    // r1: address.private
+    `${amount}u64.private`,     // r2: u64.private
+  ];
+
+  const result = await client.request('executeTransition', {
+    programId: CREDITS_PROGRAM_ID,
+    functionName: 'transfer_private',
+    inputs,
+  });
+
+  if (!result.transactionId) {
+    throw new Error('Transaction failed: No transactionId returned.');
+  }
+
+  // The Aleo program returns:
+  //   result.outputs[0] -> recipient's updated credits record (r4)
+  //   result.outputs[1] -> sender's updated credits record (r5)
+  return {
+    recipientRecord: result.outputs[0],
+    senderRecord: result.outputs[1],
+  };
+}
+
+
+/**
  * 1. Post Bounty
  */
 export async function postBounty(

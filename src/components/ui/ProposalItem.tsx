@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchMappingValueRaw } from '../../aleo/rpc'; 
+import { fetchMappingValueRaw } from '@/aleo/rpc'; 
 
 export type ProposalData = {
   bountyId: number;

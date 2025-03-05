@@ -6,7 +6,8 @@ import { transferPublic } from '@/aleo/rpc';
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
 const ACCEPT_PROPOSAL_FUNCTION = 'accept_proposal';
-const TRANSFER_PUBLIC_FUNCTION = 'transfer_public'
+const TRANSFER_PUBLIC_FUNCTION = 'transfer_public';
+const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
 const DENY_PROPOSAL_FUNCTION = 'deny_proposal';
 
 export async function handleAcceptSolution(
@@ -24,52 +25,129 @@ export async function handleAcceptSolution(
 
   const rewardAmount = `${bounty.reward}0000u64`;
 
+    // Extract the numeric portion from a string like "5000000u64.private" => 5000000
+    const extractValue = (valueStr: string): number => {
+      const match = valueStr.match(/^(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
   try {
-  
+
+
+    const allRecords = await (wallet.adapter as LeoWalletAdapter).requestRecords(CREDITS_PROGRAM_ID);
+
+
+    if (!allRecords || allRecords.length === 0) {
+      throw new Error('No credits records found');
+    }
+
+    // Filter private + unspent
+    const privateRecords = allRecords.filter(
+      (record: any) =>
+        record.data?.microcredits && record.data.microcredits.endsWith('u64.private')
+    );
+    
+    const unspentRecords = privateRecords.filter((record: any) => record.spent === false);
+
+    if (unspentRecords.length === 0) {
+      throw new Error('No unspent private records available');
+    }
+
+    const extractedReward = extractValue(rewardAmount);
+
+    const transferCandidates = unspentRecords.filter((record: any) => {
+      const recordValue = extractValue(record.data.microcredits);
+      return recordValue >= extractedReward;
+    });
+    if (transferCandidates.length === 0) {
+      throw new Error(
+        `No unspent private record can cover for the transfer.`
+      );
+    }
+    const transferRecord = transferCandidates[0];
+
+
+    const rewardAmountforTransfer = `${bounty.reward}000000u64`;
+
+    const txInputs = [
+      transferRecord,       // record to cover the transfer
+      `${proposal.proposerAddress}`,
+      rewardAmountforTransfer,
+    ];
+
+    const transaction = Transaction.createTransaction(
+        publicKey,
+        WalletAdapterNetwork.TestnetBeta,
+        CREDITS_PROGRAM_ID,
+        TRANSFER_PRIVATE_FUNCTION,
+        txInputs,
+        1_000_000,      // numeric fee
+        true      // isPrivate
+      );
+
+    const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(transaction);
+
+
+    setTxStatus(`Transaction submitted: ${txId}`);
+    
+         
+    let finalized = false;
+      for (let attempt = 0; attempt < 180; attempt++) {
+        const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
+          setTxStatus(`Attempt ${attempt + 1}: ${status}`);
+    
+          if (status === 'Completed') {
+            finalized = true;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 2000));
+        }
+          
+    setTxStatus(finalized ? 'Transaction finalized' : 'Transaction not finalized after polling');
     // // Step 1: Transfer the reward to the proposer
     // for some reason the reward if formatted differently. Need to improve this.
     
-    const rewardAmountforTransfer = `${bounty.reward}000000u64`;
+    // const rewardAmountforTransfer = `${bounty.reward}000000u64`;
 
-    setTxStatus('Transferring reward to proposer...');
+    // setTxStatus('Transferring reward to proposer...');
 
-    const transferInput = [
-      `${proposal.proposerAddress}`,
-      `${rewardAmountforTransfer}`,
-    ];
+    // const transferInput = [
+    //   `${proposal.proposerAddress}`,
+    //   `${rewardAmountforTransfer}`,
+    // ];
 
-    const fee = 1000000;
+    // const fee = 1000000;
 
-    // Create the transaction
-    const transTX = Transaction.createTransaction(
-        publicKey,                                   
-        WalletAdapterNetwork.TestnetBeta,                 
-        CREDITS_PROGRAM_ID,                               
-        TRANSFER_PUBLIC_FUNCTION,                                     
-        transferInput,                                        
-        fee,      
-        false                                            
-      );
+    // // Create the transaction
+    // const transTX = Transaction.createTransaction(
+    //     publicKey,                                   
+    //     WalletAdapterNetwork.TestnetBeta,                 
+    //     CREDITS_PROGRAM_ID,                               
+    //     TRANSFER_PUBLIC_FUNCTION,                                     
+    //     transferInput,                                        
+    //     fee,      
+    //     true      
+    //   );
 
-      console.log(transTX);
+    //   console.log(transTX);
 
-    const acceptTxTrans = await (wallet.adapter as LeoWalletAdapter).requestTransaction(transTX);
-    console.log('Transfer public credits transaction submitted:', acceptTxTrans);
+    // const acceptTxTrans = await (wallet.adapter as LeoWalletAdapter).requestTransaction(transTX);
+    // console.log('Transfer public credits transaction submitted:', acceptTxTrans);
 
-    setTxStatus('Waiting for transfer_public transaction to finalize...');
-    let transFinalized = false;
-    for (let attempt = 0; attempt < 60; attempt++) {
-      const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(acceptTxTrans);
-      if (status === 'Finalized') {
-        transFinalized = true;
-        break;
-      }
-      await new Promise((res) => setTimeout(res, 2000));
-    }
+    // setTxStatus('Waiting for transfer_public transaction to finalize...');
+    // let transFinalized = false;
+    // for (let attempt = 0; attempt < 60; attempt++) {
+    //   const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(acceptTxTrans);
+    //   if (status === 'Finalized') {
+    //     transFinalized = true;
+    //     break;
+    //   }
+    //   await new Promise((res) => setTimeout(res, 2000));
+    // }
 
-    if (!transFinalized) {
-      throw new Error('transfer_public transaction not finalized in time.');
-    }
+    // if (!transFinalized) {
+    //   throw new Error('transfer_public transaction not finalized in time.');
+    // }
   
     // Step 2: Accept the proposal
     setTxStatus('Accepting proposal...');
@@ -91,7 +169,7 @@ export async function handleAcceptSolution(
       ACCEPT_PROPOSAL_FUNCTION,
       acceptInputs,
       acceptFee,
-      false
+      true
     );
 
     console.log(acceptTx);
@@ -187,7 +265,7 @@ export async function handleDenySolution(
       DENY_PROPOSAL_FUNCTION, 
       denyInputs, 
       denyFee,
-      false 
+      true
     );
 
     console.log('Deny Transaction:', denyTx);
@@ -244,3 +322,5 @@ export async function handleDenySolution(
     setTxStatus(null);
   }
 }
+
+

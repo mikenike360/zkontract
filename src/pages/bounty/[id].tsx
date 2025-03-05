@@ -210,21 +210,21 @@ const handleSubmitProposal = async () => {
   // Loading states
   if (isLoading) {
     return (
-      <div className="text-center text-gray-500 dark:text-gray-400">
+      <div className="text-center text-gray-500">
         Loading bounty...
       </div>
     );
   }
   if (error) {
     return (
-      <div className="text-center text-red-500 dark:text-red-400">
+      <div className="text-center text-red-500">
         Error: {error.message}
       </div>
     );
   }
   if (!bounty) {
     return (
-      <div className="text-center text-gray-500 dark:text-gray-400">
+      <div className="text-center text-gray-500">
         Bounty not found.
       </div>
     );
@@ -237,22 +237,20 @@ const handleSubmitProposal = async () => {
         title={`zKontract | ${bounty.title}`}
         description={`Details of bounty: ${bounty.title}`}
       />
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <BackArrow />
-        </div>
+      <div className="mx-auto mt-12 w-full sm:w-11/12 md:w-10/12 lg:w-9/12 px-4 sm:px-6 lg:px-8 py-12">
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+
+        <h1 className="text-2xl font-bold text-primary-content">
           {bounty.title}
         </h1>
-        <p className="mt-4 text-gray-700 dark:text-gray-300">
+        <p className="mt-4 text-primary-content">
           {bounty.description}
         </p>
         <div className="mt-8 flex justify-between items-center">
-          <span className="text-lg font-medium text-green-600 dark:text-green-400">
+          <span className="text-md font-medium text-green-600">
             Reward: {bounty.reward}
           </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-primary-content">
             Deadline: {bounty.deadline}
           </span>
         </div>
@@ -261,15 +259,19 @@ const handleSubmitProposal = async () => {
         <div className="mt-12">
           <button
             onClick={handleOpenModal}
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className=" py-3 px-4 bg-secondary-content text-secondary rounded-md shadow hover:opacity-75"
           >
-            Submit Proposal
+            Submit A Proposal
           </button>
+        </div>
+
+        <div className="mb-6">
+          <BackArrow />
         </div>
 
         {/* Show transaction status (optional) */}
         {txStatus && (
-          <div className="mt-4 text-center text-sm text-gray-600">
+          <div className="mt-4 text-center text-sm text-primary-content">
             Transaction Status: {txStatus}
           </div>
         )}
@@ -278,24 +280,24 @@ const handleSubmitProposal = async () => {
       {/* Proposal Submission Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-primary p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-lg font-bold text-black dark:text-black mb-4">
+          <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-lg font-bold text-primary-content mb-4">
               Submit Proposal
             </h2>
             <textarea
               value={proposal}
               onChange={(e) => setProposal(e.target.value)}
               placeholder="Write your proposal here..."
-              className="w-full p-3 border rounded-md text-gray-900 dark:text-black dark:bg-gray-700"
+              className="w-full p-3 border rounded-md text-black"
             />
             <div className="mt-4">
-              <label className="block text-sm font-medium text-black dark:text-black">
+              <label className="block text-sm font-medium text-primary-content">
                 Attach a File
               </label>
               <input
                 type="file"
                 onChange={handleFileUpload}
-                className="mt-2 block w-full text-sm text-black file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                className="mt-2 block w-full text-sm text-primary-content file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
               />
               {uploadedFile && (
                 <p className="mt-2 text-sm text-green-600">
@@ -306,20 +308,23 @@ const handleSubmitProposal = async () => {
             <div className="mt-4 flex justify-between">
               <button
                 onClick={handleCloseModal}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                className="px-4 py-2 bg-accent text-primary-content rounded-md hover:opacity-75"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitProposal}
                 disabled={isSubmittingProposal}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-accent text-primary-content rounded-md hover:opacity-75"
               >
                 {isSubmittingProposal ? 'Submitting...' : 'Submit'}
               </button>
             </div>
           </div>
-        </div>
+
+      </div>
+
+        
       )}
     </>
   );

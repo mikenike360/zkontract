@@ -5,6 +5,9 @@ import AWS from 'aws-sdk';
 import { readBountyMappings } from '../../aleo/rpc';
 import { parseBountyChainData } from '@/utils/parseBountyChainData';
 
+// Simple in-memory cache
+const chainDataCache: { [id: string]: any } = {};
+
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -39,9 +42,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fileContent = getResult.Body.toString('utf-8');
     const bountyData = JSON.parse(fileContent);
 
-    // 2. Fetch on-chain data
-    const chainDataRaw = await readBountyMappings(id);
-    // chainDataRaw = { creator: "aleo1...", payment: "15u64", status: "0u8" }
+    // 2. Fetch on-chain data with caching
+    let chainDataRaw;
+    if (chainDataCache[id]) {
+      chainDataRaw = chainDataCache[id];
+    } else {
+      chainDataRaw = await readBountyMappings(id);
+      chainDataCache[id] = chainDataRaw;
+      // Optionally, you can set an expiration time for each cache entry.
+    }
 
     // 3. Parse on-chain data
     const chainData = parseBountyChainData(chainDataRaw);
@@ -50,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. Merge/overwrite S3 data with chain data
     bountyData.creatorAddress = chainData.creator;
     bountyData.reward = chainData.payment;    // Assuming 'reward' is a number in your BountyData type
-    bountyData.status = chainData.status;     // e.g., "Open"
+    bountyData.status = chainData.status;       // e.g., "Open"
 
     // 5. Return merged data
     return res.status(200).json(bountyData);

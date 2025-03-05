@@ -132,7 +132,7 @@ function PostBountyPage() {
         POST_BOUNTY_FUNCTION,
         inputs,
         1_000_000, 
-        false
+        true
       );
 
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);
@@ -153,10 +153,8 @@ function PostBountyPage() {
         title="zKontract | Post a Bounty"
         description="Post a new bounty to the zKontract system."
       />
-      <div className="text-primary-content mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <BackArrow />
-        </div>
+      <div className="text-primary-content mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 mt-12">
+
 
         <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           Post a Bounty
@@ -167,7 +165,7 @@ function PostBountyPage() {
           className="bg-secondary p-6 rounded-lg shadow-lg"
         >
           <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium">
+            <label htmlFor="title" className="block text-sm font-medium text-secondary-content">
               Title
             </label>
             <input
@@ -232,6 +230,9 @@ function PostBountyPage() {
             <p className="mt-4 text-red-500 text-center">{errorMessage}</p>
           )}
         </form>
+        <div className="mb-6">
+          <BackArrow />
+        </div>
 
         {transactionId && (
           <div className="mt-4 text-center">

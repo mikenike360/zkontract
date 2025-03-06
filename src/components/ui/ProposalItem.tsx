@@ -94,7 +94,7 @@ export default function ProposalItem({
       {shouldTruncate && !expanded && (
         <button
           onClick={() => setExpanded(true)}
-          className="btn btn-link btn-xs text-primary mt-1"
+          className="btn btn-link btn-xs text-primary-content mt-1"
         >
           Expand
         </button>
@@ -102,7 +102,7 @@ export default function ProposalItem({
       {expanded && (
         <button
           onClick={() => setExpanded(false)}
-          className="btn btn-link btn-xs text-primary mt-1"
+          className="btn btn-link btn-xs text-primary-content mt-1"
         >
           Collapse
         </button>

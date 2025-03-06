@@ -89,7 +89,7 @@ const TransferPrivateExample = () => {
       });
       if (feeCandidates.length === 0) {
         throw new Error(
-          `No separate record can cover the ${FEE} microcredit fee (or we only have the same record).`
+          `No separate record can cover the microcredit fee (or we only have the same record).`
         );
       }
       const feeRecord = feeCandidates[0];

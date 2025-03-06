@@ -107,7 +107,7 @@ const BoardPage: NextPageWithLayout = () => {
             onClick={handleDashboard}
             className="px-6 py-2 btn btn-secondary-content text-sm"
           >
-            My Profile
+            Dashboard
           </Button>
         </div>
 

@@ -131,8 +131,8 @@ function PostBountyPage() {
         BOUNTY_PROGRAM_ID,
         POST_BOUNTY_FUNCTION,
         inputs,
-        1_000_000, 
-        true
+        1_000_000,
+        false
       );
 
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);

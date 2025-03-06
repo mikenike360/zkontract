@@ -1,17 +1,13 @@
 import { NextSeo } from 'next-seo';
 import type { NextPageWithLayout } from '@/types';
 import Layout from '@/layouts/_layout';
-import Image from '@/components/ui/image';
-import AnchorLink from '@/components/ui/links/anchor-link';
-import routes from '@/config/routes';
-import Button from '@/components/ui/button';
 import { useIsMounted } from '@/lib/hooks/use-is-mounted';
-import { useIsDarkMode } from '@/lib/hooks/use-is-dark-mode';
+
 
 
 const ErrorPage: NextPageWithLayout = () => {
   const isMounted = useIsMounted();
-  const { isDarkMode } = useIsDarkMode();
+  
   return (
     <>
       <NextSeo
@@ -30,9 +26,9 @@ const ErrorPage: NextPageWithLayout = () => {
           Sorry, the page you are looking for might be renamed, removed, or
           might never exist.
         </p>
-        <AnchorLink href={routes?.admin}>
-          <Button shape="rounded">Back to Home</Button>
-        </AnchorLink>
+   
+
+
       </div>
     </>
   );

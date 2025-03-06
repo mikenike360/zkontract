@@ -9,7 +9,7 @@
     "build-program": "cd ./program && /home/mikenike/.cargo/bin/leo build",
     "copy-program": "tsc ./util/copy-program.ts && node ./util/copy-program.js",
     "program": "yarn configure-program && yarn build-program && yarn copy-program",
-    "dev": "yarn copy-program && yarn delete-local-modules && next dev",
+    "dev": "yarn delete-local-modules && next dev",
     "dev:ts": "yarn dev & yarn ts:watch",
     "ts": "tsc --noEmit --incremental",
     "ts:watch": "yarn ts --watch",

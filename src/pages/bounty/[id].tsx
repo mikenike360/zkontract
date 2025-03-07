@@ -145,6 +145,7 @@ const handleSubmitProposal = async () => {
       proposerAddress: publicKey,
       proposalText: proposal,
       status: "Pending",
+      rewardSent: false
       // Additional fields can be added here if needed
     };
 

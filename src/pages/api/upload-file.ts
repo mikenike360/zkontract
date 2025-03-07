@@ -3,7 +3,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import fs from 'fs';
-import { uploadFileToS3 } from '../../lib/s3';
+import { uploadFileToS3 } from '../../utils/s3';
 
 /**
  * Define the response structure

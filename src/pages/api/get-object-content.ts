@@ -1,7 +1,7 @@
 // src/pages/api/get-object-content.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getObjectContent } from '../../lib/s3';
+import { getObjectContent } from '../../utils/s3';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

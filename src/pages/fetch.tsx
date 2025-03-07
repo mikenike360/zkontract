@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { readProposalMappings } from '../aleo/rpc'; // Replace with your actual file path
+import { readProposalMappings } from '@/components/aleo/rpc'; // Replace with your actual file path
 
 const FetchProposalMappings = () => {
   const [bountyId, setBountyId] = useState('');

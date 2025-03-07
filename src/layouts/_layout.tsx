@@ -1,8 +1,7 @@
-import { useWindowScroll } from '@/lib/hooks/use-window-scroll';
-import { useIsMounted } from '@/lib/hooks/use-is-mounted';
+import { useWindowScroll } from '@/hooks/use-window-scroll';
+import { useIsMounted } from '@/hooks/use-is-mounted';
 import React, { useState, useEffect } from 'react';
 import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui';
-import Button from '@/components/ui/button';
 import { HomeIcon } from '@/components/icons/home';
 import { Twitter } from '@/components/icons/twitter';
 import { Discord } from '@/components/icons/discord';

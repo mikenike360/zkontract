@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchMappingValueRaw } from '@/aleo/rpc'; 
+import { fetchMappingValueRaw } from '@/components/aleo/rpc'; 
 
 export type ProposalData = {
   bountyId: number;
@@ -9,6 +9,7 @@ export type ProposalData = {
   fileName?: string;
   fileUrl?: string; // NEW: URL of the uploaded file
   status?: string;
+  rewardSent?: boolean; // NEW: indicates if the reward has been sent
 };
 
 export type BountyData = {
@@ -55,7 +56,7 @@ export default function ProposalItem({
   showActions = false,
 }: ProposalItemProps) {
   const [expanded, setExpanded] = useState(false);
-  const [blockchainStatus, setBlockchainStatus] = useState<string | null>(null);
+  const [blockchainStatus, setBlockchainStatus] = useState<string | undefined>(undefined);
   const maxChars = 300;
 
   useEffect(() => {

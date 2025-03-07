@@ -2,7 +2,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
-import { readBountyMappings } from '../../aleo/rpc';
+import { readBountyMappings } from '@/components/aleo/rpc';
 import { parseBountyChainData } from '@/utils/parseBountyChainData';
 
 // Simple in-memory cache

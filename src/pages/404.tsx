@@ -1,7 +1,7 @@
 import { NextSeo } from 'next-seo';
 import type { NextPageWithLayout } from '@/types';
 import Layout from '@/layouts/_layout';
-import { useIsMounted } from '@/lib/hooks/use-is-mounted';
+import { useIsMounted } from '@/hooks/use-is-mounted';
 
 
 

@@ -7,13 +7,15 @@ export const CREDITS_PROGRAM_ID = 'credits.aleo';
 export const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
 
 /**
- * Executes a private transfer of credits to a target address.
+ * Executes a private transfer of credits to a target address, then updates the reward state via the API.
  *
  * @param wallet - The wallet adapter instance.
  * @param publicKey - The public key of the user performing the transfer.
  * @param proposerAddress - The address to receive the funds.
  * @param bountyReward - The reward amount (in microcredits) to be transferred.
  * @param setTxStatus - Function to update the transaction status in the UI.
+ * @param bountyId - The bounty ID.
+ * @param proposalId - The proposal ID.
  * @returns The transaction ID of the submitted private transfer.
  */
 export async function privateTransfer(
@@ -21,10 +23,11 @@ export async function privateTransfer(
   publicKey: string,
   proposerAddress: string,
   bountyReward: number,
-  setTxStatus: (status: string | null) => void
+  setTxStatus: (status: string | null) => void,
+  bountyId: number,
+  proposalId: number
 ): Promise<string> {
-  // Example: reward is “5000” => we do “5000000u64” or “500000000u64”, etc.
-  // Adjust your multiplier as needed (based on decimal places).
+  // Format the reward amount (e.g. if bountyReward = 5000, then "5000000u64")
   const rewardAmountforTransfer = `${bountyReward}000000u64`; 
 
   // 1. Fetch all records for credits program
@@ -83,13 +86,13 @@ export async function privateTransfer(
   const txId = await wallet.requestTransaction(transaction);
   setTxStatus(`Private transfer submitted: ${txId}`);
 
-  // 7. (Optional) Poll for completion/finalization
+  // 7. Poll for completion/finalization
   let finalized = false;
   for (let attempt = 0; attempt < 60; attempt++) {
     const status = await wallet.transactionStatus(txId);
     setTxStatus(`Attempt ${attempt + 1}: ${status}`);
 
-    if (status === 'Completed' || status === 'Finalized') {
+    if (status === 'Completed' || status === 'Finalized') { // This needs to be improved currently it completes right away and does not emit a finalize..
       finalized = true;
       break;
     }
@@ -98,9 +101,26 @@ export async function privateTransfer(
 
   if (!finalized) {
     setTxStatus('Private transfer not finalized in time.');
+    throw new Error('Private transfer not finalized in time.');
   } else {
     setTxStatus('Private transfer finalized.');
   }
+
+  // 8. Call the API route to update the reward status
+  const rewardResponse = await fetch('/api/update-proposal-reward', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      bountyId,
+      proposalId,
+      rewardSent: true,
+    }),
+  });
+
+  if (!rewardResponse.ok) {
+    throw new Error('Failed to update reward status.');
+  }
+  setTxStatus('Reward status updated.');
 
   return txId;
 }

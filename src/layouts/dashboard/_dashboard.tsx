@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import cn from 'classnames';
-import { useWindowScroll } from '@/lib/hooks/use-window-scroll';
+import { useWindowScroll } from '@/hooks/use-window-scroll';
 
-import { useIsMounted } from '@/lib/hooks/use-is-mounted';
+import { useIsMounted } from '@/hooks/use-is-mounted';
 
 
 import React, { FC, useMemo } from 'react';

@@ -16,6 +16,7 @@ export const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
  * @param setTxStatus - Function to update the transaction status in the UI.
  * @param bountyId - The bounty ID.
  * @param proposalId - The proposal ID.
+
  * @returns The transaction ID of the submitted private transfer.
  */
 export async function privateTransfer(
@@ -25,7 +26,8 @@ export async function privateTransfer(
   bountyReward: number,
   setTxStatus: (status: string | null) => void,
   bountyId: number,
-  proposalId: number
+  proposalId: number,
+  
 ): Promise<string> {
   // Format the reward amount (e.g. if bountyReward = 5000, then "5000000u64")
   const rewardAmountforTransfer = `${bountyReward}000000u64`; 
@@ -66,20 +68,21 @@ export async function privateTransfer(
 
   // 4. Create transaction inputs
   const txInputs = [
-    chosenRecord,       // The record we’ll spend
-    proposerAddress,    // The address receiving the funds
+    chosenRecord,      // The record we’ll spend
+    proposerAddress,   // The address receiving the funds
     rewardAmountforTransfer,
   ];
 
   // 5. Build the transaction
+  //    Replaced the 'false' with our `payFeesPrivately` param.
   const transaction = Transaction.createTransaction(
     publicKey,
     WalletAdapterNetwork.TestnetBeta,
     CREDITS_PROGRAM_ID,
     TRANSFER_PRIVATE_FUNCTION,
     txInputs,
-    1_000_000,
-    false
+    100000,
+    true   
   );
 
   // 6. Submit the transaction
@@ -92,7 +95,7 @@ export async function privateTransfer(
     const status = await wallet.transactionStatus(txId);
     setTxStatus(`Attempt ${attempt + 1}: ${status}`);
 
-    if (status === 'Completed' || status === 'Finalized') { // This needs to be improved currently it completes right away and does not emit a finalize..
+    if (status === 'Completed' || status === 'Finalized') {
       finalized = true;
       break;
     }

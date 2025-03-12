@@ -1,4 +1,5 @@
 // src/components/DashboardBounties.tsx
+import React, { useState } from 'react';
 import Button from '@/components/ui/button';
 import ProposalItem from '@/components/ui/ProposalItem';
 import { ProposalData, BountyData } from '@/types';
@@ -6,14 +7,20 @@ import { handleDeleteBounty } from '@/utils/deleteBounty';
 
 export type ProposalStage = 'initial' | 'processing' | 'rewardSent' | 'accepted' | 'denied';
 
+export type DeleteBtnStage = 'accepted' | 'pending';
+
 type DashboardBountiesProps = {
   bounties: BountyData[];
   proposalStages: Record<number, ProposalStage>;
   transferMethod: Record<number, 'public' | 'private'>;
-  onSendReward: (bounty: BountyData, proposal: ProposalData) => void;
-  onAcceptProposal: (bounty: BountyData, proposal: ProposalData) => void;
-  onDenyProposal: (bounty: BountyData, proposal: ProposalData) => void;
+
+  // The existing handlers your parent gives you:
+  onSendReward: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
+  onAcceptProposal: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
+  onDenyProposal: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
   onToggleTransferMethod: (bountyId: number, isPrivate: boolean) => void;
+
+  // The delete bounty function
   handleDeleteBounty: (
     wallet: any,
     publicKey: string,
@@ -21,11 +28,58 @@ type DashboardBountiesProps = {
     setTxStatus: (status: string | null) => void,
     mutate: () => void
   ) => Promise<void>;
+
   wallet: any;
   publicKey: string | null;
   setTxStatus: (status: string | null) => void;
   mutate: () => void;
 };
+
+/**
+ * Computes the effective proposal status:
+ * - If the chain says "accepted", return "accepted"
+ * - If chain says "rewardSent" or proposal.rewardSent is true, return "rewardSent"
+ * - Then "denied" or "processing"
+ * - If still "initial", fall back to local proposalStages
+ */
+function getEffectiveStatus(
+  proposal: ProposalData,
+  localStages: Record<number, ProposalStage>
+): ProposalStage {
+  const rawStatus = proposal.status?.toLowerCase().trim() || 'initial';
+
+  console.log(rawStatus);
+
+  if (rawStatus === 'accepted') {
+    return 'accepted';
+  }
+  if (proposal.rewardSent) {
+    return 'rewardSent';
+  }
+  if (rawStatus === 'denied') return 'denied';
+  if (rawStatus === 'processing') return 'processing';
+  if (rawStatus === 'rewardsent') return 'rewardSent';
+
+  const local = localStages[proposal.proposalId];
+  if (rawStatus === 'initial' && local) {
+    return local;
+  }
+  return 'initial';
+}
+
+function getDeleteBtnEffectiveStatus(
+  proposal: ProposalData,
+): DeleteBtnStage {
+  const rawStatus = proposal.status?.toLowerCase().trim();
+
+  console.log(rawStatus);
+
+  if (rawStatus === 'pending') {
+    return 'pending';
+  }
+  return 'accepted';
+}
+
 
 export default function DashboardBounties({
   bounties,
@@ -41,6 +95,32 @@ export default function DashboardBounties({
   setTxStatus,
   mutate,
 }: DashboardBountiesProps) {
+  // Local UI state: Are we currently submitting for a specific proposal?
+  const [buttonLoading, setButtonLoading] = useState<Record<number, boolean>>({});
+
+  // Helper to toggle the local loading state for a given proposal
+  function setProposalLoading(proposalId: number, isLoading: boolean) {
+    setButtonLoading((prev) => ({
+      ...prev,
+      [proposalId]: isLoading,
+    }));
+  }
+
+  // NEW: local state tracking if transaction fees should be private for each bounty
+  const [feeTransferMethod, setFeeTransferMethod] = useState<Record<number, boolean>>({});
+
+  // Toggles pay-fee-privately on/off for a specific bounty
+  function onToggleFeeMethod(bountyId: number, payFeesPrivately: boolean) {
+    setFeeTransferMethod((prev) => ({
+      ...prev,
+      [bountyId]: payFeesPrivately,
+    }));
+  }
+
+
+
+
+
   return (
     <div>
       <h2 className="text-xl font-semibold text-primary-content mb-4">My Posted Bounties</h2>
@@ -52,15 +132,19 @@ export default function DashboardBounties({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-primary-content">
             {bounties.map((bounty) => {
               // Check if the bounty has an accepted proposal
-              const hasAcceptedProposal = bounty.proposals?.some((p) => {
-                const statusLower = p.status?.toLowerCase();
-                return statusLower === 'accepted' || proposalStages[p.proposalId] === 'accepted';
-              });
+              const hasAcceptedProposal = bounty.proposals?.some(
+                (p) => getEffectiveStatus(p, proposalStages) === 'accepted'
+              );
+
+              // NEW: Check if any proposal returns 'pending' using our helper.
+              const hasDeleteBtnPending = bounty.proposals?.some(
+                (p) => getDeleteBtnEffectiveStatus(p) === 'pending'
+              );
 
               return (
                 <div
                   key={bounty.id}
-                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content"
+                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content resize overflow-auto"
                 >
                   <h3 className="text-lg font-medium text-base-content mb-1">
                     {bounty.title} (ID: {bounty.id})
@@ -71,8 +155,9 @@ export default function DashboardBounties({
                   {/* PROPOSALS */}
                   {bounty.proposals && bounty.proposals.length > 0 ? (
                     <div className="mt-4">
-                      {/* Transfer Toggle */}
-                      <div className="mb-2">
+                      {/* Transfer Toggles */}
+                      <div className="mb-2 flex flex-col space-y-2">
+                        {/* Existing reward toggle */}
                         <label className="inline-flex items-center cursor-pointer">
                           <span className="mr-2 text-sm text-primary">
                             Use Private ALEO for reward?
@@ -81,8 +166,23 @@ export default function DashboardBounties({
                             type="checkbox"
                             className="toggle toggle-primary focus:outline-none"
                             checked={transferMethod[bounty.id] === 'private'}
-                            onChange={(e) => onToggleTransferMethod(bounty.id, e.target.checked)}
+                            onChange={(e) =>
+                              onToggleTransferMethod(bounty.id, e.target.checked)
+                            }
                           />
+                        </label>
+
+                        {/* NEW: fee toggle */}
+                        <label className="inline-flex items-center cursor-pointer">
+                          {/* <span className="mr-2 text-sm text-primary">
+                            Pay transaction fee privately?
+                          </span> */}
+                          {/* <input
+                            type="checkbox"
+                            className="toggle toggle-primary focus:outline-none"
+                            checked={feeTransferMethod[bounty.id] ?? false}
+                            onChange={(e) => onToggleFeeMethod(bounty.id, e.target.checked)}
+                          /> */}
                         </label>
                       </div>
 
@@ -91,41 +191,37 @@ export default function DashboardBounties({
                       </h4>
                       <ul className="space-y-3">
                         {bounty.proposals.map((proposal) => {
-                          // Normalize status from metadata
-                          const rawStatus = proposal.status?.toLowerCase() || 'initial';
-
-                          // If the returned status doesn't match our union, convert it to 'initial'
-                          const metadataStatus: ProposalStage = (['initial', 'processing', 'rewardsent', 'accepted', 'denied'].includes(
-                            rawStatus
-                          )
-                            ? rawStatus
-                            : 'initial') as ProposalStage;
-
-                          // Decide if we override with rewardSent => 'rewardSent'
-                          let effectiveStatus = metadataStatus;
-                          if (proposal.rewardSent && effectiveStatus === 'initial') {
-                            effectiveStatus = 'rewardSent';
+                          if (proposal.status === undefined) {
+                            return (
+                              <li key={proposal.proposalId}>
+                                <div className="card border p-4">
+                                  <ProposalItem proposal={proposal} bounty={bounty} showActions />
+                                  <div className="mt-2 flex justify-center">
+                                    <span className="text-info text-sm">Loading status...</span>
+                                  </div>
+                                </div>
+                              </li>
+                            );
                           }
 
-                          // If local state has something besides 'initial', you could merge that here:
-                          const local = proposalStages[proposal.proposalId];
-                          if (local && local !== 'initial') {
-                            effectiveStatus = local;
-                          }
+                          const effectiveStatus = getEffectiveStatus(proposal, proposalStages);
+                          const isLoading = !!buttonLoading[proposal.proposalId];
 
                           return (
                             <li key={proposal.proposalId}>
-                              <div className="card border">
+                              <div className="card border break-words resize overflow-auto">
                                 <ProposalItem proposal={proposal} bounty={bounty} showActions />
                                 <div className="mt-2 justify-center flex gap-2">
-                                  {renderProposalButtons(
-                                    effectiveStatus,
+                                  {renderProposalButtons({
+                                    status: effectiveStatus,
                                     bounty,
                                     proposal,
                                     onSendReward,
                                     onAcceptProposal,
-                                    onDenyProposal
-                                  )}
+                                    onDenyProposal,
+                                    isLoading,
+                                    setProposalLoading,
+                                  })}
                                 </div>
                               </div>
                             </li>
@@ -133,16 +229,17 @@ export default function DashboardBounties({
                         })}
                       </ul>
 
+
                       {/* DELETE Button if an accepted proposal exists */}
-                      {hasAcceptedProposal && (
+                      {hasAcceptedProposal && !hasDeleteBtnPending && (
                         <div className="flex justify-center mt-2">
                           <Button
                             onClick={() =>
                               handleDeleteBounty(wallet, publicKey!, bounty, setTxStatus, mutate)
                             }
-                            className="btn btn-error btn-sm"
+                            className="btn btn-error btn-sm mt-4"
                           >
-                            Delete Data
+                            Close Bounty and Delete Data
                           </Button>
                         </div>
                       )}
@@ -158,7 +255,7 @@ export default function DashboardBounties({
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-primary">
+            <p className="text-sm text-primary-content">
               <strong>Tip:</strong> If your dashboard is loading slow, delete old bounties.
             </p>
           </div>
@@ -168,56 +265,122 @@ export default function DashboardBounties({
   );
 }
 
-// Helper: Which buttons to display for a given proposal status
-function renderProposalButtons(
-  status: ProposalStage,
-  bounty: BountyData,
-  proposal: ProposalData,
-  onSendReward: (b: BountyData, p: ProposalData) => void,
-  onAcceptProposal: (b: BountyData, p: ProposalData) => void,
-  onDenyProposal: (b: BountyData, p: ProposalData) => void
-) {
+// --------------------------------------------------
+// The button rendering remains unchanged except for
+// the existing 'renderProposalButtons' you already have
+// --------------------------------------------------
+
+type RenderButtonsProps = {
+  status: ProposalStage;
+  bounty: BountyData;
+  proposal: ProposalData;
+  onSendReward: (b: BountyData, p: ProposalData) => Promise<void> | void;
+  onAcceptProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
+  onDenyProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
+  isLoading: boolean;
+  setProposalLoading: (proposalId: number, isLoading: boolean) => void;
+};
+
+function renderProposalButtons({
+  status,
+  bounty,
+  proposal,
+  onSendReward,
+  onAcceptProposal,
+  onDenyProposal,
+  isLoading,
+  setProposalLoading,
+}: RenderButtonsProps) {
+  if (isLoading) {
+    return (
+      <div className="mb-4">
+        <Button className="btn btn-info btn-sm" disabled>
+          Submitting...
+        </Button>
+      </div>
+    );
+  }
+
   switch (status) {
     case 'accepted':
       return (
-        <Button className="btn btn-success btn-sm" disabled>
-          Accept Proposal
-        </Button>
+        <div className="mb-4 flex space-x-2">
+          <Button className="btn btn-gray-100 btn-sm" disabled>
+            Send Reward
+          </Button>
+          <Button className="btn btn-error btn-sm" disabled>
+            Deny
+          </Button>
+        </div>
       );
     case 'denied':
       return (
-        <>
+        <div className="mb-4 flex space-x-2">
           <Button className="btn btn-primary btn-sm" disabled>
             Send Reward
           </Button>
           <Button className="btn btn-error btn-sm" disabled>
             Deny
           </Button>
-        </>
+        </div>
       );
     case 'processing':
       return (
-        <Button className="btn btn-info btn-sm" disabled>
-          Submitting...
-        </Button>
+        <div className="mb-4">
+          <Button className="btn btn-info btn-sm" disabled>
+            Submitting...
+          </Button>
+        </div>
       );
     case 'rewardSent':
       return (
-        <Button className="btn btn-success btn-sm" onClick={() => onAcceptProposal(bounty, proposal)}>
-          Accept Proposal
-        </Button>
+        <div className="mb-4">
+          <Button
+            className="btn btn-success btn-sm"
+            onClick={async () => {
+              setProposalLoading(proposal.proposalId, true);
+              try {
+                await onAcceptProposal(bounty, proposal);
+              } finally {
+                setProposalLoading(proposal.proposalId, false);
+              }
+            }}
+          >
+            Accept Proposal
+          </Button>
+        </div>
       );
     case 'initial':
     default:
       return (
-        <>
-          <Button className="btn btn-primary btn-sm" onClick={() => onSendReward(bounty, proposal)}>
+        <div className="mb-4 space-x-2">
+          <Button
+            className="btn btn-primary btn-sm"
+            onClick={async () => {
+              setProposalLoading(proposal.proposalId, true);
+              try {
+                await onSendReward(bounty, proposal);
+              } finally {
+                setProposalLoading(proposal.proposalId, false);
+              }
+            }}
+          >
             Send Reward
           </Button>
-          <Button className="btn btn-error btn-sm" onClick={() => onDenyProposal(bounty, proposal)}>
+          <Button
+            className="btn btn-error btn-sm"
+            onClick={async () => {
+              setProposalLoading(proposal.proposalId, true);
+              try {
+                await onDenyProposal(bounty, proposal);
+              } finally {
+                setProposalLoading(proposal.proposalId, false);
+              }
+            }}
+          >
             Deny
           </Button>
-        </>
+        </div>
       );
   }
 }

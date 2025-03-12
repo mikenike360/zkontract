@@ -7,9 +7,9 @@ export type ProposalData = {
   proposerAddress: string;
   proposalText?: string;
   fileName?: string;
-  fileUrl?: string; // NEW: URL of the uploaded file
+  fileUrl?: string; 
   status?: string;
-  rewardSent?: boolean; // NEW: indicates if the reward has been sent
+  rewardSent?: boolean;
 };
 
 export type BountyData = {
@@ -88,7 +88,7 @@ export default function ProposalItem({
     : '';
 
   return (
-    <div className="card bg-primary shadow p-3">
+    <div className="card bg-primary shadow p-3 resize overflow-auto">
       <p className="text-sm text-primary-content mt-1">
         {displayedText}
       </p>
@@ -116,12 +116,12 @@ export default function ProposalItem({
       )}
 
       {proposal.fileUrl && (
-        <div className="mt-1">
+        <div className="mt-1 ">
           <a
             href={proposal.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="link link-primary text-xs underline"
+            className="link link-primary-content text-xs underline"
           >
             View / Download Attachment
           </a>

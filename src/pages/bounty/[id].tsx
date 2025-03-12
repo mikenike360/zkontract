@@ -111,7 +111,7 @@ const handleSubmitProposal = async () => {
       SUBMIT_PROPOSAL_FUNCTION,
       inputs,
       1_000_000, // 1 ALEO credit in microcredits
-      false
+      true
     );
 
     // Request transaction execution

@@ -1,5 +1,4 @@
 // publicTransfer.ts
-
 import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 
@@ -17,6 +16,7 @@ export const TRANSFER_PUBLIC_FUNCTION = 'transfer_public';
  * @param setTxStatus - Function to update the transaction status in the UI.
  * @param bountyId - The bounty ID.
  * @param proposalId - The proposal ID.
+
  * @returns The transaction ID of the submitted public transfer.
  */
 export async function publicTransfer(
@@ -26,7 +26,7 @@ export async function publicTransfer(
   bountyReward: number,
   setTxStatus: (status: string | null) => void,
   bountyId: number,
-  proposalId: number
+  proposalId: number,
 ): Promise<string> {
   // Format the reward amount (e.g. if bountyReward = 5000, then "5000000u64")
   const rewardAmountforTransfer = `${bountyReward}000000u64`;
@@ -45,7 +45,7 @@ export async function publicTransfer(
     TRANSFER_PUBLIC_FUNCTION,
     transferInput,
     fee,
-    false
+    true
   );
 
   // 3. Send the transaction

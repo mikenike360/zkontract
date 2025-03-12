@@ -44,7 +44,7 @@ export async function handleDenyProposal(
       DENY_PROPOSAL_FUNCTION,
       denyInputs,
       denyFee,
-      false
+      true
     );
 
     console.log('Deny proposal TX =>', denyTx);

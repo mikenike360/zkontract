@@ -51,7 +51,7 @@ export async function handleAcceptProposal(
       ACCEPT_PROPOSAL_FUNCTION,
       acceptInputs,
       acceptFee,
-      false
+      true
     );
 
     console.log('Accept Proposal Transaction =>', acceptTx);

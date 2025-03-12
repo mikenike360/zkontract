@@ -53,7 +53,7 @@ export async function handleDeleteBounty(
       'delete_bounty',
       deleteInputs,
       deleteFee,
-      false
+      true
     );
 
     console.log("Delete transaction:", deleteTx);

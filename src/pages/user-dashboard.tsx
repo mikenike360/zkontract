@@ -92,28 +92,39 @@ export default function UserDashboard() {
       alert('Connect your wallet before accepting proposals.');
       return;
     }
-    if (proposalStages[proposal.proposalId] !== 'rewardSent') {
-      alert('You must send the reward before accepting the proposal.');
-      return;
-    }
+  
     setProposalStages((prev) => ({
       ...prev,
       [proposal.proposalId]: 'processing',
     }));
     const rewardAmount = `${bounty.reward}0000u64`;
     try {
-      await handleAcceptProposal(wallet.adapter as any, publicKey, bounty, proposal, rewardAmount, setTxStatus, mutate);
+      await handleAcceptProposal(
+        wallet.adapter as any,
+        publicKey,
+        bounty,
+        proposal,
+        rewardAmount,
+        setTxStatus,
+        mutate
+      );
       setProposalStages((prev) => ({
         ...prev,
         [proposal.proposalId]: 'accepted',
       }));
-      mutate(undefined, true);
+      mutate();
     } catch (err) {
       console.error('Error accepting proposal:', err);
       alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      // Revert the proposal stage back to 'initial'
+      setProposalStages((prev) => ({
+        ...prev,
+        [proposal.proposalId]: 'initial',
+      }));
       setTxStatus(null);
     }
   }
+  
 
   async function onDenyProposal(bounty: BountyData, proposal: ProposalData) {
     if (!wallet || !publicKey) {

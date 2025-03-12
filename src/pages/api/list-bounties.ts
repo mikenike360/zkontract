@@ -67,15 +67,11 @@ export default async function handler(
         })
       );
 
-      // Check if any proposal has status "accepted"
-      const hasAcceptedProposal = proposals.some(
-        (proposal) => proposal?.status === 'accepted'
-      );
 
-      // Only include bounties without accepted proposals
-      if (!hasAcceptedProposal) {
+
+      
         activeBounties.push(bountyData);
-      }
+      
     }
 
     res.status(200).json(activeBounties);

@@ -14,7 +14,8 @@ import {
   WalletNotConnectedError,
 } from '@demox-labs/aleo-wallet-adapter-base';
 
-const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
+import { BOUNTY_PROGRAM_ID } from '@/types';
+
 const POST_BOUNTY_FUNCTION = 'post_bounty';
 
 function PostBountyPage() {
@@ -122,8 +123,10 @@ function PostBountyPage() {
         publicKey,               
         `${newBountyId}u64`,     
         publicKey,               
-        `${reward}u64`,          
+        `${reward}000000u64`,          
       ];
+
+      console.log('Post bounty inputs:', inputs);
 
       const bountyTransaction = Transaction.createTransaction(
         publicKey,
@@ -132,7 +135,7 @@ function PostBountyPage() {
         POST_BOUNTY_FUNCTION,
         inputs,
         1_000_000,
-        true
+        false
       );
 
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);

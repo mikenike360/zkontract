@@ -4,7 +4,7 @@ import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapt
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { BountyData, ProposalData } from '@/components/ui/ProposalItem';
 
-export const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
+import { BOUNTY_PROGRAM_ID } from '@/types';
 export const DENY_PROPOSAL_FUNCTION = 'deny_proposal';
 
 /**

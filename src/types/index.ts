@@ -26,3 +26,5 @@ export type BountyData = {
   creatorAddress: string;
   proposals?: ProposalData[];
 };
+
+export const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';

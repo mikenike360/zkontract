@@ -15,6 +15,8 @@ import {
   WalletAdapterNetwork,
 } from '@demox-labs/aleo-wallet-adapter-base';
 
+import { BOUNTY_PROGRAM_ID } from '@/types';
+
 // Bounty data type
 type Bounty = {
   id: number | string;
@@ -35,7 +37,7 @@ const fetchBounty = async (url: string) => {
 };
 
 // Contract constants
-const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
+
 const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal';
 
 const BountyPage = () => {

@@ -1,7 +1,8 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
+import { BOUNTY_PROGRAM_ID } from '@/types';
 
 export const TESTNETBETA_API_URL = process.env.RPC_URL!;
-export const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
+
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 const ALEO_URL = 'https://testnetbeta.aleorpc.com/';
 
@@ -62,13 +63,13 @@ export async function fetchBountyStatusAndReward(bountyId: string) {
 
 
     const statusResult = await client.request('getMappingValue', {
-      program_id: 'zkontractv5.aleo',
+      program_id: BOUNTY_PROGRAM_ID,
       mapping_name: 'bounty_status',
       key: keyU64,
     });
 
     const rewardResult = await client.request('getMappingValue', {
-      program_id: 'zkontractv5.aleo',
+      program_id: BOUNTY_PROGRAM_ID,
       mapping_name: 'bounty_reward',
       key: keyU64,
     });

@@ -3,7 +3,7 @@ import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapt
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import type { BountyData } from '@/components/ui/ProposalItem';
 
-const BOUNTY_PROGRAM_ID = 'zkontractv5.aleo';
+import { BOUNTY_PROGRAM_ID } from '@/types';
 
 /**
  * Handles deleting a bounty by performing two actions:

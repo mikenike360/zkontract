@@ -66,12 +66,16 @@ export async function privateTransfer(
 
   const chosenRecord = transferCandidates[0];
 
+  console.log('Chosen record:', chosenRecord);
+
   // 4. Create transaction inputs
   const txInputs = [
     chosenRecord,      // The record we’ll spend
     proposerAddress,   // The address receiving the funds
     rewardAmountforTransfer,
   ];
+
+  console.log('Private transfer inputs:', txInputs);
 
   // 5. Build the transaction
   //    Replaced the 'false' with our `payFeesPrivately` param.

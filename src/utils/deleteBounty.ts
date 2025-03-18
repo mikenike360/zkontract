@@ -5,6 +5,11 @@ import type { BountyData } from '@/components/ui/ProposalItem';
 
 import { BOUNTY_PROGRAM_ID } from '@/types';
 
+// Import the fee calculator function
+import { getFeeForFunction } from '@/utils/feeCalculator';
+
+const DELETE_BOUNTY_FUNCTION = 'delete_bounty';
+
 /**
  * Handles deleting a bounty by performing two actions:
  * 1. Creates a blockchain transaction that calls the `delete_bounty` function.
@@ -37,32 +42,25 @@ export async function handleDeleteBounty(
   try {
     setTxStatus("Deleting bounty...");
 
-    // Build the transaction for the `delete_bounty` function.
-    // Here we mimic the accept solution formatting:
-    //  - caller is passed as the public key (without the '.private' suffix)
-    //  - bounty id is formatted with a "u64" suffix.
     const deleteInputs = [publicKey, `${bounty.id}u64`];
-    const deleteFee = 1000000; // Adjust fee if needed
-
-    console.log(deleteInputs);
+    
+    const fee = getFeeForFunction(DELETE_BOUNTY_FUNCTION);
+    console.log('Calculated fee (in micro credits):', fee);
 
     const deleteTx = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.TestnetBeta,
       BOUNTY_PROGRAM_ID, // BOUNTY_PROGRAM_ID
-      'delete_bounty',
+      DELETE_BOUNTY_FUNCTION,
       deleteInputs,
-      deleteFee,
+      fee,
       true
     );
 
-    console.log("Delete transaction:", deleteTx);
-
     // Submit the transaction and get its transaction ID.
     const deleteTxId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(deleteTx);
-    console.log("Delete bounty transaction submitted:", deleteTxId);
+    
     setTxStatus("Called delete_bounty transaction...");
-
 
     // Now call the API endpoint to remove the bounty metadata and associated proposals from S3.
     const res = await fetch("/api/delete-bounty", {

@@ -6,6 +6,9 @@ import { BountyData, ProposalData } from '@/components/ui/ProposalItem';
 
 import { BOUNTY_PROGRAM_ID } from '@/types';
 
+// Import the fee calculator function
+import { getFeeForFunction } from '@/utils/feeCalculator';
+
 export const ACCEPT_PROPOSAL_FUNCTION = 'accept_proposal';
 
 
@@ -44,14 +47,16 @@ export async function handleAcceptProposal(
       rewardAmountforTransfer,              // Payment amount (e.g. "5000000u64")
     ];
 
-    const acceptFee = 1_000_000;
+    const fee = getFeeForFunction(ACCEPT_PROPOSAL_FUNCTION);
+    console.log('Calculated fee (in micro credits):', fee);
+
     const acceptTx = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.TestnetBeta,
       BOUNTY_PROGRAM_ID,
       ACCEPT_PROPOSAL_FUNCTION,
       acceptInputs,
-      acceptFee,
+      fee,
       true
     );
 

@@ -7,15 +7,13 @@ import Layout from '@/layouts/_layout';
 import BackArrow from '@/components/ui/BackArrow';
 import useSWR from 'swr';
 
-// 1) Import wallet adapter hooks & classes
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
-import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
-import {
-  Transaction,
-  WalletAdapterNetwork,
-} from '@demox-labs/aleo-wallet-adapter-base';
-
 import { BOUNTY_PROGRAM_ID } from '@/types';
+
+// Import the new submitProposal function
+import { submitProposal } from '@/utils/submitProposal';
+
+const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal'; // not needed here anymore if defined in utils
 
 // Bounty data type
 type Bounty = {
@@ -26,7 +24,6 @@ type Bounty = {
   deadline: string;
 };
 
-// We fetch bounty from S3 via /api/get-bounty?id=<id>
 const fetchBounty = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
@@ -36,40 +33,29 @@ const fetchBounty = async (url: string) => {
   return res.json() as Promise<Bounty>;
 };
 
-// Contract constants
-
-const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal';
-
 const BountyPage = () => {
   const router = useRouter();
-  const { id } = router.query; // e.g. /bounty/12345 => id = '12345'
-
-  // 2) Access wallet & publicKey
+  const { id } = router.query;
   const { wallet, publicKey } = useWallet();
 
-  // 3) SWR fetch for bounty
   const { data: bounty, error, isLoading } = useSWR<Bounty>(
     id ? `/api/get-bounty?id=${id}` : null,
     fetchBounty
   );
 
-  // Proposal modal state
+  // Modal and proposal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proposal, setProposal] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-
-  // Submission state
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
   const [txStatus, setTxStatus] = useState<string | null>(null);
 
-  // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setUploadedFile(e.target.files[0]);
     }
   };
 
-  // Open/close modal
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -77,163 +63,54 @@ const BountyPage = () => {
     setUploadedFile(null);
   };
 
-// 4) Submit proposal by calling `submit_proposal` on-chain, then uploading to S3
-const handleSubmitProposal = async () => {
-  if (!wallet || !publicKey) {
-    alert('Please connect your Aleo wallet before submitting a proposal.');
-    return;
-  }
-  if (!id) {
-    alert('No bounty ID found. Invalid route?');
-    return;
-  }
-
-  try {
-    setIsSubmittingProposal(true);
-    setTxStatus(null);
-
-    // Convert "id" from string => number
-    const bountyId = Number(id);
-    // Generate a unique proposalId; contract uses bountyId * 1_000_000 + proposalId
-    // We'll just pick a reasonably sized proposalId
-    const proposalId = Math.floor(Date.now() % 1000000);
-
-    const inputs = [
-      publicKey,             // caller
-      `${bountyId}u64`,      // bounty_id
-      `${proposalId}u64`,    // proposal_id
-      publicKey,             // proposer_address
-    ];
-
-    // Create the transaction
-    const proposalTx = Transaction.createTransaction(
-      publicKey,
-      WalletAdapterNetwork.TestnetBeta,
-      BOUNTY_PROGRAM_ID,
-      SUBMIT_PROPOSAL_FUNCTION,
-      inputs,
-      1_000_000, // 1 ALEO credit in microcredits
-      true
-    );
-
-    // Request transaction execution
-    const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
-    console.log('Proposal transaction submitted:', txId);
-
-    // Poll for finalization
-    let finalized = false;
-    const maxRetries = 300;
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
-      console.log(`Status check #${attempt + 1}: ${status}`);
-      setTxStatus(status);
-
-      if (status === 'Finalized') {
-        finalized = true;
-        break;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Refactored submit proposal handler using our utility function
+  const handleSubmitProposal = async () => {
+    if (!wallet || !publicKey) {
+      alert('Please connect your Aleo wallet before submitting a proposal.');
+      return;
+    }
+    if (!id) {
+      alert('No bounty ID found. Invalid route?');
+      return;
     }
 
-    if (!finalized) {
-      throw new Error('Transaction did not finalize in time.');
-    }
+    try {
+      setIsSubmittingProposal(true);
+      setTxStatus(null);
 
-    // Prepare the proposal metadata
-    const proposalMetadata = {
-      bountyId,
-      proposalId,
-      caller: publicKey,
-      proposerAddress: publicKey,
-      proposalText: proposal,
-      status: "Pending",
-      rewardSent: false
-      // Additional fields can be added here if needed
-    };
+      const bountyId = Number(id);
 
-    let fileUrl: string | undefined;
-    let fileName: string | undefined;
-
-    // If a file is attached, upload it via /api/upload-file
-    // Note: We are NOT sending metadata here because the file endpoint only handles files.
-    if (uploadedFile) {
-      const formData = new FormData();
-      formData.append('proposalId', proposalId.toString());
-      formData.append('file', uploadedFile, uploadedFile.name);
-
-      const fileRes = await fetch('/api/upload-file', {
-        method: 'POST',
-        body: formData,
+      // Call our refactored function from /utils/submit_proposal.ts
+      const { txId, proposalId } = await submitProposal({
+        wallet,
+        publicKey,
+        bountyId,
+        proposalText: proposal,
+        uploadedFile,
       });
-      const fileData = await fileRes.json();
-      if (!fileRes.ok) {
-        throw new Error(fileData.error || 'Failed to upload file');
-      }
-      fileUrl = fileData.url;
-      fileName = uploadedFile.name;
+
+      console.log('Proposal submitted successfully:', txId);
+      // Optionally, update txStatus based on further polling if desired.
+      alert('Proposal submitted successfully!');
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error submitting proposal:', error);
+      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSubmittingProposal(false);
     }
+  };
 
-    // Merge the file URL and file name into the metadata if a file was uploaded
-    const completeMetadata = {
-      ...proposalMetadata,
-      ...(fileUrl ? { fileUrl, fileName } : {}),
-    };
-
-    // Upload the proposal metadata via /api/upload-proposal.
-    // Both proposalId and metadata are sent as strings.
-    const metaRes = await fetch('/api/upload-proposal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        proposalId: proposalId.toString(),
-        metadata: JSON.stringify(completeMetadata),
-      }),
-    });
-    const metaData = await metaRes.json();
-    if (!metaRes.ok) {
-      throw new Error(metaData.error || 'Failed to upload proposal metadata');
-    }
-
-    alert('Proposal submitted successfully!');
-    handleCloseModal();
-  } catch (error) {
-    console.error('Error submitting proposal:', error);
-    alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
-  } finally {
-    setIsSubmittingProposal(false);
-  }
-};
-
-
-
-
-
-  // Loading states
   if (isLoading) {
-    return (
-      <div className="text-center text-gray-500">
-        Loading bounty...
-      </div>
-    );
+    return <div className="text-center text-gray-500">Loading bounty...</div>;
   }
   if (error) {
-    return (
-      <div className="text-center text-red-500">
-        Error: {error.message}
-      </div>
-    );
+    return <div className="text-center text-red-500">Error: {error.message}</div>;
   }
   if (!bounty) {
-    return (
-      <div className="text-center text-gray-500">
-        Bounty not found.
-      </div>
-    );
+    return <div className="text-center text-gray-500">Bounty not found.</div>;
   }
 
-  // Rendering the page
   return (
     <>
       <NextSeo
@@ -241,38 +118,27 @@ const handleSubmitProposal = async () => {
         description={`Details of bounty: ${bounty.title}`}
       />
       <div className="mx-auto mt-12 w-full sm:w-11/12 md:w-10/12 lg:w-9/12 px-4 sm:px-6 lg:px-8 py-12">
-
-
-        <h1 className="text-2xl font-bold text-primary-content">
-          {bounty.title}
-        </h1>
-        <p className="mt-4 text-primary-content">
-          {bounty.description}
-        </p>
+        <h1 className="text-2xl font-bold text-primary-content mt-12">{bounty.title}</h1>
+        <p className="mt-4 text-primary-content">{bounty.description}</p>
         <div className="mt-8 flex justify-between items-center">
-          <span className="text-md font-medium text-green-600">
-            Reward: {bounty.reward}
-          </span>
-          <span className="text-sm text-primary-content">
-            Deadline: {bounty.deadline}
-          </span>
+          <span className="text-md font-medium text-green-600">Reward: {bounty.reward}</span>
+          <span className="text-sm text-primary-content">Deadline: {bounty.deadline}</span>
         </div>
-
-        {/* Submit Proposal Button */}
         <div className="mt-12">
           <button
             onClick={handleOpenModal}
-            className=" py-3 px-4 bg-secondary-content text-secondary rounded-md shadow hover:opacity-75"
+            className="py-3 px-4 bg-secondary-content text-secondary rounded-md shadow hover:opacity-75"
           >
             Submit A Proposal
           </button>
         </div>
-
         <div className="mb-6">
-          <BackArrow />
-        </div>
 
-        {/* Show transaction status (optional) */}
+    {/* Back Arrow */}
+     <div className="mb-6">
+          <BackArrow />
+          </div>
+        </div>
         {txStatus && (
           <div className="mt-4 text-center text-sm text-primary-content">
             Transaction Status: {txStatus}
@@ -280,13 +146,10 @@ const handleSubmitProposal = async () => {
         )}
       </div>
 
-      {/* Proposal Submission Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-lg font-bold text-primary-content mb-4">
-              Submit Proposal
-            </h2>
+            <h2 className="text-lg font-bold text-primary-content mb-4">Submit Proposal</h2>
             <textarea
               value={proposal}
               onChange={(e) => setProposal(e.target.value)}
@@ -294,18 +157,14 @@ const handleSubmitProposal = async () => {
               className="w-full p-3 border rounded-md text-black"
             />
             <div className="mt-4">
-              <label className="block text-sm font-medium text-primary-content">
-                Attach a File
-              </label>
+              <label className="block text-sm font-medium text-primary-content">Attach a File</label>
               <input
                 type="file"
                 onChange={handleFileUpload}
-                className="mt-2 block w-full text-sm text-primary-content file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                className="mt-2 block w-full text-sm text-primary-content"
               />
               {uploadedFile && (
-                <p className="mt-2 text-sm text-green-600">
-                  Selected File: {uploadedFile.name}
-                </p>
+                <p className="mt-2 text-sm text-green-600">Selected File: {uploadedFile.name}</p>
               )}
             </div>
             <div className="mt-4 flex justify-between">
@@ -324,10 +183,7 @@ const handleSubmitProposal = async () => {
               </button>
             </div>
           </div>
-
-      </div>
-
-        
+        </div>
       )}
     </>
   );
@@ -336,6 +192,5 @@ const handleSubmitProposal = async () => {
 BountyPage.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };
-
 
 export default BountyPage;

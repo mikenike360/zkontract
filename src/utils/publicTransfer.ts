@@ -45,7 +45,7 @@ export async function publicTransfer(
     TRANSFER_PUBLIC_FUNCTION,
     transferInput,
     fee,
-    true
+    false
   );
 
   // 3. Send the transaction

@@ -16,6 +16,9 @@ import {
 
 import { BOUNTY_PROGRAM_ID } from '@/types';
 
+// Import the fee calculator function
+import { getFeeForFunction } from '@/utils/feeCalculator';
+
 const POST_BOUNTY_FUNCTION = 'post_bounty';
 
 function PostBountyPage() {
@@ -73,7 +76,7 @@ function PostBountyPage() {
         description, 
         reward, 
         deadline, 
-        creatorAddress: publicKey  // new field
+        creatorAddress: publicKey
       };
 
       const res = await fetch('/api/upload-bounty', {
@@ -120,13 +123,17 @@ function PostBountyPage() {
       setBountyId(newBountyId);
 
       const inputs = [
-        publicKey,               
-        `${newBountyId}u64`,     
-        publicKey,               
-        `${reward}000000u64`,          
+        publicKey,               // caller
+        `${newBountyId}u64`,     // bounty_id
+        publicKey,               // creator_address
+        `${reward}000000u64`,    // payment_amount in micro credits
       ];
 
       console.log('Post bounty inputs:', inputs);
+
+      // Use the fee calculator to get the fee for the post_bounty function
+      const fee = getFeeForFunction(POST_BOUNTY_FUNCTION);
+      console.log('Calculated fee (in micro credits):', fee);
 
       const bountyTransaction = Transaction.createTransaction(
         publicKey,
@@ -134,12 +141,11 @@ function PostBountyPage() {
         BOUNTY_PROGRAM_ID,
         POST_BOUNTY_FUNCTION,
         inputs,
-        1_000_000,
+        fee, // dynamically calculated fee
         false
       );
 
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);
-
       
       console.log('Transaction submitted:', txId);
       setTransactionId(txId);
@@ -157,12 +163,9 @@ function PostBountyPage() {
         description="Post a new bounty to the zKontract system."
       />
       <div className="text-primary-content mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 mt-12">
-
-
         <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           Post a Bounty
         </h1>
-
         <form
           onSubmit={handleSubmit}
           className="bg-secondary p-6 rounded-lg shadow-lg"
@@ -236,7 +239,6 @@ function PostBountyPage() {
         <div className="mb-6">
           <BackArrow />
         </div>
-
         {transactionId && (
           <div className="mt-4 text-center">
             <div><strong>Transaction ID:</strong> {transactionId}</div>

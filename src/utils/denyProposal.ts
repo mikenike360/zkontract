@@ -5,6 +5,8 @@ import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { BountyData, ProposalData } from '@/components/ui/ProposalItem';
 
 import { BOUNTY_PROGRAM_ID } from '@/types';
+// Import the fee calculator function
+import { getFeeForFunction } from '@/utils/feeCalculator';
 export const DENY_PROPOSAL_FUNCTION = 'deny_proposal';
 
 /**
@@ -36,14 +38,15 @@ export async function handleDenyProposal(
       `${proposal.proposalId}u64`,  // Proposal ID
     ];
 
-    const denyFee = 1_000_000; // Adjust if needed
+    const fee = getFeeForFunction(DENY_PROPOSAL_FUNCTION);
+    console.log('Calculated fee (in micro credits):', fee);
     const denyTx = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.TestnetBeta,
       BOUNTY_PROGRAM_ID,
       DENY_PROPOSAL_FUNCTION,
       denyInputs,
-      denyFee,
+      fee,
       true
     );
 

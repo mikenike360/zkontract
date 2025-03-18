@@ -48,6 +48,18 @@ type ProposalItemProps = {
   showActions?: boolean; // Controls whether Accept/Deny buttons should show
 };
 
+// Helper function to extract the S3 object key from a full URL
+function extractS3Key(url: string): string {
+  try {
+    const parsedUrl = new URL(url);
+    // Remove the leading '/' from the pathname
+    return parsedUrl.pathname.startsWith('/') ? parsedUrl.pathname.slice(1) : parsedUrl.pathname;
+  } catch (error) {
+    console.error('Invalid URL provided:', url);
+    return url;
+  }
+}
+
 export default function ProposalItem({
   proposal,
   bounty,
@@ -57,6 +69,8 @@ export default function ProposalItem({
 }: ProposalItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [blockchainStatus, setBlockchainStatus] = useState<string | undefined>(undefined);
+  // New state for the temporary (presigned) URL
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const maxChars = 300;
 
   useEffect(() => {
@@ -87,6 +101,20 @@ export default function ProposalItem({
       : proposal.proposalText.slice(0, maxChars) + '...'
     : '';
 
+    const fetchSignedUrl = async () => {
+      if (!proposal.fileUrl) return;
+      const fileKey = extractS3Key(proposal.fileUrl);
+    
+      try {
+        const response = await fetch(`/api/get-presigned-url?key=${encodeURIComponent(fileKey)}`);
+        const data = await response.json();
+        setSignedUrl(data.url);
+      } catch (error) {
+        console.error('Error fetching signed URL:', error);
+      }
+    };
+    
+
   return (
     <div className="card bg-primary shadow p-3 resize overflow-auto">
       <p className="text-sm text-primary-content mt-1">
@@ -116,15 +144,24 @@ export default function ProposalItem({
       )}
 
       {proposal.fileUrl && (
-        <div className="mt-1 ">
-          <a
-            href={proposal.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link link-primary-content text-xs underline"
-          >
-            View / Download Attachment
-          </a>
+        <div className="mt-1">
+          {signedUrl ? (
+            <a
+              href={signedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link link-primary-content text-xs underline"
+            >
+              View / Download Attachment
+            </a>
+          ) : (
+            <button
+              onClick={fetchSignedUrl}
+              className="btn btn-link btn-xs text-primary-content mt-1"
+            >
+              Generate Link
+            </button>
+          )}
         </div>
       )}
 

@@ -7,6 +7,7 @@ import { BountyData, ProposalData } from '@/components/ui/ProposalItem';
 import { BOUNTY_PROGRAM_ID } from '@/types';
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+
 export const DENY_PROPOSAL_FUNCTION = 'deny_proposal';
 
 /**
@@ -26,7 +27,7 @@ export async function handleDenyProposal(
   bounty: BountyData,
   proposal: ProposalData,
   setTxStatus: (status: string | null) => void,
-  mutate: () => void
+  
 ) {
   try {
     setTxStatus('Denying proposal...');
@@ -90,7 +91,7 @@ export async function handleDenyProposal(
 
     alert('Proposal denied successfully!');
     setTxStatus('Proposal denied successfully!');
-    mutate();
+    
   } catch (err) {
     console.error('Error denying proposal:', err);
     alert(`Error: ${err instanceof Error ? err.message : String(err)}`);

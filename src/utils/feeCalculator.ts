@@ -11,6 +11,8 @@ export interface FeeMapping {
     accept_proposal: 0.027616,
     deny_proposal: 0.01445,
     delete_bounty: 0.033482,
+    transfer_public: 0.04406,
+    transfer_private: 0.04406,
   };
   
   /**

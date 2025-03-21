@@ -128,6 +128,7 @@ module.exports = {
       'black',
       'luxury',
       'dracula',
+      'synthwave',
     ],
   },
 };

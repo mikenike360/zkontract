@@ -6,6 +6,9 @@ import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 export const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
 
+// Import the fee calculator function
+import { getFeeForFunction } from '@/utils/feeCalculator';
+
 /**
  * Executes a private transfer of credits to a target address, then updates the reward state via the API.
  *
@@ -77,6 +80,9 @@ export async function privateTransfer(
 
   console.log('Private transfer inputs:', txInputs);
 
+  const fee = getFeeForFunction(TRANSFER_PRIVATE_FUNCTION);
+  console.log('Calculated fee (in micro credits):', fee);
+
   // 5. Build the transaction
   //    Replaced the 'false' with our `payFeesPrivately` param.
   const transaction = Transaction.createTransaction(
@@ -85,7 +91,7 @@ export async function privateTransfer(
     CREDITS_PROGRAM_ID,
     TRANSFER_PRIVATE_FUNCTION,
     txInputs,
-    100000,
+    fee,
     true   
   );
 
@@ -99,7 +105,7 @@ export async function privateTransfer(
     const status = await wallet.transactionStatus(txId);
     setTxStatus(`Attempt ${attempt + 1}: ${status}`);
 
-    if (status === 'Completed' || status === 'Finalized') {
+    if (status === 'Finalized') {
       finalized = true;
       break;
     }
@@ -128,6 +134,6 @@ export async function privateTransfer(
     throw new Error('Failed to update reward status.');
   }
   setTxStatus('Reward status updated.');
-
   return txId;
+  
 }

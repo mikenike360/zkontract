@@ -6,7 +6,6 @@ import { ProposalData, BountyData } from '@/types';
 import { handleDeleteBounty } from '@/utils/deleteBounty';
 
 export type ProposalStage = 'initial' | 'processing' | 'rewardSent' | 'accepted' | 'denied';
-
 export type DeleteBtnStage = 'accepted' | 'pending';
 
 type DashboardBountiesProps = {
@@ -48,7 +47,7 @@ function getEffectiveStatus(
 ): ProposalStage {
   const rawStatus = proposal.status?.toLowerCase().trim() || 'initial';
 
-  console.log(rawStatus);
+  
 
   if (rawStatus === 'accepted') {
     return 'accepted';
@@ -67,19 +66,16 @@ function getEffectiveStatus(
   return 'initial';
 }
 
-function getDeleteBtnEffectiveStatus(
-  proposal: ProposalData,
-): DeleteBtnStage {
+function getDeleteBtnEffectiveStatus(proposal: ProposalData): DeleteBtnStage {
   const rawStatus = proposal.status?.toLowerCase().trim();
 
-  console.log(rawStatus);
+  
 
   if (rawStatus === 'pending') {
     return 'pending';
   }
   return 'accepted';
 }
-
 
 export default function DashboardBounties({
   bounties,
@@ -117,16 +113,12 @@ export default function DashboardBounties({
     }));
   }
 
-
-
-
-
   return (
     <div>
       <h2 className="text-xl font-semibold text-primary-content mb-4">My Posted Bounties</h2>
 
       {bounties.length === 0 ? (
-        <p className="text-base-content">You haven’t posted any bounties yet.</p>
+        <p className="text-primary-content">You haven’t posted any bounties yet.</p>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-primary-content">
@@ -136,7 +128,7 @@ export default function DashboardBounties({
                 (p) => getEffectiveStatus(p, proposalStages) === 'accepted'
               );
 
-              // NEW: Check if any proposal returns 'pending' using our helper.
+              // Check if any proposal returns 'pending' using our helper.
               const hasDeleteBtnPending = bounty.proposals?.some(
                 (p) => getDeleteBtnEffectiveStatus(p) === 'pending'
               );
@@ -144,7 +136,7 @@ export default function DashboardBounties({
               return (
                 <div
                   key={bounty.id}
-                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content resize overflow-auto"
+                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content resize overflow-auto "
                 >
                   <h3 className="text-lg font-medium text-base-content mb-1">
                     {bounty.title} (ID: {bounty.id})
@@ -174,15 +166,7 @@ export default function DashboardBounties({
 
                         {/* NEW: fee toggle */}
                         <label className="inline-flex items-center cursor-pointer">
-                          {/* <span className="mr-2 text-sm text-primary">
-                            Pay transaction fee privately?
-                          </span> */}
-                          {/* <input
-                            type="checkbox"
-                            className="toggle toggle-primary focus:outline-none"
-                            checked={feeTransferMethod[bounty.id] ?? false}
-                            onChange={(e) => onToggleFeeMethod(bounty.id, e.target.checked)}
-                          /> */}
+                          {/* Optionally, you could add a fee toggle here */}
                         </label>
                       </div>
 
@@ -221,6 +205,7 @@ export default function DashboardBounties({
                                     onDenyProposal,
                                     isLoading,
                                     setProposalLoading,
+                                    mutate, // Passing mutate to the button renderer
                                   })}
                                 </div>
                               </div>
@@ -228,7 +213,6 @@ export default function DashboardBounties({
                           );
                         })}
                       </ul>
-
 
                       {/* DELETE Button if an accepted proposal exists */}
                       {hasAcceptedProposal && !hasDeleteBtnPending && (
@@ -266,8 +250,7 @@ export default function DashboardBounties({
 }
 
 // --------------------------------------------------
-// The button rendering remains unchanged except for
-// the existing 'renderProposalButtons' you already have
+// Button rendering for proposals with mutate integration
 // --------------------------------------------------
 
 type RenderButtonsProps = {
@@ -279,6 +262,7 @@ type RenderButtonsProps = {
   onDenyProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
   isLoading: boolean;
   setProposalLoading: (proposalId: number, isLoading: boolean) => void;
+  mutate: () => void;
 };
 
 function renderProposalButtons({
@@ -290,6 +274,7 @@ function renderProposalButtons({
   onDenyProposal,
   isLoading,
   setProposalLoading,
+  mutate,
 }: RenderButtonsProps) {
   if (isLoading) {
     return (
@@ -341,6 +326,7 @@ function renderProposalButtons({
               setProposalLoading(proposal.proposalId, true);
               try {
                 await onAcceptProposal(bounty, proposal);
+                mutate(); // Refresh data after accepting proposal
               } finally {
                 setProposalLoading(proposal.proposalId, false);
               }
@@ -360,6 +346,7 @@ function renderProposalButtons({
               setProposalLoading(proposal.proposalId, true);
               try {
                 await onSendReward(bounty, proposal);
+                mutate(); // Refresh data after sending reward
               } finally {
                 setProposalLoading(proposal.proposalId, false);
               }
@@ -373,6 +360,7 @@ function renderProposalButtons({
               setProposalLoading(proposal.proposalId, true);
               try {
                 await onDenyProposal(bounty, proposal);
+                mutate(); // Refresh data after denying proposal
               } finally {
                 setProposalLoading(proposal.proposalId, false);
               }

@@ -5,6 +5,9 @@ import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 export const TRANSFER_PUBLIC_FUNCTION = 'transfer_public';
 
+// Import the fee calculator function
+import { getFeeForFunction } from '@/utils/feeCalculator';
+
 /**
  * Executes a public transfer of credits to a target address,
  * then updates the reward state via the API.
@@ -35,7 +38,10 @@ export async function publicTransfer(
 
   // 1. Create the transaction input
   const transferInput = [proposerAddress, rewardAmountforTransfer];
-  const fee = 1_000_000;
+  
+
+  const fee = getFeeForFunction(TRANSFER_PUBLIC_FUNCTION);
+  console.log('Calculated fee (in micro credits):', fee);
 
   // 2. Build the transaction
   const transTx = Transaction.createTransaction(
@@ -45,7 +51,7 @@ export async function publicTransfer(
     TRANSFER_PUBLIC_FUNCTION,
     transferInput,
     fee,
-    false
+    true
   );
 
   // 3. Send the transaction
@@ -84,6 +90,5 @@ export async function publicTransfer(
     throw new Error('Failed to update reward status.');
   }
   setTxStatus('Reward status updated.');
-
   return txId;
 }

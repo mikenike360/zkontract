@@ -168,7 +168,7 @@ export default function UserDashboard() {
           My Dashboard
         </h1>
         <h3 className="text-xl text-primary-content text-center mb-8">
-          Note: Please verify you have enough public Aleo to cover transaction fees!
+          Note: Please verify you have enough PRIVATE Aleo to cover transaction fees!
         </h3>
 
         {isLoading && <p className="text-center text-info">Loading...</p>}

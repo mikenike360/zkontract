@@ -37,11 +37,11 @@ const BountyCard = ({ bounty }: { bounty: Bounty }) => {
       : bounty.description;
 
   return (
-    <div className="card bg-base-100 shadow-lg p-4 hover:shadow-xl transition-shadow flex flex-col min-h-[220px]">
+    <div className="card bg-secondary shadow-lg p-4 hover:shadow-xl transition-shadow flex flex-col min-h-[220px] resize overflow-auto">
       {/* Top Section: Title and Description */}
       <div>
-        <h3 className="text-lg font-medium text-base-content">{bounty.title}</h3>
-        <p className="text-sm text-base-content opacity-80 mt-2">
+        <h3 className="text-lg font-medium text-secondary-content">{bounty.title}</h3>
+        <p className="text-sm text-secondary-content opacity-80 mt-2">
           {shortDescription}
         </p>
       </div>
@@ -51,7 +51,7 @@ const BountyCard = ({ bounty }: { bounty: Bounty }) => {
           <span className="text-sm font-medium text-success">
             Reward: {bounty.reward}
           </span>
-          <span className="text-xs text-neutral">
+          <span className="text-xs text-secondary-content">
             {bounty.deadline}
           </span>
         </div>
@@ -99,13 +99,13 @@ const BoardPage: NextPageWithLayout = () => {
         <div className="flex flex-wrap justify-center gap-4 mb-10">
           <Button
             onClick={handleAddBounty}
-            className="px-6 py-2 btn btn-secondary-content text-sm"
+            className="px-6 py-2 btn btn-secondary text-sm"
           >
             Add Bounty
           </Button>
           <Button
             onClick={handleDashboard}
-            className="px-6 py-2 btn btn-secondary-content text-sm"
+            className="px-6 py-2 btn btn-secondary text-sm"
           >
             Dashboard
           </Button>

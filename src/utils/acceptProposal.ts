@@ -32,7 +32,7 @@ export async function handleAcceptProposal(
   proposal: ProposalData,
   rewardAmount: string,
   setTxStatus: (status: string | null) => void,
-  mutate: () => void
+  
 ) {
   try {
     setTxStatus('Accepting proposal...');
@@ -99,7 +99,7 @@ export async function handleAcceptProposal(
 
     alert('Proposal accepted successfully!');
     setTxStatus('Proposal accepted successfully!');
-    mutate();
+    
   } catch (err) {
     console.error('Error accepting proposal:', err);
     alert(`Error: ${err instanceof Error ? err.message : String(err)}`);

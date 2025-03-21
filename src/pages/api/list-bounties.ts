@@ -42,30 +42,30 @@ export default async function handler(
       const bountyData = JSON.parse(bountyDataObj.Body.toString());
 
       // Fetch all proposals for this bounty
-      const proposalsList = await s3.listObjectsV2({
-        Bucket: bucketName,
-        Prefix: `${proposalsPrefix}${bountyData.id}/`,
-      }).promise();
+      // const proposalsList = await s3.listObjectsV2({
+      //   Bucket: bucketName,
+      //   Prefix: `${proposalsPrefix}${bountyData.id}/`,
+      // }).promise();
 
-      const proposals = await Promise.all(
-        (proposalsList.Contents || []).map(async (proposalObj) => {
-          if (!proposalObj.Key || !proposalObj.Key.endsWith('.json')) return null;
+      // const proposals = await Promise.all(
+      //   (proposalsList.Contents || []).map(async (proposalObj) => {
+      //     if (!proposalObj.Key || !proposalObj.Key.endsWith('.json')) return null;
 
           // 2) Same check for each proposal object
-          const proposalDataObj = await s3.getObject({
-            Bucket: bucketName,
-            Key: proposalObj.Key,
-          }).promise();
+          // const proposalDataObj = await s3.getObject({
+          //   Bucket: bucketName,
+          //   Key: proposalObj.Key,
+          // }).promise();
 
-          if (!proposalDataObj.Body) {
-            console.error(`No body found for proposal object ${proposalObj.Key}`);
-            return null; 
-          }
+          // if (!proposalDataObj.Body) {
+          //   console.error(`No body found for proposal object ${proposalObj.Key}`);
+          //   return null; 
+          // }
 
-          const proposalData = JSON.parse(proposalDataObj.Body.toString());
-          return proposalData;
-        })
-      );
+      //     const proposalData = JSON.parse(proposalDataObj.Body.toString());
+      //     return proposalData;
+      //   })
+      // );
 
 
 

@@ -126,7 +126,7 @@ function PostBountyPage() {
         publicKey,               // caller
         `${newBountyId}u64`,     // bounty_id
         publicKey,               // creator_address
-        `${reward}000000u64`,    // payment_amount in micro credits
+        `${reward}u64`,    // payment_amount in micro credits
       ];
 
       console.log('Post bounty inputs:', inputs);
@@ -168,10 +168,10 @@ function PostBountyPage() {
         </h1>
         <form
           onSubmit={handleSubmit}
-          className="bg-secondary p-6 rounded-lg shadow-lg"
+          className="bg-primary-content p-6 rounded-lg shadow-lg"
         >
           <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-secondary-content">
+            <label htmlFor="title" className="block text-sm font-medium text-primary">
               Title
             </label>
             <input
@@ -185,7 +185,7 @@ function PostBountyPage() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-secondary-content">
+            <label htmlFor="description" className="block text-sm font-medium text-primary">
               Description
             </label>
             <textarea
@@ -198,7 +198,7 @@ function PostBountyPage() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="reward" className="block text-sm font-medium text-secondary-content">
+            <label htmlFor="reward" className="block text-sm font-medium text-primary">
               Reward (ALEO)
             </label>
             <input
@@ -212,7 +212,7 @@ function PostBountyPage() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="deadline" className="block text-sm font-medium text-secondary-content">
+            <label htmlFor="deadline" className="block text-sm font-medium text-primary">
               Deadline
             </label>
             <input

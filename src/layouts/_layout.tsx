@@ -25,6 +25,7 @@ const themes = [
   "black",
   "luxury",
   "dracula",
+  "synthwave",
 ];
 
 // ThemeSelector component using Next Themes

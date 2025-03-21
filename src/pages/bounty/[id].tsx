@@ -13,8 +13,6 @@ import { BOUNTY_PROGRAM_ID } from '@/types';
 // Import the new submitProposal function
 import { submitProposal } from '@/utils/submitProposal';
 
-const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal'; // not needed here anymore if defined in utils
-
 // Bounty data type
 type Bounty = {
   id: number | string;
@@ -80,7 +78,7 @@ const BountyPage = () => {
 
       const bountyId = Number(id);
 
-      // Call our refactored function from /utils/submit_proposal.ts
+      // Call our refactored function from /utils/submitProposal.ts
       const { txId, proposalId } = await submitProposal({
         wallet,
         publicKey,
@@ -90,7 +88,6 @@ const BountyPage = () => {
       });
 
       console.log('Proposal submitted successfully:', txId);
-      // Optionally, update txStatus based on further polling if desired.
       alert('Proposal submitted successfully!');
       handleCloseModal();
     } catch (error) {
@@ -117,39 +114,53 @@ const BountyPage = () => {
         title={`zKontract | ${bounty.title}`}
         description={`Details of bounty: ${bounty.title}`}
       />
-      <div className="mx-auto mt-12 w-full sm:w-11/12 md:w-10/12 lg:w-9/12 px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-2xl font-bold text-primary-content mt-12">{bounty.title}</h1>
-        <p className="mt-4 text-primary-content">{bounty.description}</p>
-        <div className="mt-8 flex justify-between items-center">
-          <span className="text-md font-medium text-green-600">Reward: {bounty.reward}</span>
-          <span className="text-sm text-primary-content">Deadline: {bounty.deadline}</span>
+      <div className="mx-auto mt-12 w-full sm:w-11/12 md:w-10/12 lg:w-8/12 px-4 sm:px-6 lg:px-8 py-12">
+        {/* Card Container */}
+        <div className="card bg-secondary shadow-xl p-8 flex flex-col resize overflow-auto">
+          <div className="flex flex-col gap-6 flex-grow">
+            {/* Header: Title and Description */}
+            <div>
+              <h1 className="text-3xl font-bold text-primary-content">
+                {bounty.title}
+              </h1>
+              <p className="mt-2 text-primary-content">{bounty.description}</p>
+            </div>
+          </div>
+          {/* Footer: Reward and Deadline */}
+          <div className="flex justify-between items-center mt-6 pt-4">
+            <div className="w-1/2 text-center text-lg font-medium text-green-600">
+              Reward: {bounty.reward}
+            </div>
+            <div className="w-1/2 text-center text-lg text-primary-content">
+              Deadline: {bounty.deadline}
+            </div>
+          </div>
+
+
         </div>
-        <div className="mt-12">
+        {/* Button outside the card */}
+        <div className="flex justify-center mt-6">
           <button
             onClick={handleOpenModal}
-            className="py-3 px-4 bg-secondary-content text-secondary rounded-md shadow hover:opacity-75"
+            className="py-3 px-6 bg-secondary text-secondary-content rounded-md shadow hover:opacity-75"
           >
             Submit A Proposal
           </button>
         </div>
-        <div className="mb-6">
+          {/* Back Arrow */}
+          <div className="mt-4">
+            <BackArrow />
+          </div>
 
-    {/* Back Arrow */}
-     <div className="mb-6">
-          <BackArrow />
-          </div>
-        </div>
-        {txStatus && (
-          <div className="mt-4 text-center text-sm text-primary-content">
-            Transaction Status: {txStatus}
-          </div>
-        )}
       </div>
 
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-lg font-bold text-primary-content mb-4">Submit Proposal</h2>
+            <h2 className="text-lg font-bold text-primary-content mb-4">
+              Submit Proposal
+            </h2>
             <textarea
               value={proposal}
               onChange={(e) => setProposal(e.target.value)}
@@ -157,14 +168,18 @@ const BountyPage = () => {
               className="w-full p-3 border rounded-md text-black"
             />
             <div className="mt-4">
-              <label className="block text-sm font-medium text-primary-content">Attach a File</label>
+              <label className="block text-sm font-medium text-primary-content">
+                Attach a File
+              </label>
               <input
                 type="file"
                 onChange={handleFileUpload}
                 className="mt-2 block w-full text-sm text-primary-content"
               />
               {uploadedFile && (
-                <p className="mt-2 text-sm text-green-600">Selected File: {uploadedFile.name}</p>
+                <p className="mt-2 text-sm text-green-600">
+                  Selected File: {uploadedFile.name}
+                </p>
               )}
             </div>
             <div className="mt-4 flex justify-between">
@@ -182,6 +197,7 @@ const BountyPage = () => {
                 {isSubmittingProposal ? 'Submitting...' : 'Submit'}
               </button>
             </div>
+            
           </div>
         </div>
       )}

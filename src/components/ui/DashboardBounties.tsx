@@ -115,7 +115,7 @@ export default function DashboardBounties({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-primary-content mb-4">My Posted Bounties</h2>
+      <h2 className="text-xl font-semibold text-primary-content mb-8 mt-8">My Posted Bounties</h2>
 
       {bounties.length === 0 ? (
         <p className="text-primary-content">You haven’t posted any bounties yet.</p>

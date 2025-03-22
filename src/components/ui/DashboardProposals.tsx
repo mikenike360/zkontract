@@ -16,7 +16,7 @@ function groupProposalsByBounty(proposals: ProposalData[]) {
   }, {});
 }
 
-export default function DashboardProposals({ proposals, fetchedBounties }: DashboardProposalsProps) {
+export default function DashboardProposals({ proposals }: DashboardProposalsProps) {
   const proposalsByBounty = groupProposalsByBounty(proposals);
 
   return (
@@ -27,20 +27,16 @@ export default function DashboardProposals({ proposals, fetchedBounties }: Dashb
       {proposals.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-base-content">
           {Object.entries(proposalsByBounty).map(([bountyId, proposals]) => {
-            const bounty = fetchedBounties[+bountyId];
+            
             return (
               <div key={bountyId} className="card rounded-lg shadow p-4 bg-base-100 border">
                 <p className="font-semibold mb-2">Bounty ID: {bountyId}</p>
-                {bounty ? (
-                  <p className="mb-2">Bounty Title: {bounty.title}</p>
-                ) : (
-                  <p className="mb-2 italic">Loading bounty info...</p>
-                )}
+
                 <ul className="space-y-2">
                   {proposals.map((prop) => (
                     <li key={`${prop.bountyId}-${prop.proposalId}`}>
                       <div className="card p-4 bg-base-200 border">
-                        <ProposalItem proposal={prop} bounty={bounty} showActions={false} />
+                        <ProposalItem proposal={prop}  showActions={false} />
                       </div>
                     </li>
                   ))}
@@ -51,7 +47,7 @@ export default function DashboardProposals({ proposals, fetchedBounties }: Dashb
         </div>
       ) : (
         <p className="text-primary-content">
-          You haven’t submitted any proposals yet.
+          You haven’t submitted any proposals yet.a
         </p>
       )}
     </div>

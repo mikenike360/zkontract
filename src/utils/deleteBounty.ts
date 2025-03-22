@@ -35,7 +35,7 @@ export async function handleDeleteBounty(
   }
 
   const confirmDelete = window.confirm(
-    "Are you sure you want to delete this bounty and all of its associated proposals?"
+    "Are you sure you want to delete this bounty?"
   );
   if (!confirmDelete) return;
 

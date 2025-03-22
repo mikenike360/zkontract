@@ -21,7 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const bucket = 'zkontract'; // your real bucket name
     const key = `metadata/proposals/${bountyId}/${proposalId}.json`;
-    console.log(key);
+    const userkey = `metadata/userproposals/${bountyId}/${proposalId}.json`;
+    
 
     // Fetch existing .json
     const getRes = await s3.getObject({ Bucket: bucket, Key: key }).promise();
@@ -37,6 +38,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await s3.putObject({
       Bucket: bucket,
       Key: key,
+      Body: JSON.stringify(proposalData),
+      ContentType: 'application/json',
+    }).promise();
+
+    // Re-upload
+    await s3.putObject({
+      Bucket: bucket,
+      Key: userkey,
       Body: JSON.stringify(proposalData),
       ContentType: 'application/json',
     }).promise();

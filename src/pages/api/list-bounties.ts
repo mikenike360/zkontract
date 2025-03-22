@@ -14,7 +14,6 @@ export default async function handler(
   try {
     const bucketName = 'zkontract';
     const bountiesPrefix = 'metadata/bounties/';
-    const proposalsPrefix = 'metadata/proposals/';
 
     // Fetch all bounties
     const bountiesList = await s3.listObjectsV2({

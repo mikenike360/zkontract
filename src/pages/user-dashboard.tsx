@@ -106,7 +106,6 @@ export default function UserDashboard() {
         proposal,
         rewardAmount,
         setTxStatus,
-        mutate
       );
       setProposalStages((prev) => ({
         ...prev,
@@ -137,7 +136,7 @@ export default function UserDashboard() {
       return;
     }
     try {
-      await handleDenyProposal(wallet.adapter as any, publicKey, bounty, proposal, setTxStatus, mutate);
+      await handleDenyProposal(wallet.adapter as any, publicKey, bounty, proposal, setTxStatus);
       setProposalStages((prev) => ({
         ...prev,
         [proposal.proposalId]: 'denied',
@@ -176,7 +175,7 @@ export default function UserDashboard() {
 
         {data && (
           <>
-            <DashboardProposals proposals={data.myProposals} fetchedBounties={fetchedBounties} />
+            <DashboardProposals proposals={data.myProposals}  />
             <DashboardBounties
               bounties={data.myBounties}
               proposalStages={proposalStages}

@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const bucket = 'zkontract';
     const bountiesPrefix = 'metadata/bounties/';
-    const proposalsPrefix = 'metadata/proposals/';
+    const proposalsPrefix = 'metadata/userproposals/';
 
     // 1) List all bounties in bounties/
     const bountyList = await s3.listObjectsV2({
@@ -111,8 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Delimiter: '/',
     }).promise();
 
-    // We expect subfolders like "zkontract/metadata/proposals/<bountyId>/"
-    // If your bucket structure doesn't have "folders" as CommonPrefixes, we might do a different approach
+
     if (topLevelList.CommonPrefixes) {
       // For each bounty subfolder
       for (const prefixObj of topLevelList.CommonPrefixes) {

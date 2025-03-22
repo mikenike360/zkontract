@@ -34,7 +34,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await s3.deleteObject(bountyMetadataParams).promise();
 
     // Delete associated proposals from S3.
-    // Assuming proposals are stored under a folder: metadata/proposals/<bountyId>/
     const proposalsPrefix = `metadata/proposals/${bountyId}/`;
     const listedObjects = await s3.listObjectsV2({
       Bucket: BUCKET_NAME,

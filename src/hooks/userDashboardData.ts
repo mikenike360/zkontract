@@ -1,13 +1,8 @@
 // src/hooks/useDashboardData.ts
-import { useEffect, useState } from 'react';
 import useSWR from 'swr';
-
-// Example: in DashboardBounties.tsx
-import { ProposalData, BountyData } from '@/types';
-
+import { ProposalData } from '@/types';
 
 export type DashboardData = {
-  myBounties: BountyData[];
   myProposals: ProposalData[];
 };
 
@@ -26,28 +21,5 @@ export function useDashboardData(publicKey: string | null) {
     fetchDashboard
   );
 
-  const [fetchedBounties, setFetchedBounties] = useState<Record<number, BountyData>>({});
-
-  useEffect(() => {
-    if (data?.myProposals) {
-      const uniqueBountyIds = Array.from(new Set(data.myProposals.map((p) => p.bountyId)));
-      uniqueBountyIds.forEach(async (bountyId) => {
-        if (!fetchedBounties[bountyId]) {
-          try {
-            const res = await fetch(`/api/get-bounty?id=${bountyId}`);
-            if (res.ok) {
-              const bounty = (await res.json()) as BountyData;
-              setFetchedBounties((prev) => ({ ...prev, [bountyId]: bounty }));
-            } else {
-              console.error(`Error fetching bounty ${bountyId}:`, await res.text());
-            }
-          } catch (err) {
-            console.error(`Error fetching bounty ${bountyId}:`, err);
-          }
-        }
-      });
-    }
-  }, [data?.myProposals, fetchedBounties]);
-
-  return { data, error, isLoading, mutate, fetchedBounties };
+  return { data, error, isLoading, mutate };
 }

@@ -114,7 +114,8 @@ const BountyPage = () => {
         title={`zKontract | ${bounty.title}`}
         description={`Details of bounty: ${bounty.title}`}
       />
-      <div className="mx-auto mt-12 w-full sm:w-11/12 md:w-10/12 lg:w-8/12 px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-28">
+
         {/* Card Container */}
         <div className="card bg-secondary shadow-xl p-8 flex flex-col resize overflow-auto">
           <div className="flex flex-col gap-6 flex-grow">

@@ -41,7 +41,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ContentType: 'application/json',
     };
 
+    const userparams = {
+      Bucket: 'zkontract', // your S3 bucket
+      Key: `metadata/userproposals/${bountyId}/${proposalId}.json`,
+      Body: JSON.stringify(parsedMetadata),
+      ContentType: 'application/json',
+    };
+
     await s3.putObject(params).promise();
+    await s3.putObject(userparams).promise();
     return res.status(200).json({ message: 'Proposal uploaded successfully' });
   } catch (error) {
     console.error('Proposal upload error:', error);

@@ -1,1 +1,1 @@
-This is the main net deployment for zKontract!
+This is the dev deployment for zkontract on the testnetbeta

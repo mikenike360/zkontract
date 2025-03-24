@@ -5,7 +5,8 @@ import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui';
 import { HomeIcon } from '@/components/icons/home';
 import { Twitter } from '@/components/icons/twitter';
 import { Discord } from '@/components/icons/discord';
-import { useTheme } from 'next-themes'; // Use Next Themes hook
+import { useTheme } from 'next-themes';
+import Footer from '@/components/ui/Footer';
 
 require('@demox-labs/aleo-wallet-adapter-reactui/dist/styles.css');
 
@@ -107,6 +108,7 @@ export function Header() {
           <HeaderRightArea />
         </div>
       </div>
+      
     </nav>
   );
   
@@ -126,6 +128,7 @@ export default function Layout({
       <main className="mb-12 flex flex-grow flex-col pt-4 sm:pt-12 bg-primary">
         {children}
       </main>
+      <Footer />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { BOUNTY_PROGRAM_ID } from '@/types';
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
 
+import { CURRENT_NETWORK } from '@/types';
+
 const DELETE_BOUNTY_FUNCTION = 'delete_bounty';
 
 /**
@@ -48,8 +50,8 @@ export async function handleDeleteBounty(
 
     const deleteTx = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.TestnetBeta,
-      BOUNTY_PROGRAM_ID, // BOUNTY_PROGRAM_ID
+      CURRENT_NETWORK,
+      BOUNTY_PROGRAM_ID,
       DELETE_BOUNTY_FUNCTION,
       deleteInputs,
       fee,

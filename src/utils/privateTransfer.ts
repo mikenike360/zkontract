@@ -2,6 +2,7 @@
 
 import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
+import { CURRENT_NETWORK } from '@/types';
 
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 export const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
@@ -87,7 +88,7 @@ export async function privateTransfer(
   //    Replaced the 'false' with our `payFeesPrivately` param.
   const transaction = Transaction.createTransaction(
     publicKey,
-    WalletAdapterNetwork.TestnetBeta,
+    CURRENT_NETWORK,
     CREDITS_PROGRAM_ID,
     TRANSFER_PRIVATE_FUNCTION,
     txInputs,

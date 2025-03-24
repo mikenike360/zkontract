@@ -1,5 +1,8 @@
 import type { NextPage } from 'next';
 import type { ReactElement, ReactNode } from 'react';
+import { WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
+
+export const CURRENT_NETWORK: WalletAdapterNetwork = WalletAdapterNetwork.TestnetBeta;
 
 export type NextPageWithLayout<P = {}> = NextPage<P> & {
   authorization?: boolean;

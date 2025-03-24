@@ -3,6 +3,7 @@
 import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { BOUNTY_PROGRAM_ID } from '@/types';
+import { CURRENT_NETWORK } from '@/types';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
@@ -49,7 +50,7 @@ export async function submitProposal({
   // Create the transaction (fee is hard-coded here as 1_000_000 microcredits)
   const proposalTx = Transaction.createTransaction(
     publicKey,
-    WalletAdapterNetwork.TestnetBeta,
+    CURRENT_NETWORK,
     BOUNTY_PROGRAM_ID,
     SUBMIT_PROPOSAL_FUNCTION,
     inputs,

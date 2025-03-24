@@ -14,6 +14,7 @@ import {
   WalletNotConnectedError,
 } from '@demox-labs/aleo-wallet-adapter-base';
 
+import { CURRENT_NETWORK } from '@/types';
 import { BOUNTY_PROGRAM_ID } from '@/types';
 
 // Import the fee calculator function
@@ -137,11 +138,11 @@ function PostBountyPage() {
 
       const bountyTransaction = Transaction.createTransaction(
         publicKey,
-        WalletAdapterNetwork.TestnetBeta,
+        CURRENT_NETWORK,
         BOUNTY_PROGRAM_ID,
         POST_BOUNTY_FUNCTION,
         inputs,
-        fee, // dynamically calculated fee
+        fee,
         false
       );
 

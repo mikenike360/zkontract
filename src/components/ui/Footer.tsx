@@ -16,7 +16,7 @@ export default function Footer() {
             White Paper
           </Link>
           <Link href="/terms" className="hover:underline">
-            Terms &
+            Terms & Conditions
           </Link>
 
           <a

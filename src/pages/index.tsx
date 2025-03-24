@@ -38,7 +38,7 @@ const MainPage: NextPageWithLayout = () => {
       <GLSLBackground />
 
       {/* Main Hero Section */}
-      <div className="bg-primary bg-opacity-80 relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-16">
+      <div className="fixed inset-0 bg-primary bg-opacity-80 z-10 flex flex-col items-center justify-center px-4 py-16">
         <h1 className="text-5xl font-extrabold text-center tracking-tight text-primary-content sm:text-6xl">
           zKontract
         </h1>

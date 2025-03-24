@@ -7,6 +7,7 @@ import { BountyData, ProposalData } from '@/components/ui/ProposalItem';
 import { BOUNTY_PROGRAM_ID } from '@/types';
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+import { CURRENT_NETWORK } from '@/types';
 
 export const DENY_PROPOSAL_FUNCTION = 'deny_proposal';
 
@@ -43,7 +44,7 @@ export async function handleDenyProposal(
     console.log('Calculated fee (in micro credits):', fee);
     const denyTx = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.TestnetBeta,
+      CURRENT_NETWORK,
       BOUNTY_PROGRAM_ID,
       DENY_PROPOSAL_FUNCTION,
       denyInputs,

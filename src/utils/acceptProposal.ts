@@ -5,6 +5,7 @@ import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import { BountyData, ProposalData } from '@/components/ui/ProposalItem';
 
 import { BOUNTY_PROGRAM_ID } from '@/types';
+import { CURRENT_NETWORK } from '@/types';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
@@ -52,7 +53,7 @@ export async function handleAcceptProposal(
 
     const acceptTx = Transaction.createTransaction(
       publicKey,
-      WalletAdapterNetwork.TestnetBeta,
+      CURRENT_NETWORK,
       BOUNTY_PROGRAM_ID,
       ACCEPT_PROPOSAL_FUNCTION,
       acceptInputs,

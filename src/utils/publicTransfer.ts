@@ -1,6 +1,7 @@
 // publicTransfer.ts
 import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
+import { CURRENT_NETWORK } from '@/types';
 
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
 export const TRANSFER_PUBLIC_FUNCTION = 'transfer_public';
@@ -46,7 +47,7 @@ export async function publicTransfer(
   // 2. Build the transaction
   const transTx = Transaction.createTransaction(
     publicKey,
-    WalletAdapterNetwork.TestnetBeta,
+    CURRENT_NETWORK,
     CREDITS_PROGRAM_ID,
     TRANSFER_PUBLIC_FUNCTION,
     transferInput,

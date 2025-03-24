@@ -112,7 +112,7 @@ zKontract is a community-driven project maintained by VenomLabs. Special thanks 
 
 ## Contribute
 Want to help shape the future of private bounties?
-- [GitHub](https://github.com/venomlabs/zkontract)
+- [GitHub](https://github.com/mikenike360/zkontract)
 - Open-source contributions welcome
 - Reach out via [contact@venomlabs.xyz](mailto:contact@venomlabs.xyz)
 `;

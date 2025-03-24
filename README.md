@@ -96,13 +96,13 @@ This project is open-source under the MIT License. Built with love by [VenomLabs
 If you like this project and want to support it:
 - Star the repo ⭐
 - Share it
-- Donate ALEO to: `aleo1yourdonationaddresshere`
+- Donate ALEO to: `aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec`
 
 ---
 
 ## 🔗 Links
 
-- [Whitepaper](https://zkontract.xyz/whitepaper)
-- [Privacy Policy](https://zkontract.xyz/privacy-policy)
-- [Terms of Use](https://zkontract.xyz/terms)
+- [Whitepaper](https://zkontract.app/whitepaper)
+- [Privacy Policy](https://zkontract.app/privacy-policy)
+- [Terms of Use](https://zkontract.app/terms)
 - [Aleo Network](https://aleo.org)

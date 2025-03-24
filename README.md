@@ -64,7 +64,7 @@
 - `/src/components`: UI components (Dashboard, Proposals, Bounties)
 - `/src/utils`: Blockchain + storage helper functions
 - `/src/hooks`: Custom React hooks
-- `/contracts`: Aleo smart contracts (off-chain)
+- `/program`: Aleo smart contracts (off-chain)
 
 ---
 

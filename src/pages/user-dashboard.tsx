@@ -13,8 +13,9 @@ import { publicTransfer } from '@/utils/publicTransfer';
 import { handleAcceptProposal } from '@/utils/acceptProposal';
 import { handleDenyProposal } from '@/utils/denyProposal';
 
-// Import your delete bounty function
+// Import your delete functions
 import { handleDeleteBounty } from '@/utils/deleteBounty';
+import { handleDeleteProposal } from '@/utils/deleteProposal';
 
 import { ProposalData, BountyData } from '@/types';
 
@@ -27,32 +28,25 @@ export default function UserDashboard() {
   // Track the stage for each proposal
   const [proposalStages, setProposalStages] = useState<Record<number, ProposalStage>>({});
 
-  // Use the custom hook for dashboard data
-  const { data, error, isLoading, mutate, fetchedBounties } = useDashboardData(publicKey);
+  // Custom hook providing dashboard data
+  const { data, error, isLoading, mutate } = useDashboardData(publicKey);
 
-  // Handlers
+  // Handler for sending reward to a proposal.
   async function onSendReward(bounty: BountyData, proposal: ProposalData) {
     if (!wallet || !publicKey) {
       alert('Connect your wallet before sending rewards.');
       return;
     }
-    // Prevent duplicate processing
-    if (
-      proposalStages[proposal.proposalId] !== undefined &&
-      proposalStages[proposal.proposalId] !== 'initial'
-    ) {
+    if (proposalStages[proposal.proposalId] !== undefined && proposalStages[proposal.proposalId] !== 'initial') {
       console.warn('Reward already sent or proposal accepted.');
       return;
     }
-
     setProposalStages((prev) => ({
       ...prev,
       [proposal.proposalId]: 'processing',
     }));
-
     const selectedMethod = transferMethod[bounty.id] || 'public';
     const rewardNumber = parseInt(bounty.reward, 10);
-
     try {
       if (selectedMethod === 'private') {
         await privateTransfer(
@@ -80,6 +74,7 @@ export default function UserDashboard() {
         [proposal.proposalId]: 'rewardSent',
       }));
       alert('Reward sent successfully! Now you can accept the proposal.');
+      mutate();
     } catch (err) {
       console.error('Error sending reward:', err);
       alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
@@ -87,12 +82,12 @@ export default function UserDashboard() {
     }
   }
 
+  // Handler for accepting a proposal.
   async function onAcceptProposal(bounty: BountyData, proposal: ProposalData) {
     if (!wallet || !publicKey) {
       alert('Connect your wallet before accepting proposals.');
       return;
     }
-  
     setProposalStages((prev) => ({
       ...prev,
       [proposal.proposalId]: 'processing',
@@ -105,7 +100,7 @@ export default function UserDashboard() {
         bounty,
         proposal,
         rewardAmount,
-        setTxStatus,
+        setTxStatus
       );
       setProposalStages((prev) => ({
         ...prev,
@@ -115,7 +110,6 @@ export default function UserDashboard() {
     } catch (err) {
       console.error('Error accepting proposal:', err);
       alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
-      // Revert the proposal stage back to 'initial'
       setProposalStages((prev) => ({
         ...prev,
         [proposal.proposalId]: 'initial',
@@ -123,8 +117,8 @@ export default function UserDashboard() {
       setTxStatus(null);
     }
   }
-  
 
+  // Handler for denying a proposal.
   async function onDenyProposal(bounty: BountyData, proposal: ProposalData) {
     if (!wallet || !publicKey) {
       alert('Connect your wallet before denying proposals.');
@@ -141,6 +135,7 @@ export default function UserDashboard() {
         ...prev,
         [proposal.proposalId]: 'denied',
       }));
+      mutate();
     } catch (err) {
       console.error('Error denying proposal:', err);
       alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
@@ -148,7 +143,27 @@ export default function UserDashboard() {
     }
   }
 
-  // Handler for toggling transfer method
+  // Handler for deleting a proposal from the dashboard.
+  async function onDeleteProposal(bountyId: number, proposalId: number) {
+    if (!wallet || !publicKey) {
+      alert('Connect your wallet before deleting a proposal.');
+      return;
+    }
+    try {
+      await handleDeleteProposal({
+        caller: publicKey,
+        bountyId,
+        proposalId,
+      });
+      alert('Proposal deleted successfully.');
+      mutate();
+    } catch (err) {
+      console.error('Error deleting proposal:', err);
+      alert(`Error deleting proposal: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  // Handler for toggling transfer method.
   function onToggleTransferMethod(bountyId: number, isPrivate: boolean) {
     setTransferMethod((prev) => ({
       ...prev,
@@ -171,11 +186,14 @@ export default function UserDashboard() {
         </h3>
 
         {isLoading && <p className="text-center text-info">Loading...</p>}
-        {error && <p className="text-center text-error">Error: {error.message}</p>}
+        {error && <p className="text-center text-error">Error: {error?.message}</p>}
 
         {data && (
           <>
-            <DashboardProposals proposals={data.myProposals}  />
+            <DashboardProposals
+              proposals={data.myProposals}
+              handleDeleteProposal={onDeleteProposal}
+            />
             <DashboardBounties
               bounties={data.myBounties}
               proposalStages={proposalStages}
@@ -184,8 +202,6 @@ export default function UserDashboard() {
               onAcceptProposal={onAcceptProposal}
               onDenyProposal={onDenyProposal}
               onToggleTransferMethod={onToggleTransferMethod}
-
-              // Pass handleDeleteBounty and everything else it needs:
               handleDeleteBounty={handleDeleteBounty}
               wallet={wallet}
               publicKey={publicKey}

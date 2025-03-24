@@ -19,7 +19,7 @@ type DashboardBountiesProps = {
   onDenyProposal: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
   onToggleTransferMethod: (bountyId: number, isPrivate: boolean) => void;
 
-  // The delete bounty function
+  // The delete bounty function from the util file
   handleDeleteBounty: (
     wallet: any,
     publicKey: string,
@@ -35,19 +35,13 @@ type DashboardBountiesProps = {
 };
 
 /**
- * Computes the effective proposal status:
- * - If the chain says "accepted", return "accepted"
- * - If chain says "rewardSent" or proposal.rewardSent is true, return "rewardSent"
- * - Then "denied" or "processing"
- * - If still "initial", fall back to local proposalStages
+ * Computes the effective proposal status.
  */
 function getEffectiveStatus(
   proposal: ProposalData,
   localStages: Record<number, ProposalStage>
 ): ProposalStage {
   const rawStatus = proposal.status?.toLowerCase().trim() || 'initial';
-
-  
 
   if (rawStatus === 'accepted') {
     return 'accepted';
@@ -68,9 +62,6 @@ function getEffectiveStatus(
 
 function getDeleteBtnEffectiveStatus(proposal: ProposalData): DeleteBtnStage {
   const rawStatus = proposal.status?.toLowerCase().trim();
-
-  
-
   if (rawStatus === 'pending') {
     return 'pending';
   }
@@ -102,7 +93,7 @@ export default function DashboardBounties({
     }));
   }
 
-  // NEW: local state tracking if transaction fees should be private for each bounty
+  // Local state tracking if transaction fees should be private for each bounty (if needed)
   const [feeTransferMethod, setFeeTransferMethod] = useState<Record<number, boolean>>({});
 
   // Toggles pay-fee-privately on/off for a specific bounty
@@ -136,7 +127,7 @@ export default function DashboardBounties({
               return (
                 <div
                   key={bounty.id}
-                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content resize overflow-auto "
+                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content resize overflow-auto"
                 >
                   <h3 className="text-lg font-medium text-base-content mb-1">
                     {bounty.title} (ID: {bounty.id})
@@ -149,7 +140,6 @@ export default function DashboardBounties({
                     <div className="mt-4">
                       {/* Transfer Toggles */}
                       <div className="mb-2 flex flex-col space-y-2">
-                        {/* Existing reward toggle */}
                         <label className="inline-flex items-center cursor-pointer">
                           <span className="mr-2 text-sm text-primary">
                             Use Private ALEO for reward?
@@ -162,11 +152,6 @@ export default function DashboardBounties({
                               onToggleTransferMethod(bounty.id, e.target.checked)
                             }
                           />
-                        </label>
-
-                        {/* NEW: fee toggle */}
-                        <label className="inline-flex items-center cursor-pointer">
-                          {/* Optionally, you could add a fee toggle here */}
                         </label>
                       </div>
 
@@ -205,7 +190,7 @@ export default function DashboardBounties({
                                     onDenyProposal,
                                     isLoading,
                                     setProposalLoading,
-                                    mutate, // Passing mutate to the button renderer
+                                    mutate,
                                   })}
                                 </div>
                               </div>
@@ -214,7 +199,7 @@ export default function DashboardBounties({
                         })}
                       </ul>
 
-                      {/* DELETE Button if an accepted proposal exists */}
+                      {/* DELETE Button if an accepted proposal exists and no proposal is still pending */}
                       {hasAcceptedProposal && !hasDeleteBtnPending && (
                         <div className="flex justify-center mt-2">
                           <Button
@@ -223,14 +208,14 @@ export default function DashboardBounties({
                             }
                             className="btn btn-error btn-sm mt-4"
                           >
-                            Close Bounty and Delete Data
+                            Close Bounty
                           </Button>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="mt-4">
-                      <p className="text-base-content">No proposals for this bounty yet.</p>
+                      <p className="text-base-content">No pending proposals for this bounty!</p>
                     </div>
                   )}
                 </div>

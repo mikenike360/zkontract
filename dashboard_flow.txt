@@ -1,0 +1,46 @@
+┌─────────────────────────────────────────────────────────────┐
+│                          User Dashboard                     │
+│  (pages/user-dashboard.tsx)                                 │
+│                                                             │
+│  ┌────────────────────────┐       ┌─────────────────────┐ │
+│  │ DashboardBounties      │       │ DashboardProposals  │ │
+│  │ (Bounties List)        │       │ (Proposals List)    │ │
+│  └────────────────────────┘       └─────────────────────┘ │
+│             │                                │            │
+│             ├─ "Close Bounty" button        ├─ "Delete Proposal" button
+│             │                                │            │
+│             │                                │            │
+│             ▼                                ▼            │
+│  ┌───────────────────────────────┐   ┌─────────────────────────┐
+│  │ handleDeleteBounty()          │   │ handleDeleteProposal()  │
+│  │ (in /src/utils/deleteBounty)  │   │ (in /src/utils/deleteProposal)│
+│  └───────────────────────────────┘   └─────────────────────────┘
+│             │                                │            │
+│             │                                │            │
+│             ├────── Calls API endpoint ────► API: /api/delete-bounty  │
+│             │       with { bountyId }              with { bountyId, proposalId }
+│             │                                │            │
+└─────────────┴────────────────────────────────┴────────────┘
+                   │                                │
+                   ▼                                ▼
+         ┌──────────────────────────────┐    ┌────────────────────────────┐
+         │ API Endpoint:                │    │ API Endpoint:              │
+         │ /pages/api/delete-bounty.ts  │    │ /pages/api/delete-bounty.ts│
+         │ - If no proposalId provided, │    │ - If proposalId provided,  │
+         │   delete bounty metadata     │    │   delete that proposal     │
+         │   file from S3               │    │   file from S3             │
+         └──────────────────────────────┘    └────────────────────────────┘
+                   │                                │
+                   └─────────S3 Deletion───────────────► Updated S3 Data
+                                      │
+                                      ▼
+                      ┌────────────────────────────────┐
+                      │  Data Fetch via useDashboardData │
+                      │  (calls /api/my-dashboard)       │
+                      └────────────────────────────────┘
+                                      │
+                                      ▼
+                      ┌────────────────────────────────┐
+                      │   Updated Bounties & Proposals │
+                      │   re-rendered in the UI        │
+                      └────────────────────────────────┘

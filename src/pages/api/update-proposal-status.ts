@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const bucket = 'zkontract'; // your real bucket name
     const key = `metadata/proposals/${bountyId}/${proposalId}.json`;
-    const userkey = `metadata/userproposals/${bountyId}/${proposalId}.json`;
+
     
 
     // Fetch existing .json
@@ -42,13 +42,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ContentType: 'application/json',
     }).promise();
 
-    // Re-upload
-    await s3.putObject({
-      Bucket: bucket,
-      Key: userkey,
-      Body: JSON.stringify(proposalData),
-      ContentType: 'application/json',
-    }).promise();
 
     return res.status(200).json({ message: `Proposal status set to ${newStatus}` });
   } catch (error) {

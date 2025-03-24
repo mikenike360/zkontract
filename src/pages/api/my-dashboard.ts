@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const bucket = 'zkontract';
     const bountiesPrefix = 'metadata/bounties/';
-    const proposalsPrefix = 'metadata/userproposals/';
+    const proposalsPrefix = 'metadata/proposals/';
 
     // 1) List all bounties in bounties/
     const bountyList = await s3.listObjectsV2({
@@ -63,8 +63,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const bountyData = JSON.parse(bountyStr);
           // If this bounty was created by the user
           if (bountyData.creatorAddress === publicKey) {
-            // Also fetch proposals
-            const bountyId = bountyData.id; // make sure .id matches your schema
+            // Also fetch proposals for this bounty
+            const bountyId = bountyData.id; // ensure .id matches your schema
             const proposals: any[] = [];
 
             // list proposals in proposals/<bountyId>/
@@ -101,21 +101,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 2) Get proposals the user submitted
+    // 2) Get proposals the user submitted (from the proposals folder)
     const myProposals: any[] = [];
 
-    // We list ALL subfolders of proposals/ and filter
     const topLevelList = await s3.listObjectsV2({
       Bucket: bucket,
       Prefix: proposalsPrefix,
       Delimiter: '/',
     }).promise();
 
-
     if (topLevelList.CommonPrefixes) {
-      // For each bounty subfolder
+      // For each bounty subfolder in proposals/
       for (const prefixObj of topLevelList.CommonPrefixes) {
-        const subPrefix = prefixObj.Prefix; // e.g. zkontract/metadata/proposals/12345/
+        const subPrefix = prefixObj.Prefix; // e.g. "metadata/proposals/12345/"
         if (!subPrefix) continue;
 
         // List the proposals under that subPrefix
@@ -136,6 +134,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const propStr = await bodyToString(propData.Body);
             try {
               const proposalData = JSON.parse(propStr);
+              // If this proposal was submitted by the user
               if (proposalData.proposerAddress === publicKey) {
                 myProposals.push(proposalData);
               }

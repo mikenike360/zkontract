@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const bucket = 'zkontract'; // your actual bucket name
     const key = `metadata/proposals/${bountyId}/${proposalId}.json`;
-    const userkey = `metadata/userproposals/${bountyId}/${proposalId}.json`;
+   
 
     // Fetch existing metadata
     const getRes = await s3.getObject({ Bucket: bucket, Key: key }).promise();
@@ -39,14 +39,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Body: JSON.stringify(proposalData),
       ContentType: 'application/json',
     }).promise();
-
-    await s3.putObject({
-      Bucket: bucket,
-      Key: userkey,
-      Body: JSON.stringify(proposalData),
-      ContentType: 'application/json',
-    }).promise();
-
 
     return res.status(200).json({ message: 'Reward field updated successfully' });
   } catch (error) {

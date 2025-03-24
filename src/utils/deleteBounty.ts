@@ -14,7 +14,6 @@ const DELETE_BOUNTY_FUNCTION = 'delete_bounty';
  * Handles deleting a bounty by performing two actions:
  * 1. Creates a blockchain transaction that calls the `delete_bounty` function.
  *    - Inputs: caller public key, bounty id (formatted with a "u64" suffix)
- * 2. Calls the API endpoint to delete the associated S3 data for the bounty and its proposals.
  *
  * @param wallet - The connected wallet adapter instance.
  * @param publicKey - The public key of the user.
@@ -62,7 +61,7 @@ export async function handleDeleteBounty(
     
     setTxStatus("Called delete_bounty transaction...");
 
-    // Now call the API endpoint to remove the bounty metadata and associated proposals from S3.
+    // Now call the API endpoint to remove the bounty metadata.
     const res = await fetch("/api/delete-bounty", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },

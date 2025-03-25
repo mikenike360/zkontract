@@ -35,7 +35,7 @@
     "axios": "0.24.0",
     "browserify-fs": "^1.0.0",
     "classnames": "2.3.1",
-    "daisyui": "^4.12.24",
+    "daisyui": "4.12.24",
     "date-fns": "2.28.0",
     "dayjs": "1.11.0",
     "decimal.js": "^10.3.1",

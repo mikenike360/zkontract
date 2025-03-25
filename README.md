@@ -97,6 +97,7 @@ If you like this project and want to support it:
 - Star the repo ⭐
 - Share it
 - Donate ALEO to: `aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec`
+- Buy me a Coffee: 
 
 ---
 

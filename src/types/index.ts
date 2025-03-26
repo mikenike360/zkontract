@@ -5,6 +5,7 @@ import { WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
 //Change to MainnetBeta for mainnet or TestnetBeta for testnet
 export const CURRENT_NETWORK: WalletAdapterNetwork = WalletAdapterNetwork.MainnetBeta;
 
+
 //TESTNET_RPC_URL=https://testnetbeta.aleorpc.com
 //MAINNET_RPC_URL=https://mainnet.aleorpc.com
 export const CURRENT_RPC_URL = "https://mainnet.aleorpc.com";

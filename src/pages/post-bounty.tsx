@@ -130,11 +130,12 @@ function PostBountyPage() {
         `${reward}u64`,    // payment_amount in micro credits
       ];
 
-      console.log('Post bounty inputs:', inputs);
+      
 
       // Use the fee calculator to get the fee for the post_bounty function
       const fee = getFeeForFunction(POST_BOUNTY_FUNCTION);
-      console.log('Calculated fee (in micro credits):', fee);
+      
+      console.log(CURRENT_NETWORK)
 
       const bountyTransaction = Transaction.createTransaction(
         publicKey,
@@ -143,7 +144,7 @@ function PostBountyPage() {
         POST_BOUNTY_FUNCTION,
         inputs,
         fee,
-        false
+        true
       );
 
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);

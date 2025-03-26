@@ -23,6 +23,8 @@ import '@/assets/css/globals.css';
 import '@/assets/css/range-slider.css';
 import '@demox-labs/aleo-wallet-adapter-reactui/styles.css';
 
+import { CURRENT_NETWORK, CURRENT_RPC_URL } from '@/types';
+
 // Initialize the wallet adapters outside the component
 const wallets = [
   new LeoWalletAdapter({
@@ -48,7 +50,9 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.UponRequest}
+            network={WalletAdapterNetwork.MainnetBeta}
             autoConnect
+            
           >
             <WalletModalProvider>
               <ThemeProvider attribute="data-theme" enableSystem={true} defaultTheme="dark">

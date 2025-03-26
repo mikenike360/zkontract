@@ -6,6 +6,7 @@ import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
+import { CURRENT_NETWORK } from '@/types';
 
 // Dynamically import GLSLBackground (no SSR)
 const GLSLBackground = dynamic(() => import('../utils/GLSLBackground'), {

@@ -195,7 +195,7 @@ function PostBountyPage() {
               value={formData.description}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm overflow-auto resize"
             />
           </div>
           <div className="mb-4">

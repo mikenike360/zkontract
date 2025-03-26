@@ -1,13 +1,12 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
 import { BOUNTY_PROGRAM_ID } from '@/types';
+import { CURRENT_RPC_URL } from '@/types';
 
-export const TESTNETBETA_API_URL = process.env.RPC_URL!;
 
 export const CREDITS_PROGRAM_ID = 'credits.aleo';
-const ALEO_URL = 'https://testnetbeta.aleorpc.com/';
 
 // Create the JSON-RPC client
-export const client = getClient(TESTNETBETA_API_URL);
+export const client = getClient(CURRENT_RPC_URL);
 
 
 // returns a string for address-based mappings
@@ -416,9 +415,9 @@ export function getClient(apiUrl: string): JSONRPCClient {
  * Get Verifying Key for a Function
  */
 async function getDeploymentTransaction(programId: string): Promise<any> {
-  const response = await fetch(`${ALEO_URL}find/transactionID/deployment/${programId}`);
+  const response = await fetch(`${CURRENT_RPC_URL}find/transactionID/deployment/${programId}`);
   const deployTxId = await response.json();
-  const txResponse = await fetch(`${ALEO_URL}transaction/${deployTxId}`);
+  const txResponse = await fetch(`${CURRENT_RPC_URL}transaction/${deployTxId}`);
   const tx = await txResponse.json();
   return tx;
 }

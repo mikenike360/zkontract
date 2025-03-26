@@ -12,13 +12,13 @@ export default function Footer() {
           <Link href="/privacy-policy" className="hover:underline">
             Privacy Policy
           </Link>
-          <Link href="/whitepaper" className="hover:underline">
-            White Paper
-          </Link>
+
           <Link href="/terms" className="hover:underline">
             Terms & Conditions
           </Link>
-
+          <Link href="/whitepaper" className="hover:underline">
+            White Paper
+          </Link>
           <a
             href="https://buymeacoffee.com/michaelvenu"
             target="_blank"

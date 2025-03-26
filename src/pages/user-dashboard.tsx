@@ -181,9 +181,9 @@ export default function UserDashboard() {
         <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
           My Dashboard
         </h1>
-        <h3 className="text-xl text-primary-content text-center mb-8">
+        {/* <h3 className="text-xl text-primary-content text-center mb-8">
           Note: Please verify you have enough PRIVATE Aleo to cover transaction fees!
-        </h3>
+        </h3> */}
 
         {isLoading && <p className="text-center text-info">Loading...</p>}
         {error && <p className="text-center text-error">Error: {error?.message}</p>}

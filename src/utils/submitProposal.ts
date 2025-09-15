@@ -2,6 +2,7 @@
 
 import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
+// Removed: import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { BOUNTY_PROGRAM_ID } from '@/types';
 import { CURRENT_NETWORK } from '@/types';
 
@@ -43,9 +44,8 @@ export async function submitProposal({
     publicKey,             // proposer_address
   ];
 
-        
-    const fee = getFeeForFunction(SUBMIT_PROPOSAL_FUNCTION);
-    console.log('Calculated fee (in micro credits):', fee);
+  const fee = getFeeForFunction(SUBMIT_PROPOSAL_FUNCTION);
+  console.log('Calculated fee (in micro credits):', fee);
 
   // Create the transaction (fee is hard-coded here as 1_000_000 microcredits)
   const proposalTx = Transaction.createTransaction(
@@ -55,7 +55,7 @@ export async function submitProposal({
     SUBMIT_PROPOSAL_FUNCTION,
     inputs,
     fee, // fee in microcredits; adjust if needed
-    true
+    false
   );
 
   // Request transaction execution via the wallet adapter

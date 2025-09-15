@@ -4,6 +4,7 @@ import { ProposalData } from '@/types';
 
 export type DashboardData = {
   myProposals: ProposalData[];
+  myBounties: any[];
 };
 
 async function fetchDashboard(url: string): Promise<DashboardData> {

@@ -93,7 +93,7 @@ export async function privateTransfer(
     TRANSFER_PRIVATE_FUNCTION,
     txInputs,
     fee,
-    true   
+    false  // Use public fees
   );
 
   // 6. Submit the transaction

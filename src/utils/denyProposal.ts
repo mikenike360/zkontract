@@ -49,7 +49,7 @@ export async function handleDenyProposal(
       DENY_PROPOSAL_FUNCTION,
       denyInputs,
       fee,
-      true
+      false  // Use public fees
     );
 
     console.log('Deny proposal TX =>', denyTx);

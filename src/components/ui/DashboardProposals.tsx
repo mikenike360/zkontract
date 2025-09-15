@@ -6,7 +6,6 @@ import { handleDeleteProposal } from '@/utils/deleteProposal';
 
 type DashboardProposalsProps = {
   proposals: ProposalData[];
-  fetchedBounties: Record<number, any>;
 };
 
 function groupProposalsByBounty(proposals: ProposalData[]) {

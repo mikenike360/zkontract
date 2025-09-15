@@ -127,7 +127,7 @@ function PostBountyPage() {
         publicKey,               // caller
         `${newBountyId}u64`,     // bounty_id
         publicKey,               // creator_address
-        `${reward}u64`,    // payment_amount in micro credits
+        `${parseFloat(reward) * 1_000_000}u64`,    // payment_amount in micro credits (ALEO * 1,000,000)
       ];
 
       
@@ -144,7 +144,7 @@ function PostBountyPage() {
         POST_BOUNTY_FUNCTION,
         inputs,
         fee,
-        true
+        false
       );
 
       const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);

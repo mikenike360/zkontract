@@ -1,5 +1,7 @@
 
-program zkontractv5.aleo {
+import zk_escrow_v2.aleo;
+
+program zkontract_v2.aleo {
 
     const contract_owner: address = aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec;
 
@@ -13,6 +15,7 @@ program zkontractv5.aleo {
     mapping bounty_creator: u64 => address;
     mapping bounty_payment: u64 => u64;
     mapping bounty_status: u64 => u8;
+    mapping bounty_escrow_id: u64 => u64; // Maps bounty ID to escrow ID
 
     mapping proposal_bounty_id: u64 => u64;
     mapping proposal_proposer: u64 => address;
@@ -23,19 +26,29 @@ program zkontractv5.aleo {
     mapping bounty_output_status: u64 => u8;
     mapping account: address => u64;
 
+    // Upgrade constructor - required for Leo programs (upgradable)
+    @admin(address = "aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec")
+    async constructor() {
+        // The Leo compiler automatically generates the constructor logic
+    }
+
 
 
     // Async function to set bounty details
     async function finalize_post_bounty(
+        escrow_future: Future,
         bounty_id: u64,
         creator_address: address,
         payment_amount: u64
     ) {
+        escrow_future.await();
+        
         assert(!bounty_creator.contains(bounty_id)); // Ensure bounty ID is unique.
 
         bounty_creator.set(bounty_id, creator_address);
         bounty_payment.set(bounty_id, payment_amount);
         bounty_status.set(bounty_id, BOUNTY_STATUS_OPEN);
+        bounty_escrow_id.set(bounty_id, bounty_id); // Use bounty ID as escrow ID
 
         all_bounties.set(bounty_id, true);
     }
@@ -49,9 +62,12 @@ program zkontractv5.aleo {
     ) -> Future {
         assert_eq(caller, creator_address); // Ensure the caller is the creator.
 
-        // Call the async function to finalize posting the bounty
-        let post_bounty_future: Future = finalize_post_bounty(bounty_id, creator_address, payment_amount);
-        return post_bounty_future;
+        // Create escrow for this bounty - set creator as both sender and temporary recipient
+        // When proposal is accepted, we'll create a new escrow with the actual proposer as recipient
+        let escrow_future: Future = zk_escrow_v2.aleo/create_escrow(bounty_id, creator_address, payment_amount);
+        
+        // Return combined future
+        return finalize_post_bounty(escrow_future, bounty_id, creator_address, payment_amount);
     }
 
     async function finalize_view_bounty_by_id(bounty_id: u64) {
@@ -105,15 +121,17 @@ program zkontractv5.aleo {
 
     // Async function to finalize proposal acceptance
     async function finalize_accept_proposal(
+        release_future: Future,
         bounty_id: u64,
         composite_proposal_id: u64
     ) {
+        release_future.await();
+        
         assert(bounty_creator.contains(bounty_id)); // Ensure bounty exists.
         assert(proposal_bounty_id.contains(composite_proposal_id)); // Ensure proposal exists.
 
         bounty_status.set(bounty_id, BOUNTY_STATUS_COMPLETED);
         proposal_status.set(composite_proposal_id, PROPOSAL_STATUS_ACCEPTED);
-
     }
 
     // Transition to accept a proposal
@@ -122,14 +140,18 @@ program zkontractv5.aleo {
         bounty_id: u64,
         proposal_id: u64,
         creator_address: address,
-        payment_amount: u64
+        payment_amount: u64,
+        proposer_address: address
     ) -> Future {
+        assert_eq(caller, creator_address); // Only the bounty creator can accept proposals
+        
         let composite_proposal_id: u64 = bounty_id * 1000000u64 + proposal_id;
 
-        // Call the async function to finalize the proposal acceptance
-        let accept_proposal_future: Future = finalize_accept_proposal(bounty_id, composite_proposal_id);
-        return accept_proposal_future;
+        // Release escrow to proposer - only the original sender (creator) can call release
+        let release_future: Future = zk_escrow_v2.aleo/release(bounty_id, payment_amount, proposer_address);
         
+        // Return combined future
+        return finalize_accept_proposal(release_future, bounty_id, composite_proposal_id);
     }
 
     // Async function to finalize proposal denial
@@ -172,7 +194,58 @@ program zkontractv5.aleo {
             return delete_bounty_future;
         }
 
-
+    // Allow proposer to claim payment directly from escrow
+    async transition claim_payment(
+        caller: address,
+        bounty_id: u64,
+        proposal_id: u64,
+        payment_amount: u64
+    ) -> Future {
+        // Claim from escrow - caller should be the proposer (recipient)
+        let claim_future: Future = zk_escrow_v2.aleo/claim(bounty_id, payment_amount, caller);
         
+        return finalize_claim_payment(claim_future, bounty_id, proposal_id, caller);
+    }
 
+    // Finalize claim payment
+    async function finalize_claim_payment(
+        claim_future: Future,
+        bounty_id: u64,
+        proposal_id: u64,
+        caller: address
+    ) {
+        claim_future.await();
+        
+        let composite_proposal_id: u64 = bounty_id * 1000000u64 + proposal_id;
+        
+        // Verify the proposal exists and is accepted
+        assert(proposal_bounty_id.contains(composite_proposal_id));
+        assert_eq(proposal_status.get(composite_proposal_id), PROPOSAL_STATUS_ACCEPTED);
+        assert_eq(proposal_proposer.get(composite_proposal_id), caller);
+    }
+
+    // Allow bounty creator to cancel escrow and get refund
+    async transition cancel_bounty_escrow(
+        caller: address,
+        bounty_id: u64,
+        payment_amount: u64
+    ) -> Future {
+        // Cancel escrow - the cancel function expects the sender address as recipient parameter
+        // This is confusing in the escrow contract, but it returns funds to sender
+        let cancel_future: Future = zk_escrow_v2.aleo/cancel(bounty_id, payment_amount, caller);
+        
+        return finalize_cancel_bounty_escrow(cancel_future, bounty_id, caller);
+    }
+
+    // Finalize cancel bounty escrow
+    async function finalize_cancel_bounty_escrow(
+        cancel_future: Future,
+        bounty_id: u64,
+        caller: address
+    ) {
+        cancel_future.await();
+        
+        // Verify caller is the bounty creator
+        assert_eq(bounty_creator.get(bounty_id), caller);
+    }
 }

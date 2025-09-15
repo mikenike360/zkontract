@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Button from '@/components/ui/button';
 import ProposalItem from '@/components/ui/ProposalItem';
 import { ProposalData, BountyData } from '@/types';
-import { handleDeleteBounty } from '@/utils/deleteBounty';
+// Removed handleDeleteBounty import as we now use escrow-based cancel functionality
 
 export type ProposalStage = 'initial' | 'processing' | 'rewardSent' | 'accepted' | 'denied';
 export type DeleteBtnStage = 'accepted' | 'pending';
@@ -11,22 +11,14 @@ export type DeleteBtnStage = 'accepted' | 'pending';
 type DashboardBountiesProps = {
   bounties: BountyData[];
   proposalStages: Record<number, ProposalStage>;
-  transferMethod: Record<number, 'public' | 'private'>;
 
   // The existing handlers your parent gives you:
-  onSendReward: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
   onAcceptProposal: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
   onDenyProposal: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
-  onToggleTransferMethod: (bountyId: number, isPrivate: boolean) => void;
-
-  // The delete bounty function from the util file
-  handleDeleteBounty: (
-    wallet: any,
-    publicKey: string,
-    bounty: BountyData,
-    setTxStatus: (status: string | null) => void,
-    mutate: () => void
-  ) => Promise<void>;
+  
+  // New escrow-based handlers:
+  onClaimPayment: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
+  onCancelBounty: (bounty: BountyData) => Promise<void> | void;
 
   wallet: any;
   publicKey: string | null;
@@ -71,12 +63,10 @@ function getDeleteBtnEffectiveStatus(proposal: ProposalData): DeleteBtnStage {
 export default function DashboardBounties({
   bounties,
   proposalStages,
-  transferMethod,
-  onSendReward,
   onAcceptProposal,
   onDenyProposal,
-  onToggleTransferMethod,
-  handleDeleteBounty,
+  onClaimPayment,
+  onCancelBounty,
   wallet,
   publicKey,
   setTxStatus,
@@ -138,21 +128,11 @@ export default function DashboardBounties({
                   {/* PROPOSALS */}
                   {bounty.proposals && bounty.proposals.length > 0 ? (
                     <div className="mt-4">
-                      {/* Transfer Toggles */}
-                      <div className="mb-2 flex flex-col space-y-2">
-                        <label className="inline-flex items-center cursor-pointer">
-                          <span className="mr-2 text-sm text-primary">
-                            Use Private ALEO for reward?
-                          </span>
-                          <input
-                            type="checkbox"
-                            className="toggle toggle-primary focus:outline-none"
-                            checked={transferMethod[bounty.id] === 'private'}
-                            onChange={(e) =>
-                              onToggleTransferMethod(bounty.id, e.target.checked)
-                            }
-                          />
-                        </label>
+                      {/* Escrow Info */}
+                      <div className="mb-2">
+                        <span className="text-sm text-info">
+                          💡 All rewards are securely managed via escrow
+                        </span>
                       </div>
 
                       <h4 className="text-sm font-semibold text-base-content mb-2">
@@ -185,12 +165,13 @@ export default function DashboardBounties({
                                     status: effectiveStatus,
                                     bounty,
                                     proposal,
-                                    onSendReward,
                                     onAcceptProposal,
                                     onDenyProposal,
+                                    onClaimPayment,
                                     isLoading,
                                     setProposalLoading,
                                     mutate,
+                                    publicKey,
                                   })}
                                 </div>
                               </div>
@@ -199,16 +180,14 @@ export default function DashboardBounties({
                         })}
                       </ul>
 
-                      {/* DELETE Button if an accepted proposal exists and no proposal is still pending */}
-                      {hasAcceptedProposal && !hasDeleteBtnPending && (
+                      {/* Cancel Bounty button for creator (if no accepted proposals) */}
+                      {!hasAcceptedProposal && publicKey === bounty.creatorAddress && (
                         <div className="flex justify-center mt-2">
                           <Button
-                            onClick={() =>
-                              handleDeleteBounty(wallet, publicKey!, bounty, setTxStatus, mutate)
-                            }
-                            className="btn btn-error btn-sm mt-4"
+                            onClick={() => onCancelBounty(bounty)}
+                            className="btn btn-warning btn-sm mt-4"
                           >
-                            Close Bounty
+                            Cancel Bounty & Refund Escrow
                           </Button>
                         </div>
                       )}
@@ -242,24 +221,26 @@ type RenderButtonsProps = {
   status: ProposalStage;
   bounty: BountyData;
   proposal: ProposalData;
-  onSendReward: (b: BountyData, p: ProposalData) => Promise<void> | void;
   onAcceptProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
   onDenyProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
+  onClaimPayment: (b: BountyData, p: ProposalData) => Promise<void> | void;
   isLoading: boolean;
   setProposalLoading: (proposalId: number, isLoading: boolean) => void;
   mutate: () => void;
+  publicKey: string | null;
 };
 
 function renderProposalButtons({
   status,
   bounty,
   proposal,
-  onSendReward,
   onAcceptProposal,
   onDenyProposal,
+  onClaimPayment,
   isLoading,
   setProposalLoading,
   mutate,
+  publicKey,
 }: RenderButtonsProps) {
   if (isLoading) {
     return (
@@ -271,88 +252,89 @@ function renderProposalButtons({
     );
   }
 
+  const isCreator = publicKey === bounty.creatorAddress;
+  const isProposer = publicKey === proposal.proposerAddress;
+
   switch (status) {
     case 'accepted':
       return (
         <div className="mb-4 flex space-x-2">
-          <Button className="btn btn-gray-100 btn-sm" disabled>
-            Send Reward
-          </Button>
-          <Button className="btn btn-error btn-sm" disabled>
-            Deny
-          </Button>
+          <span className="text-success text-sm">✅ Proposal Accepted</span>
+          {isProposer && (
+            <Button
+              onClick={async () => {
+                setProposalLoading(proposal.proposalId, true);
+                try {
+                  await onClaimPayment(bounty, proposal);
+                  mutate();
+                } catch (err) {
+                  console.error('Error claiming payment:', err);
+                } finally {
+                  setProposalLoading(proposal.proposalId, false);
+                }
+              }}
+              className="btn btn-success btn-sm"
+            >
+              Claim Payment
+            </Button>
+          )}
         </div>
       );
     case 'denied':
       return (
-        <div className="mb-4 flex space-x-2">
-          <Button className="btn btn-primary btn-sm" disabled>
-            Send Reward
-          </Button>
-          <Button className="btn btn-error btn-sm" disabled>
-            Deny
-          </Button>
+        <div className="mb-4">
+          <span className="text-error text-sm">❌ Proposal Denied</span>
         </div>
       );
     case 'processing':
       return (
         <div className="mb-4">
           <Button className="btn btn-info btn-sm" disabled>
-            Submitting...
+            Processing...
           </Button>
         </div>
       );
     case 'rewardSent':
-      return (
-        <div className="mb-4">
+    case 'initial':
+    default:
+      return isCreator ? (
+        <div className="mb-4 flex space-x-2">
           <Button
-            className="btn btn-success btn-sm"
             onClick={async () => {
               setProposalLoading(proposal.proposalId, true);
               try {
                 await onAcceptProposal(bounty, proposal);
-                mutate(); // Refresh data after accepting proposal
+                mutate();
+              } catch (err) {
+                console.error('Error accepting proposal:', err);
               } finally {
                 setProposalLoading(proposal.proposalId, false);
               }
             }}
-          >
-            Accept Proposal
-          </Button>
-        </div>
-      );
-    case 'initial':
-    default:
-      return (
-        <div className="mb-4 space-x-2">
-          <Button
             className="btn btn-primary btn-sm"
-            onClick={async () => {
-              setProposalLoading(proposal.proposalId, true);
-              try {
-                await onSendReward(bounty, proposal);
-                mutate(); // Refresh data after sending reward
-              } finally {
-                setProposalLoading(proposal.proposalId, false);
-              }
-            }}
           >
-            Send Reward
+            Accept & Release Escrow
           </Button>
           <Button
-            className="btn btn-error btn-sm"
             onClick={async () => {
               setProposalLoading(proposal.proposalId, true);
               try {
                 await onDenyProposal(bounty, proposal);
-                mutate(); // Refresh data after denying proposal
+                mutate();
+              } catch (err) {
+                console.error('Error denying proposal:', err);
               } finally {
                 setProposalLoading(proposal.proposalId, false);
               }
             }}
+            className="btn btn-error btn-sm"
           >
             Deny
           </Button>
+        </div>
+      ) : (
+        <div className="mb-4">
+          <span className="text-info text-sm">⏳ Awaiting creator response</span>
         </div>
       );
   }

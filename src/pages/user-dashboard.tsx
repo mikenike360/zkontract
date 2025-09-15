@@ -8,79 +8,59 @@ import { useDashboardData } from '@/hooks/userDashboardData';
 import DashboardProposals from '@/components/ui/DashboardProposals';
 import DashboardBounties, { ProposalStage } from '@/components/ui/DashboardBounties';
 import Button from '@/components/ui/button';
-import { privateTransfer } from '@/utils/privateTransfer';
-import { publicTransfer } from '@/utils/publicTransfer';
-import { handleAcceptProposal } from '@/utils/acceptProposal';
+// Removed old transfer utility imports - now using escrow-based transactions
 import { handleDenyProposal } from '@/utils/denyProposal';
 
 // Import your delete functions
-import { handleDeleteBounty } from '@/utils/deleteBounty';
+// Removed handleDeleteBounty import as we now use escrow-based cancel functionality
 import { handleDeleteProposal } from '@/utils/deleteProposal';
 
+import { Transaction } from '@demox-labs/aleo-wallet-adapter-base';
+import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
+import { CURRENT_NETWORK, BOUNTY_PROGRAM_ID } from '@/types';
+import { getFeeForFunction } from '@/utils/feeCalculator';
+
 import { ProposalData, BountyData } from '@/types';
+
+// Helper function to wait for transaction finalization
+async function waitForTransactionFinalization(
+  wallet: any,
+  txId: string,
+  setTxStatus: (status: string | null) => void
+): Promise<void> {
+  setTxStatus(`Transaction submitted: ${txId}. Waiting for finalization...`);
+  
+  let finalized = false;
+  for (let attempt = 0; attempt < 300; attempt++) { // Wait up to 5 minutes
+    try {
+      const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
+      if (status === 'Finalized') {
+        finalized = true;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+    } catch (statusErr) {
+      console.log('Checking transaction status...');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  
+  if (!finalized) {
+    throw new Error('Transaction did not finalize in time. Please check the blockchain explorer.');
+  }
+}
 
 export default function UserDashboard() {
   const { wallet, publicKey } = useWallet();
   const [txStatus, setTxStatus] = useState<string | null>(null);
 
   // Payment method toggle per bounty
-  const [transferMethod, setTransferMethod] = useState<Record<number, 'public' | 'private'>>({});
+  // Removed transferMethod state as we now use escrow for all transactions
   // Track the stage for each proposal
   const [proposalStages, setProposalStages] = useState<Record<number, ProposalStage>>({});
 
   // Custom hook providing dashboard data
   const { data, error, isLoading, mutate } = useDashboardData(publicKey);
-
-  // Handler for sending reward to a proposal.
-  async function onSendReward(bounty: BountyData, proposal: ProposalData) {
-    if (!wallet || !publicKey) {
-      alert('Connect your wallet before sending rewards.');
-      return;
-    }
-    if (proposalStages[proposal.proposalId] !== undefined && proposalStages[proposal.proposalId] !== 'initial') {
-      console.warn('Reward already sent or proposal accepted.');
-      return;
-    }
-    setProposalStages((prev) => ({
-      ...prev,
-      [proposal.proposalId]: 'processing',
-    }));
-    const selectedMethod = transferMethod[bounty.id] || 'public';
-    const rewardNumber = parseInt(bounty.reward, 10);
-    try {
-      if (selectedMethod === 'private') {
-        await privateTransfer(
-          wallet.adapter as any,
-          publicKey,
-          proposal.proposerAddress,
-          rewardNumber,
-          setTxStatus,
-          bounty.id,
-          proposal.proposalId
-        );
-      } else {
-        await publicTransfer(
-          wallet.adapter as any,
-          publicKey,
-          proposal.proposerAddress,
-          rewardNumber,
-          setTxStatus,
-          bounty.id,
-          proposal.proposalId
-        );
-      }
-      setProposalStages((prev) => ({
-        ...prev,
-        [proposal.proposalId]: 'rewardSent',
-      }));
-      alert('Reward sent successfully! Now you can accept the proposal.');
-      mutate();
-    } catch (err) {
-      console.error('Error sending reward:', err);
-      alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
-      setTxStatus(null);
-    }
-  }
 
   // Handler for accepting a proposal.
   async function onAcceptProposal(bounty: BountyData, proposal: ProposalData) {
@@ -88,25 +68,43 @@ export default function UserDashboard() {
       alert('Connect your wallet before accepting proposals.');
       return;
     }
+    if (publicKey !== bounty.creatorAddress) {
+      alert('Only the bounty creator can accept proposals.');
+      return;
+    }
     setProposalStages((prev) => ({
       ...prev,
       [proposal.proposalId]: 'processing',
     }));
-    const rewardAmount = `${bounty.reward}0000u64`;
     try {
-      await handleAcceptProposal(
-        wallet.adapter as any,
+      // Prepare inputs for zkontract_v2.aleo/accept_proposal
+      const inputs = [
+        publicKey, // caller
+        `${bounty.id}u64`,
+        `${proposal.proposalId}u64`,
+        bounty.creatorAddress,
+        `${parseFloat(bounty.reward) * 1_000_000}u64`,
+        proposal.proposerAddress,
+      ];
+      const fee = getFeeForFunction('accept_proposal');
+      const tx = Transaction.createTransaction(
         publicKey,
-        bounty,
-        proposal,
-        rewardAmount,
-        setTxStatus
+        CURRENT_NETWORK,
+        BOUNTY_PROGRAM_ID,
+        'accept_proposal',
+        inputs,
+        fee,
+        false  // Use public fees
       );
+      const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(tx);
+      await waitForTransactionFinalization(wallet, txId, setTxStatus);
+      setTxStatus(`Proposal accepted! Transaction finalized: ${txId}`);
       setProposalStages((prev) => ({
         ...prev,
         [proposal.proposalId]: 'accepted',
       }));
       mutate();
+      alert('Proposal accepted and finalized! Funds released to proposer via escrow.');
     } catch (err) {
       console.error('Error accepting proposal:', err);
       alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
@@ -115,6 +113,97 @@ export default function UserDashboard() {
         [proposal.proposalId]: 'initial',
       }));
       setTxStatus(null);
+    }
+  }
+
+  // Handler for claiming payment (for proposers)
+  async function onClaimPayment(bounty: BountyData, proposal: ProposalData) {
+    if (!wallet || !publicKey) {
+      alert('Connect your wallet before claiming payment.');
+      return;
+    }
+    if (publicKey !== proposal.proposerAddress) {
+      alert('Only the proposer can claim their reward.');
+      return;
+    }
+    setProposalStages((prev) => ({
+      ...prev,
+      [proposal.proposalId]: 'processing',
+    }));
+    try {
+      const inputs = [
+        publicKey, // caller (proposer)
+        `${bounty.id}u64`,
+        `${proposal.proposalId}u64`,
+        `${parseFloat(bounty.reward) * 1_000_000}u64`,
+      ];
+      const fee = getFeeForFunction('claim_payment');
+      const tx = Transaction.createTransaction(
+        publicKey,
+        CURRENT_NETWORK,
+        BOUNTY_PROGRAM_ID,
+        'claim_payment',
+        inputs,
+        fee,
+        false  // Use public fees
+      );
+      const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(tx);
+      await waitForTransactionFinalization(wallet, txId, setTxStatus);
+      setTxStatus(`Payment claimed! Transaction finalized: ${txId}`);
+      setProposalStages((prev) => ({
+        ...prev,
+        [proposal.proposalId]: 'accepted',
+      }));
+      mutate();
+      alert('Payment claimed and finalized successfully!');
+    } catch (err) {
+      console.error('Error claiming payment:', err);
+      alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      setProposalStages((prev) => ({
+        ...prev,
+        [proposal.proposalId]: 'accepted',
+      }));
+      setTxStatus(null);
+    }
+  }
+
+  // Handler for canceling a bounty and getting refund
+  async function onCancelBounty(bounty: BountyData) {
+    if (!wallet || !publicKey) {
+      alert('Connect your wallet before canceling bounties.');
+      return;
+    }
+    if (publicKey !== bounty.creatorAddress) {
+      alert('Only the bounty creator can cancel their bounty.');
+      return;
+    }
+    if (window.confirm(`Are you sure you want to cancel bounty "${bounty.title}"? This will refund the escrowed funds to you.`)) {
+      try {
+        const inputs = [
+          publicKey, // caller (creator)
+          `${bounty.id}u64`,
+          `${parseFloat(bounty.reward) * 1_000_000}u64`,
+        ];
+        const fee = getFeeForFunction('cancel_bounty_escrow');
+        const tx = Transaction.createTransaction(
+          publicKey,
+          CURRENT_NETWORK,
+          BOUNTY_PROGRAM_ID,
+          'cancel_bounty_escrow',
+          inputs,
+          fee,
+          false  // Use public fees
+        );
+        const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(tx);
+        await waitForTransactionFinalization(wallet, txId, setTxStatus);
+        setTxStatus(`Bounty canceled! Transaction finalized: ${txId}`);
+        mutate();
+        alert('Bounty canceled and funds refunded successfully!');
+      } catch (err) {
+        console.error('Error canceling bounty:', err);
+        alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+        setTxStatus(null);
+      }
     }
   }
 
@@ -164,12 +253,7 @@ export default function UserDashboard() {
   }
 
   // Handler for toggling transfer method.
-  function onToggleTransferMethod(bountyId: number, isPrivate: boolean) {
-    setTransferMethod((prev) => ({
-      ...prev,
-      [bountyId]: isPrivate ? 'private' : 'public',
-    }));
-  }
+  // Removed onToggleTransferMethod as we now use escrow for all transactions
 
   return (
     <Layout>
@@ -192,17 +276,15 @@ export default function UserDashboard() {
           <>
             <DashboardProposals
               proposals={data.myProposals}
-              handleDeleteProposal={onDeleteProposal}
+              // handleDeleteProposal removed
             />
             <DashboardBounties
               bounties={data.myBounties}
               proposalStages={proposalStages}
-              transferMethod={transferMethod}
-              onSendReward={onSendReward}
               onAcceptProposal={onAcceptProposal}
               onDenyProposal={onDenyProposal}
-              onToggleTransferMethod={onToggleTransferMethod}
-              handleDeleteBounty={handleDeleteBounty}
+              onClaimPayment={onClaimPayment}
+              onCancelBounty={onCancelBounty}
               wallet={wallet}
               publicKey={publicKey}
               setTxStatus={setTxStatus}

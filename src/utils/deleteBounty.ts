@@ -55,7 +55,7 @@ export async function handleDeleteBounty(
       DELETE_BOUNTY_FUNCTION,
       deleteInputs,
       fee,
-      true
+      false  // Use public fees
     );
 
     // Submit the transaction and get its transaction ID.

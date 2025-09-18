@@ -1,8 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 
-// Use dynamic import for glslCanvas to handle ESM issues
-let GlslCanvas: any;
-
 const FRAGMENT_SHADER = `
 #ifdef GL_ES
 precision mediump float;
@@ -100,27 +97,62 @@ void main() {
 `;
 
 export default function GLSLBackground() {
-  // Simplified version for debugging
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Try to dynamically import glslCanvas
+    const setupGLSL = async () => {
+      try {
+        const GlslCanvas = await import('glslCanvas');
+        const sandbox = new (GlslCanvas.default || GlslCanvas)(canvas);
+        sandbox.load(FRAGMENT_SHADER);
+      } catch (error) {
+        console.log('glslCanvas not available, using fallback');
+        // Use a basic WebGL fallback or simple animation
+        setupBasicWebGL();
+      }
+    };
+
+    const setupBasicWebGL = () => {
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        console.log('WebGL not available');
+        return;
+      }
+      
+      // Set canvas size
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      // Simple blue background that changes over time
+      let time = 0;
+      const animate = () => {
+        time += 0.01;
+        const blue = 0.2 + 0.3 * Math.sin(time);
+        gl.clearColor(0.1, 0.2, blue, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        requestAnimationFrame(animate);
+      };
+      animate();
+    };
+
+    setupGLSL();
+
+    return () => {
+      // cleanup if needed
+    };
+  }, []);
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 1,
-        pointerEvents: 'none',
-        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontSize: '24px',
-        fontWeight: 'bold'
-      }}
-    >
-      GLSL Background Component Loaded
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={1920}
+      height={1080}
+      className="fixed top-0 left-0 w-full h-full"
+      style={{ zIndex: -1, pointerEvents: 'none' }}
+    />
   );
 }

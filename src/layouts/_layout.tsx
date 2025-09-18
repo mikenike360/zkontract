@@ -123,7 +123,7 @@ export default function Layout({
 }: React.PropsWithChildren<LayoutProps>) {
   return (
     // Use DaisyUI tokens for the background and text color
-    <div className="bg-base-100 text-base-content flex min-h-screen flex-col">
+    <div className="bg-primary text-base-content flex min-h-screen flex-col">
       <Header />
       <main className="mb-12 flex flex-grow flex-col pt-4 sm:pt-12">
         {children}

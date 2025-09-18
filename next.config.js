@@ -6,6 +6,11 @@ const runtimeCaching = require('next-pwa/cache');
 require('dotenv').config();
 
 module.exports = withPWA({
+  pwa: {
+    dest: 'public',
+    disable: process.env.NODE_ENV === 'development',
+    runtimeCaching,
+  },
   env: {
     URL: process.env.URL,
     TWITTER: process.env.TWITTER,
@@ -13,11 +18,10 @@ module.exports = withPWA({
     RPC_URL: process.env.RPC_URL,
   },
   reactStrictMode: true,
-  pwa: {
-    dest: 'public',
-    disable: process.env.NODE_ENV === 'development',
-    runtimeCaching,
-  },
+  // Allow cross-origin requests from network IP in development
+  ...(process.env.NODE_ENV === 'development' && {
+    allowedDevOrigins: ['192.168.88.17'],
+  }),
   ...(process.env.NODE_ENV === 'production' && {
     typescript: {
       ignoreBuildErrors: true,
@@ -27,7 +31,12 @@ module.exports = withPWA({
     },
   }),
   webpack: (config, options) => {
-    config.ignoreWarnings = [/Failed to parse source map/];
+    config.ignoreWarnings = [
+      /Failed to parse source map/,
+      /webpack\.cache\.PackFileCacheStrategy/,
+      /Skipped not serializable cache item/,
+      /No serializer registered for Warning/,
+    ];
     const fallback = config.resolve.fallback || {};
     Object.assign(fallback, {
       stream: require.resolve('stream-browserify'),

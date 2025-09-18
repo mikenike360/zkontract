@@ -26,7 +26,6 @@ module.exports = withPWA({
       ignoreDuringBuilds: true,
     },
   }),
-  webpack5: true,
   webpack: (config, options) => {
     config.ignoreWarnings = [/Failed to parse source map/];
     const fallback = config.resolve.fallback || {};

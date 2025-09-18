@@ -1,13 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require('tailwindcss/defaultTheme');
 
+// Tailwind CSS v4 configuration - most config is now in CSS files
 module.exports = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx}',
     './src/components/**/*.{js,ts,jsx,tsx}',
     './src/layouts/**/*.{js,ts,jsx,tsx}',
   ],
-  // Add a safelist so Tailwind doesn't purge these classes
+  // Safelist remains for dynamic classes
   safelist: [
     'wallet-adapter-button',
     'wallet-adapter-dropdown',
@@ -20,7 +21,7 @@ module.exports = {
   theme: {
     screens: {
       xs: '500px',
-      sm: '640px',
+      sm: '640px', 
       md: '768px',
       lg: '1024px',
       xl: '1280px',
@@ -29,7 +30,6 @@ module.exports = {
       '4xl': '2160px',
     },
     extend: {
-      // Removed custom color overrides so DaisyUI themes take full effect
       spacing: {
         13: '3.375rem',
       },
@@ -107,38 +107,6 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-    (() => {
-      // Import DaisyUI v5 ES module in CommonJS
-      let daisyui;
-      try {
-        daisyui = require('daisyui');
-      } catch (e) {
-        // Fallback for ES module in CommonJS
-        return require('daisyui/src/index.js');
-      }
-      return daisyui;
-    })(),
-  ],
-  daisyui: {
-    themes: [
-      'light',
-      'dark',
-      'cupcake',
-      'bumblebee',
-      'emerald',
-      'forest',
-      'aqua',
-      'lofi',
-      'pastel',
-      'fantasy',
-      'wireframe',
-      'black',
-      'luxury',
-      'dracula',
-      'synthwave',
-    ],
-  },
+  // Note: plugins are now configured in CSS files for Tailwind v4
+  plugins: [],
 };

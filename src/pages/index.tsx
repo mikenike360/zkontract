@@ -3,6 +3,7 @@ import { NextSeo } from 'next-seo';
 import Layout from '@/layouts/_layout';
 import Button from '@/components/ui/button';
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
+import { useWalletModal } from '@demox-labs/aleo-wallet-adapter-reactui';
 import { WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
 import { useRouter } from 'next/router';
 import { CURRENT_NETWORK } from '@/types';
@@ -12,17 +13,20 @@ import GLSLBackground from '@/utils/GLSLBackground';
 
 const MainPage: NextPageWithLayout = () => {
   const { publicKey } = useWallet();
+  const { setVisible } = useWalletModal();
   const router = useRouter();
   const { alertState, hideAlert, showError } = useAlertModal();
 
   const handleButtonClick = async () => {
     try {
       if (!publicKey) {
-        throw new WalletNotConnectedError();
+        // Open the wallet modal instead of showing an error
+        setVisible(true);
+        return;
       }
       router.push('/board');
     } catch (error) {
-      showError('Wallet Required', 'Please click on Select Wallet and connect your wallet to proceed.');
+      showError('Wallet Required', 'Please connect your wallet to proceed.');
     }
   };
 

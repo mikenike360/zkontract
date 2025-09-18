@@ -128,6 +128,7 @@ export default function GLSLBackground() {
       width={1920} // or lower for performance
       height={1080}
       className="fixed top-0 left-0 w-full h-full pt-24"
+      style={{ opacity: 0.6 }}
     />
   );
 }

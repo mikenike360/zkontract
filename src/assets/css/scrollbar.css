@@ -59,7 +59,7 @@
   content: '';
   display: block;
   position: absolute;
-  @apply bg-black/10 dark:bg-gray-500;
+  background: rgb(0 0 0 / 0.1);
 }
 
 .os-theme-thin > .os-scrollbar-vertical > .os-scrollbar-track:before,
@@ -93,7 +93,7 @@
   left: 50%;
   margin-left: -1px;
   border-radius: 15px;
-  @apply bg-black/10 dark:bg-gray-600;
+  background: rgb(0 0 0 / 0.1);
 }
 .os-theme-thin
   > .os-scrollbar
@@ -103,7 +103,7 @@
   display: block;
   position: absolute;
   border-radius: 10px;
-  @apply bg-black/30 dark:bg-gray-800;
+  background: rgb(0 0 0 / 0.3);
 }
 
 .os-theme-thin

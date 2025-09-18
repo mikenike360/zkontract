@@ -17,14 +17,14 @@
   width: 100%;
   height: 4px;
   border-radius: 6px;
-  @apply bg-base-300;
+  background: oklch(var(--b3));
 }
 .rc-slider-track {
   position: absolute;
   height: 4px;
   border-radius: 6px;
   /* Using primary token for the slider track */
-  @apply bg-primary;
+  background: oklch(var(--p));
 }
 .rc-slider-handle {
   position: absolute;

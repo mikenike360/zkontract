@@ -10,15 +10,103 @@
   :root {
     --color-brand: 43 24 39;
   }
+  
+  /* Define custom font family */
+  .font-body {
+    font-family: 'Fira Code', monospace, ui-sans-serif, system-ui, sans-serif;
+  }
+  
   html,
   body {
-    @apply antialiased bg-base-100 font-body text-base-content;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Fira Code', monospace, ui-sans-serif, system-ui, sans-serif;
+    background: oklch(var(--b1));
+    color: oklch(var(--bc));
   }
   .dynamic-html h6 {
     @apply font-medium uppercase;
   }
   .dynamic-html p {
     @apply mb-3;
+  }
+  
+  /* DaisyUI v5 compatibility utilities */
+  .bg-base-100 {
+    background: oklch(var(--b1));
+  }
+  .bg-base-200 {
+    background: oklch(var(--b2));
+  }
+  .bg-base-300 {
+    background: oklch(var(--b3));
+  }
+  .text-base-content {
+    color: oklch(var(--bc));
+  }
+  .border-base-300 {
+    border-color: oklch(var(--b3));
+  }
+  
+  /* Common DaisyUI color utilities */
+  .bg-primary {
+    background: oklch(var(--p));
+  }
+  .bg-secondary {
+    background: oklch(var(--s));
+  }
+  .bg-success {
+    background: oklch(var(--su));
+  }
+  .bg-warning {
+    background: oklch(var(--wa));
+  }
+  .bg-error {
+    background: oklch(var(--er));
+  }
+  .bg-info {
+    background: oklch(var(--in));
+  }
+  
+  .text-primary {
+    color: oklch(var(--p));
+  }
+  .text-primary-content {
+    color: oklch(var(--pc));
+  }
+  .text-secondary {
+    color: oklch(var(--s));
+  }
+  .text-success {
+    color: oklch(var(--su));
+  }
+  .text-warning {
+    color: oklch(var(--wa));
+  }
+  .text-error {
+    color: oklch(var(--er));
+  }
+  .text-info {
+    color: oklch(var(--in));
+  }
+  
+  /* Black opacity utilities */
+  .bg-black\/10 {
+    background: rgb(0 0 0 / 0.1);
+  }
+  .bg-black\/20 {
+    background: rgb(0 0 0 / 0.2);
+  }
+  
+  /* Base content with opacity */
+  .text-base-content\/70 {
+    color: oklch(var(--bc) / 0.7);
+  }
+  .text-base-content\/80 {
+    color: oklch(var(--bc) / 0.8);
+  }
+  .text-base-content\/90 {
+    color: oklch(var(--bc) / 0.9);
   }
 }
 

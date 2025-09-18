@@ -98,12 +98,11 @@ export async function handleAcceptProposal(
       throw new Error('Failed to update proposal status in the database.');
     }
 
-    alert('Proposal accepted successfully!');
     setTxStatus('Proposal accepted successfully!');
     
   } catch (err) {
     console.error('Error accepting proposal:', err);
-    alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    // Error will be handled by the transaction modal
     setTxStatus(null);
   }
 }

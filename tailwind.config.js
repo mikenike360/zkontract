@@ -110,7 +110,17 @@ module.exports = {
   plugins: [
     require('@tailwindcss/typography'),
     require('@tailwindcss/forms'),
-    require('daisyui'),
+    (() => {
+      // Import DaisyUI v5 ES module in CommonJS
+      let daisyui;
+      try {
+        daisyui = require('daisyui');
+      } catch (e) {
+        // Fallback for ES module in CommonJS
+        return require('daisyui/src/index.js');
+      }
+      return daisyui;
+    })(),
   ],
   daisyui: {
     themes: [

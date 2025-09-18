@@ -40,7 +40,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const fileContent = getResult.Body.toString('utf-8');
-    const bountyData = JSON.parse(fileContent);
+    
+    // Check for empty or invalid JSON
+    if (!fileContent.trim()) {
+      return res.status(404).json({ error: 'Bounty file is empty' });
+    }
+    
+    let bountyData;
+    try {
+      bountyData = JSON.parse(fileContent);
+    } catch (parseError) {
+      console.error(`Invalid JSON in bounty file ${id}:`, parseError);
+      return res.status(500).json({ error: 'Bounty file contains invalid JSON' });
+    }
 
     // 2. Fetch on-chain data with caching
     let chainDataRaw;

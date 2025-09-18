@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import Layout from '@/layouts/_layout';
 import BackArrow from '@/components/ui/BackArrow';
 import Button from '@/components/ui/button';
+import TransactionModal from '@/components/ui/TransactionModal';
+import { useTransactionModal } from '@/hooks/useTransactionModal';
 
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
@@ -22,6 +24,31 @@ import { getFeeForFunction } from '@/utils/feeCalculator';
 
 const POST_BOUNTY_FUNCTION = 'post_bounty';
 
+// Helper function to wait for transaction finalization
+async function waitForTransactionFinalization(
+  wallet: any,
+  txId: string
+): Promise<void> {
+  let finalized = false;
+  for (let attempt = 0; attempt < 300; attempt++) { // Wait up to 5 minutes
+    try {
+      const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(txId);
+      if (status === 'Finalized') {
+        finalized = true;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+    } catch (statusErr) {
+      console.log('Checking transaction status...');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  
+  if (!finalized) {
+    throw new Error('Transaction did not finalize in time. Please check the blockchain explorer.');
+  }
+}
+
 function PostBountyPage() {
   const router = useRouter();
   const { wallet, publicKey } = useWallet();
@@ -38,67 +65,11 @@ function PostBountyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [bountyId, setBountyId] = useState<number | null>(null);
+  
+  // Transaction modal hook
+  const { modalState, executeTransactionWithModal, hideTransactionModal } = useTransactionModal();
 
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
 
-    if (transactionId && wallet) {
-      intervalId = setInterval(async () => {
-        try {
-          const status = await (wallet.adapter as LeoWalletAdapter).transactionStatus(transactionId);
-          console.log('Transaction status:', status);
-          setTxStatus(status);
-
-          if (status === 'Finalized') {
-            clearInterval(intervalId!);
-            intervalId = null;
-            await handlePostFinalization();
-          }
-        } catch (pollError) {
-          console.error('Error polling status:', pollError);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [transactionId, wallet]);
-
-  const handlePostFinalization = async () => {
-    try {
-      if (!bountyId) throw new Error('No bountyId set!');
-
-      const { title, description, reward, deadline } = formData;
-      // Include owner's wallet address in metadata
-      const metadata = { 
-        id: bountyId, 
-        title, 
-        description, 
-        reward, 
-        deadline, 
-        creatorAddress: publicKey
-      };
-
-      const res = await fetch('/api/upload-bounty', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bountyId, metadata }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to upload bounty metadata');
-      }
-
-      alert('Bounty posted successfully!');
-      router.push('/board');
-    } catch (error) {
-      console.error('Error uploading bounty metadata:', error);
-      setErrorMessage('Failed to post bounty metadata. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -111,51 +82,90 @@ function PostBountyPage() {
     e.preventDefault();
 
     if (!wallet || !publicKey) {
-      alert('Please connect your wallet to proceed.');
+      setErrorMessage('Please connect your wallet to proceed.');
+      setIsSubmitting(false);
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      setErrorMessage(null);
+    setIsSubmitting(true);
+    setErrorMessage(null);
 
-      const { title, description, reward, deadline } = formData;
-      const newBountyId = Date.now();
-      setBountyId(newBountyId);
+    const { title, description, reward, deadline } = formData;
+    const newBountyId = Date.now();
+    setBountyId(newBountyId);
 
-      const inputs = [
-        publicKey,               // caller
-        `${newBountyId}u64`,     // bounty_id
-        publicKey,               // creator_address
-        `${parseFloat(reward) * 1_000_000}u64`,    // payment_amount in micro credits (ALEO * 1,000,000)
-      ];
+    await executeTransactionWithModal(
+      'Post Bounty',
+      // Transaction function
+      async () => {
+        const inputs = [
+          publicKey,               // caller
+          `${newBountyId}u64`,     // bounty_id
+          publicKey,               // creator_address
+          `${parseFloat(reward) * 1_000_000}u64`,    // payment_amount in micro credits (ALEO * 1,000,000)
+        ];
 
-      
+        const fee = getFeeForFunction(POST_BOUNTY_FUNCTION);
+        
+        const bountyTransaction = Transaction.createTransaction(
+          publicKey,
+          CURRENT_NETWORK,
+          BOUNTY_PROGRAM_ID,
+          POST_BOUNTY_FUNCTION,
+          inputs,
+          fee,
+          false
+        );
 
-      // Use the fee calculator to get the fee for the post_bounty function
-      const fee = getFeeForFunction(POST_BOUNTY_FUNCTION);
-      
-      console.log(CURRENT_NETWORK)
+        const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);
+        setTransactionId(txId);
+        return txId;
+      },
+      // Finalization function
+      async (txId: string) => {
+        await waitForTransactionFinalization(wallet, txId);
+        
+        // Upload bounty metadata to S3
+        const metadata = {
+          id: newBountyId,
+          title,
+          description,
+          reward,
+          deadline,
+          creatorAddress: publicKey,
+        };
+        
+        const response = await fetch('/api/upload-bounty', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bountyId: newBountyId,
+            metadata,
+          }),
+        });
 
-      const bountyTransaction = Transaction.createTransaction(
-        publicKey,
-        CURRENT_NETWORK,
-        BOUNTY_PROGRAM_ID,
-        POST_BOUNTY_FUNCTION,
-        inputs,
-        fee,
-        false
-      );
-
-      const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(bountyTransaction);
-      
-      console.log('Transaction submitted:', txId);
-      setTransactionId(txId);
-    } catch (error) {
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('S3 upload failed:', errorData);
+          throw new Error(`Failed to save bounty metadata: ${errorData.error || 'Unknown error'}`);
+        }
+        
+        console.log('Bounty metadata uploaded successfully to S3');
+      },
+      // Success callback
+      () => {
+        setIsSubmitting(false);
+        console.log('Bounty posted successfully, redirecting to board');
+        // Force a delay to ensure S3 is consistent, then redirect
+        setTimeout(() => {
+          router.push('/board');
+        }, 1000);
+      }
+    ).catch((error) => {
       console.error('Error posting bounty:', error);
       setErrorMessage('Failed to post bounty. Please try again.');
       setIsSubmitting(false);
-    }
+    });
   };
 
   return (
@@ -241,12 +251,16 @@ function PostBountyPage() {
         <div className="mb-6">
           <BackArrow />
         </div>
-        {transactionId && (
-          <div className="mt-4 text-center">
-            <div><strong>Transaction ID:</strong> {transactionId}</div>
-            <div><strong>Transaction Status:</strong> {txStatus}</div>
-          </div>
-        )}
+
+        {/* Transaction Progress Modal */}
+        <TransactionModal
+          isOpen={modalState.isOpen}
+          onClose={hideTransactionModal}
+          status={modalState.status}
+          title={modalState.title}
+          txId={modalState.txId}
+          errorMessage={modalState.errorMessage}
+        />
       </div>
     </>
   );

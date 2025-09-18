@@ -7,6 +7,8 @@ import { WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { CURRENT_NETWORK } from '@/types';
+import AlertModal from '@/components/ui/AlertModal';
+import { useAlertModal } from '@/hooks/useAlertModal';
 
 // Dynamically import GLSLBackground (no SSR)
 const GLSLBackground = dynamic(() => import('../utils/GLSLBackground'), {
@@ -16,6 +18,7 @@ const GLSLBackground = dynamic(() => import('../utils/GLSLBackground'), {
 const MainPage: NextPageWithLayout = () => {
   const { publicKey } = useWallet();
   const router = useRouter();
+  const { alertState, hideAlert, showError } = useAlertModal();
 
   const handleButtonClick = async () => {
     try {
@@ -24,7 +27,7 @@ const MainPage: NextPageWithLayout = () => {
       }
       router.push('/board');
     } catch (error) {
-      alert('Please click on Select Wallet and connect your wallet to proceed.');
+      showError('Wallet Required', 'Please click on Select Wallet and connect your wallet to proceed.');
     }
   };
 
@@ -65,6 +68,19 @@ const MainPage: NextPageWithLayout = () => {
           )}
         </div>
       </div>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        showCancel={alertState.showCancel}
+        onConfirm={alertState.onConfirm}
+        confirmText={alertState.confirmText}
+        cancelText={alertState.cancelText}
+      />
     </>
   );
 };

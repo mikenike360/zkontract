@@ -71,7 +71,10 @@ const BoardPage: NextPageWithLayout = () => {
   const router = useRouter();
 
   // Use SWR to fetch bounties from the backend
-  const { data: bounties, error, isLoading } = useSWR<Bounty[]>('bounties', fetchBounties);
+  const { data: bounties, error, isLoading, mutate } = useSWR<Bounty[]>('bounties', fetchBounties, {
+    refreshInterval: 30000, // Refresh every 30 seconds
+    revalidateOnFocus: true, // Revalidate when window gets focus
+  });
 
   const handleAddBounty = () => {
     router.push('/post-bounty');
@@ -108,6 +111,12 @@ const BoardPage: NextPageWithLayout = () => {
             className="px-6 py-2 btn btn-secondary text-sm"
           >
             Dashboard
+          </Button>
+          <Button
+            onClick={() => mutate()}
+            className="px-6 py-2 btn btn-accent text-sm"
+          >
+            🔄 Refresh
           </Button>
         </div>
 

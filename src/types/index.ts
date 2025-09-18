@@ -34,6 +34,7 @@ export type BountyData = {
   deadline: string;
   creatorAddress: string;
   proposals?: ProposalData[];
+  contractStatus?: string | null; // Status from contract: "0" = open, "1" = completed
 };
 
-export const BOUNTY_PROGRAM_ID = 'zkontract_v2.aleo';
+export const BOUNTY_PROGRAM_ID = 'zkontract_v4.aleo';

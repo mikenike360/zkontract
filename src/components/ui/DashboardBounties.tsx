@@ -17,8 +17,8 @@ type DashboardBountiesProps = {
   onDenyProposal: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
   
   // New escrow-based handlers:
-  onClaimPayment: (bounty: BountyData, proposal: ProposalData) => Promise<void> | void;
   onCancelBounty: (bounty: BountyData) => Promise<void> | void;
+  onCloseBounty: (bounty: BountyData) => Promise<void> | void;
 
   wallet: any;
   publicKey: string | null;
@@ -65,8 +65,8 @@ export default function DashboardBounties({
   proposalStages,
   onAcceptProposal,
   onDenyProposal,
-  onClaimPayment,
   onCancelBounty,
+  onCloseBounty,
   wallet,
   publicKey,
   setTxStatus,
@@ -95,19 +95,55 @@ export default function DashboardBounties({
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold text-primary-content mb-8 mt-8">My Posted Bounties</h2>
+    <div className="mb-12">
+      {/* Enhanced Section Header */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="bg-blue-500 p-2 rounded-lg shadow-md">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-base-content">
+            My Posted Bounties
+          </h2>
+          <p className="text-base-content/80 text-sm font-medium mt-1">
+            Manage and review proposals for your bounties
+          </p>
+        </div>
+      </div>
 
       {bounties.length === 0 ? (
-        <p className="text-primary-content">You haven’t posted any bounties yet.</p>
+        <div className="text-center py-12">
+          <div className="bg-base-200 rounded-xl p-8 max-w-md mx-auto border border-base-300">
+            <div className="w-16 h-16 bg-gray-400/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-base-content text-lg font-bold mb-2">
+              No bounties posted yet
+            </p>
+            <p className="text-base-content/80 text-sm font-medium">
+              You haven't posted any bounties yet. Create your first bounty to get started!
+            </p>
+          </div>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-primary-content">
             {bounties.map((bounty) => {
-              // Check if the bounty has an accepted proposal
+              // Check if the bounty is completed on-chain (contract status = "1" or "1u8")
+              console.log(`Bounty ${bounty.id} contract status:`, bounty.contractStatus);
+              const isBountyCompleted = bounty.contractStatus === "1" || bounty.contractStatus === "1u8";
+              
+              // Also check if the bounty has an accepted proposal (fallback)
               const hasAcceptedProposal = bounty.proposals?.some(
                 (p) => getEffectiveStatus(p, proposalStages) === 'accepted'
               );
+
+              // Use contract status as primary source, fallback to proposal status
+              const bountyIsClosed = isBountyCompleted || hasAcceptedProposal;
 
               // Check if any proposal returns 'pending' using our helper.
               const hasDeleteBtnPending = bounty.proposals?.some(
@@ -117,27 +153,84 @@ export default function DashboardBounties({
               return (
                 <div
                   key={bounty.id}
-                  className="card rounded-lg shadow p-4 bg-base-100 border text-primary-content resize overflow-auto"
+                  className="group bg-base-100 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-base-300 overflow-hidden"
                 >
-                  <h3 className="text-lg font-medium text-base-content mb-1">
-                    {bounty.title} (ID: {bounty.id})
-                  </h3>
-                  <p className="text-sm text-base-content mb-1">Reward: {bounty.reward} Aleo</p>
-                  <p className="text-xs text-base-content">Deadline: {bounty.deadline}</p>
+                  {/* Card Header */}
+                  <div className="bg-base-200 p-4 border-b border-base-300">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-bold text-primary">#{bounty.id.toString().slice(-3)}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg font-bold text-base-content leading-tight">
+                            {bounty.title}
+                          </h3>
+                          <p className="text-xs font-medium text-base-content/80 mt-1">
+                            ID: {bounty.id}
+                          </p>
+                        </div>
+                      </div>
+                      {bountyIsClosed && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="bg-green-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-md">
+                            ✅ CLOSED
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Bounty Details */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                        <div className="text-lg font-bold text-emerald-600">{bounty.reward}</div>
+                        <div className="text-xs text-emerald-600/70">Aleo Reward</div>
+                      </div>
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div className="text-sm font-semibold text-amber-600">{bounty.deadline}</div>
+                        <div className="text-xs text-amber-600/70">Deadline</div>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* PROPOSALS */}
                   {bounty.proposals && bounty.proposals.length > 0 ? (
-                    <div className="mt-4">
+                    <div className="p-4">
                       {/* Escrow Info */}
-                      <div className="mb-2">
-                        <span className="text-sm text-info">
-                          💡 All rewards are securely managed via escrow
-                        </span>
+                      <div className="bg-info/10 border border-info/20 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-info/20 rounded-full flex items-center justify-center">
+                            <span className="text-xs">🔒</span>
+                          </div>
+                          <span className="text-sm text-info font-medium">
+                            All rewards are securely managed via escrow
+                          </span>
+                        </div>
                       </div>
 
-                      <h4 className="text-sm font-semibold text-base-content mb-2">
-                        Proposals For Review:
-                      </h4>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-lg font-bold text-base-content flex items-center gap-2">
+                          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          {bountyIsClosed ? 'Proposals (Closed)' : 'Proposals For Review'}
+                        </h4>
+                        <span className="bg-primary/10 border border-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary">
+                          {bounty.proposals.length} proposal{bounty.proposals.length === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                      
+                      {bountyIsClosed && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-yellow-600 text-sm">ℹ️</span>
+                            <span className="text-sm text-yellow-600/80 font-medium">
+                              Only one proposal can be accepted per bounty. You can still deny other proposals.
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       <ul className="space-y-3">
                         {bounty.proposals.map((proposal) => {
                           if (proposal.status === undefined) {
@@ -158,20 +251,20 @@ export default function DashboardBounties({
 
                           return (
                             <li key={proposal.proposalId}>
-                              <div className="card border break-words resize overflow-auto">
+                              <div className="bg-base-100 border border-base-300/30 rounded-lg p-4 hover:border-primary/30 transition-all duration-200 break-words">
                                 <ProposalItem proposal={proposal} bounty={bounty} showActions />
-                                <div className="mt-2 justify-center flex gap-2">
+                                <div className="mt-4 pt-3 border-t border-base-300/30 flex justify-center gap-2">
                                   {renderProposalButtons({
                                     status: effectiveStatus,
                                     bounty,
                                     proposal,
                                     onAcceptProposal,
                                     onDenyProposal,
-                                    onClaimPayment,
                                     isLoading,
                                     setProposalLoading,
                                     mutate,
                                     publicKey,
+                                    hasAcceptedProposal: bountyIsClosed,
                                   })}
                                 </div>
                               </div>
@@ -179,24 +272,53 @@ export default function DashboardBounties({
                           );
                         })}
                       </ul>
-
-                      {/* Cancel Bounty button for creator (if no accepted proposals) */}
-                      {!hasAcceptedProposal && publicKey === bounty.creatorAddress && (
-                        <div className="flex justify-center mt-2">
-                          <Button
-                            onClick={() => onCancelBounty(bounty)}
-                            className="btn btn-warning btn-sm mt-4"
-                          >
-                            Cancel Bounty & Refund Escrow
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   ) : (
-                    <div className="mt-4">
-                      <p className="text-base-content">No pending proposals for this bounty!</p>
+                    <div className="p-4">
+                      <div className="bg-base-200 rounded-xl p-6 text-center border border-base-300">
+                        <div className="w-12 h-12 bg-gray-400/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <p className="text-base-content font-bold">No proposals yet</p>
+                        <p className="text-base-content/80 text-sm font-medium mt-1">Waiting for developers to submit proposals</p>
+                      </div>
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="p-4 border-t border-base-300 bg-base-200/50">
+                    {/* Cancel Bounty button for creator (if no accepted proposals) - Show regardless of proposal count */}
+                    {!bountyIsClosed && publicKey === bounty.creatorAddress && (
+                      <div className="flex justify-center">
+                        <Button
+                          onClick={() => onCancelBounty(bounty)}
+                          className="btn btn-warning btn-sm hover:btn-warning/80 transition-all duration-200 font-medium shadow-md"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Cancel Bounty & Refund Escrow
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Close Bounty button for creator (if proposal is accepted) */}
+                    {bountyIsClosed && publicKey === bounty.creatorAddress && (
+                      <div className="flex justify-center">
+                        <Button
+                          onClick={() => onCloseBounty(bounty)}
+                          className="btn btn-success btn-sm hover:btn-success/80 transition-all duration-200 font-medium shadow-md"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Close Bounty
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -223,11 +345,11 @@ type RenderButtonsProps = {
   proposal: ProposalData;
   onAcceptProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
   onDenyProposal: (b: BountyData, p: ProposalData) => Promise<void> | void;
-  onClaimPayment: (b: BountyData, p: ProposalData) => Promise<void> | void;
   isLoading: boolean;
   setProposalLoading: (proposalId: number, isLoading: boolean) => void;
   mutate: () => void;
   publicKey: string | null;
+  hasAcceptedProposal: boolean;
 };
 
 function renderProposalButtons({
@@ -236,11 +358,11 @@ function renderProposalButtons({
   proposal,
   onAcceptProposal,
   onDenyProposal,
-  onClaimPayment,
   isLoading,
   setProposalLoading,
   mutate,
   publicKey,
+  hasAcceptedProposal,
 }: RenderButtonsProps) {
   if (isLoading) {
     return (
@@ -260,24 +382,6 @@ function renderProposalButtons({
       return (
         <div className="mb-4 flex space-x-2">
           <span className="text-success text-sm">✅ Proposal Accepted</span>
-          {isProposer && (
-            <Button
-              onClick={async () => {
-                setProposalLoading(proposal.proposalId, true);
-                try {
-                  await onClaimPayment(bounty, proposal);
-                  mutate();
-                } catch (err) {
-                  console.error('Error claiming payment:', err);
-                } finally {
-                  setProposalLoading(proposal.proposalId, false);
-                }
-              }}
-              className="btn btn-success btn-sm"
-            >
-              Claim Payment
-            </Button>
-          )}
         </div>
       );
     case 'denied':
@@ -311,9 +415,14 @@ function renderProposalButtons({
                 setProposalLoading(proposal.proposalId, false);
               }
             }}
-            className="btn btn-primary btn-sm"
+            disabled={hasAcceptedProposal}
+            className={`btn btn-sm ${
+              hasAcceptedProposal 
+                ? 'btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed' 
+                : 'btn-primary'
+            }`}
           >
-            Accept & Release Escrow
+            {hasAcceptedProposal ? 'Bounty Closed' : 'Accept & Release Escrow'}
           </Button>
           <Button
             onClick={async () => {
@@ -327,9 +436,14 @@ function renderProposalButtons({
                 setProposalLoading(proposal.proposalId, false);
               }
             }}
-            className="btn btn-error btn-sm"
+            disabled={hasAcceptedProposal}
+            className={`btn btn-sm ${
+              hasAcceptedProposal 
+                ? 'btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed' 
+                : 'btn-error'
+            }`}
           >
-            Deny
+            {hasAcceptedProposal ? 'Cannot Deny' : 'Deny'}
           </Button>
         </div>
       ) : (

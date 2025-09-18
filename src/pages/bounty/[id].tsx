@@ -1,6 +1,6 @@
 // pages/bounty/[id].tsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import Layout from '@/layouts/_layout';
@@ -12,6 +12,11 @@ import { BOUNTY_PROGRAM_ID } from '@/types';
 
 // Import the new submitProposal function
 import { submitProposal } from '@/utils/submitProposal';
+import TransactionModal from '@/components/ui/TransactionModal';
+import { useTransactionModal } from '@/hooks/useTransactionModal';
+import AlertModal from '@/components/ui/AlertModal';
+import { useAlertModal } from '@/hooks/useAlertModal';
+import { validateFile, getFileTypeDescription, formatFileSize, DEFAULT_FILE_CONFIG } from '@/utils/fileValidation';
 
 // Bounty data type
 type Bounty = {
@@ -47,6 +52,43 @@ const BountyPage = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
   const [txStatus, setTxStatus] = useState<string | null>(null);
+  const [hasExistingProposal, setHasExistingProposal] = useState(false);
+  const [isCheckingProposal, setIsCheckingProposal] = useState(true);
+
+  // Alert and transaction modal hooks
+  const { alertState, hideAlert, showError } = useAlertModal();
+  const { modalState, executeTransactionWithModal, hideTransactionModal } = useTransactionModal();
+
+  // Check if user has already submitted a proposal to this bounty
+  useEffect(() => {
+    const checkExistingProposal = async () => {
+      if (!publicKey || !id) {
+        setIsCheckingProposal(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/my-dashboard?publicKey=${publicKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          const userProposals = data.myProposals || [];
+          
+          // Check if user has already submitted a proposal to this bounty
+          const existingProposal = userProposals.find(
+            (proposal: any) => proposal.bountyId === Number(id)
+          );
+          
+          setHasExistingProposal(!!existingProposal);
+        }
+      } catch (error) {
+        console.error('Error checking existing proposals:', error);
+      } finally {
+        setIsCheckingProposal(false);
+      }
+    };
+
+    checkExistingProposal();
+  }, [publicKey, id]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -54,48 +96,75 @@ const BountyPage = () => {
     }
   };
 
-  const handleOpenModal = () => setIsModalOpen(true);
+  const handleOpenModal = () => {
+    if (hasExistingProposal) {
+      showError('Proposal Already Submitted', 'You have already submitted a proposal to this bounty. Only one proposal per bounty is allowed.');
+      return;
+    }
+    setIsModalOpen(true);
+  };
+  
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setProposal('');
     setUploadedFile(null);
   };
 
-  // Refactored submit proposal handler using our utility function
+  // Submit proposal handler using transaction modal
   const handleSubmitProposal = async () => {
     if (!wallet || !publicKey) {
-      alert('Please connect your Aleo wallet before submitting a proposal.');
+      showError('Wallet Required', 'Please connect your Aleo wallet before submitting a proposal.');
       return;
     }
     if (!id) {
-      alert('No bounty ID found. Invalid route?');
+      showError('Invalid Route', 'No bounty ID found. Please try again.');
+      return;
+    }
+    if (hasExistingProposal) {
+      showError('Proposal Already Submitted', 'You have already submitted a proposal to this bounty. Only one proposal per bounty is allowed.');
       return;
     }
 
-    try {
-      setIsSubmittingProposal(true);
-      setTxStatus(null);
-
-      const bountyId = Number(id);
-
-      // Call our refactored function from /utils/submitProposal.ts
-      const { txId, proposalId } = await submitProposal({
-        wallet,
-        publicKey,
-        bountyId,
-        proposalText: proposal,
-        uploadedFile,
-      });
-
-      console.log('Proposal submitted successfully:', txId);
-      alert('Proposal submitted successfully!');
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error submitting proposal:', error);
-      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsSubmittingProposal(false);
+    // Validate file before starting transaction
+    const fileValidation = validateFile(uploadedFile);
+    if (!fileValidation.isValid) {
+      showError('Invalid File', fileValidation.errorMessage || 'Please check your file and try again.');
+      return;
     }
+
+    setIsSubmittingProposal(true);
+    const bountyId = Number(id);
+
+    await executeTransactionWithModal(
+      'Submit Proposal',
+      // Transaction function - we'll extract the core logic from submitProposal utility
+      async () => {
+        // For now, use the existing utility but extract the txId
+        const result = await submitProposal({
+          wallet,
+          publicKey,
+          bountyId,
+          proposalText: proposal,
+          uploadedFile,
+        });
+        return result.txId;
+      },
+      // Finalization function
+      async (txId: string) => {
+        // The submitProposal utility already handles finalization and S3 upload
+        // So we don't need additional logic here
+      },
+      // Success callback
+      () => {
+        setIsSubmittingProposal(false);
+        handleCloseModal();
+        setHasExistingProposal(true);
+        console.log('Proposal submitted successfully');
+      }
+    ).catch((error) => {
+      console.error('Error submitting proposal:', error);
+      setIsSubmittingProposal(false);
+    });
   };
 
   if (isLoading) {
@@ -141,12 +210,28 @@ const BountyPage = () => {
         </div>
         {/* Button outside the card */}
         <div className="flex justify-center mt-6">
-          <button
-            onClick={handleOpenModal}
-            className="py-3 px-6 bg-secondary text-secondary-content rounded-md shadow hover:opacity-75"
-          >
-            Submit A Proposal
-          </button>
+          {isCheckingProposal ? (
+            <button
+              disabled
+              className="py-3 px-6 bg-gray-400 text-gray-600 rounded-md shadow cursor-not-allowed"
+            >
+              Checking...
+            </button>
+          ) : hasExistingProposal ? (
+            <button
+              disabled
+              className="py-3 px-6 bg-gray-400 text-gray-600 rounded-md shadow cursor-not-allowed"
+            >
+              Proposal Already Submitted
+            </button>
+          ) : (
+            <button
+              onClick={handleOpenModal}
+              className="py-3 px-6 bg-secondary text-secondary-content rounded-md shadow hover:opacity-75"
+            >
+              Submit A Proposal
+            </button>
+          )}
         </div>
           {/* Back Arrow */}
           <div className="mt-4">
@@ -170,17 +255,32 @@ const BountyPage = () => {
             />
             <div className="mt-4">
               <label className="block text-sm font-medium text-primary-content">
-                Attach a File
+                Attach a File (Optional)
               </label>
+              <div className="mt-1 text-xs text-primary-content opacity-70">
+                Allowed: {getFileTypeDescription(DEFAULT_FILE_CONFIG.allowedTypes)} | Max: {formatFileSize(DEFAULT_FILE_CONFIG.maxSizeInBytes)}
+              </div>
               <input
                 type="file"
+                accept={DEFAULT_FILE_CONFIG.allowedTypes.join(',')}
                 onChange={handleFileUpload}
                 className="mt-2 block w-full text-sm text-primary-content"
               />
               {uploadedFile && (
-                <p className="mt-2 text-sm text-green-600">
-                  Selected File: {uploadedFile.name}
-                </p>
+                <>
+                  {(() => {
+                    const validation = validateFile(uploadedFile);
+                    return validation.isValid ? (
+                      <p className="mt-2 text-sm text-green-600">
+                        ✓ Selected: {uploadedFile.name} ({formatFileSize(uploadedFile.size)})
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-sm text-red-600">
+                        ✗ {validation.errorMessage}
+                      </p>
+                    );
+                  })()}
+                </>
               )}
             </div>
             <div className="mt-4 flex justify-between">
@@ -192,8 +292,12 @@ const BountyPage = () => {
               </button>
               <button
                 onClick={handleSubmitProposal}
-                disabled={isSubmittingProposal}
-                className="px-4 py-2 bg-accent text-primary-content rounded-md hover:opacity-75"
+                disabled={isSubmittingProposal || (uploadedFile ? !validateFile(uploadedFile).isValid : false)}
+                className={`px-4 py-2 rounded-md ${
+                  isSubmittingProposal || (uploadedFile ? !validateFile(uploadedFile).isValid : false)
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    : 'bg-accent text-primary-content hover:opacity-75'
+                }`}
               >
                 {isSubmittingProposal ? 'Submitting...' : 'Submit'}
               </button>
@@ -202,6 +306,29 @@ const BountyPage = () => {
           </div>
         </div>
       )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        showCancel={alertState.showCancel}
+        onConfirm={alertState.onConfirm}
+        confirmText={alertState.confirmText}
+        cancelText={alertState.cancelText}
+      />
+
+      {/* Transaction Progress Modal */}
+      <TransactionModal
+        isOpen={modalState.isOpen}
+        onClose={hideTransactionModal}
+        status={modalState.status}
+        title={modalState.title}
+        txId={modalState.txId}
+        errorMessage={modalState.errorMessage}
+      />
     </>
   );
 };

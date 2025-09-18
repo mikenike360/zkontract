@@ -6,15 +6,14 @@ export interface FeeMapping {
   
   // Hard-coded fee values in credits
   export const defaultFeeValues: FeeMapping = {
-    post_bounty: 0.08, // Increased due to escrow creation
-    submit_proposal: 0.042786,
-    accept_proposal: 0.055, // Increased due to escrow release
-    deny_proposal: 0.01445,
-    claim_payment: 0.035, // New escrow claim function
-    cancel_bounty_escrow: 0.035, // New escrow cancel function
-    delete_bounty: 0.033482,
-    transfer_public: 0.04406,
-    transfer_private: 0.04406,
+    post_bounty: 0.1, // Increased due to escrow creation
+    submit_proposal: 0.05,
+    accept_proposal: 0.07, // Increased due to escrow release
+    deny_proposal: 0.02,
+    cancel_bounty_escrow: 0.05, // Increased for escrow cancel function
+    delete_bounty: 0.04,
+    transfer_public: 0.05,
+    transfer_private: 0.05,
   };
   
   /**

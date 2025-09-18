@@ -85,14 +85,14 @@ export async function fetchBountyStatusAndReward(bountyId: string) {
 
 export async function readBountyMappings(bountyId: string) {
   // Fetch raw strings for all mappings
-  const creator = await fetchMappingValueRaw('bounty_creator', bountyId);
-  const payment = await fetchMappingValueRaw('bounty_payment', bountyId);
-  const status = await fetchMappingValueRaw('bounty_status', bountyId);
+  const creatorResult = await fetchMappingValueRaw('bounty_creator', bountyId);
+  const paymentResult = await fetchMappingValueRaw('bounty_payment', bountyId);
+  const statusResult = await fetchMappingValueRaw('bounty_status', bountyId);
 
   return {
-    creator,  
-    payment,  
-    status,   
+    creator: creatorResult?.value ?? creatorResult ?? null,  
+    payment: paymentResult?.value ?? paymentResult ?? null,  
+    status: statusResult?.value ?? statusResult ?? null,   
   };
 }
 

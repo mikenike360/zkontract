@@ -3,6 +3,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
 import { Readable } from 'stream';
+import { readBountyMappings } from '@/components/aleo/rpc';
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -66,6 +67,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             // Also fetch proposals for this bounty
             const bountyId = bountyData.id; // ensure .id matches your schema
             const proposals: any[] = [];
+
+            // Fetch bounty status from contract
+            try {
+              const contractData = await readBountyMappings(bountyId.toString());
+              bountyData.contractStatus = contractData.status;
+            } catch (contractError) {
+              console.error('Error fetching contract data for bounty', bountyId, contractError);
+              bountyData.contractStatus = null;
+            }
 
             // list proposals in proposals/<bountyId>/
             const proposalsList = await s3.listObjectsV2({

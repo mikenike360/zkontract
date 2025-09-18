@@ -126,56 +126,56 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4 ${statusContent.bgColor} ${statusContent.borderColor} border-2`}>
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className={`bg-base-100 border border-base-300 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 ${statusContent.borderColor} border-2`}>
         {/* Header */}
         <div className="flex items-center mb-4">
           <div className="mr-4">
             {statusContent.icon}
           </div>
           <div>
-            <h2 className={`text-lg font-bold ${statusContent.textColor}`}>
+            <h2 className="text-lg font-bold text-base-content">
               {title}
             </h2>
-            <p className={`text-sm ${statusContent.textColor} opacity-75`}>
+            <p className="text-sm text-base-content/70">
               {statusContent.heading}
             </p>
           </div>
         </div>
 
         {/* Message */}
-        <div className={`mb-6 ${statusContent.textColor}`}>
-          <p className="whitespace-pre-line text-sm">{statusContent.message}</p>
+        <div className="mb-6">
+          <p className="whitespace-pre-line text-sm text-base-content/80">{statusContent.message}</p>
         </div>
 
         {/* Progress indicator for finalizing */}
         {status === 'finalizing' && (
           <div className="mb-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-orange-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+            <div className="w-full bg-base-300 rounded-full h-2">
+              <div className="bg-warning h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
             </div>
-            <p className="text-xs text-gray-600 mt-1">Confirming on blockchain...</p>
+            <p className="text-xs text-base-content/60 mt-1">Confirming on blockchain...</p>
           </div>
         )}
 
         {/* Buttons */}
-        <div className="flex justify-end space-x-3">
+        <div className="flex justify-end gap-3">
           {txId && status !== 'submitting' && (
-            <Button
+            <button
               onClick={handleViewTransaction}
               className="btn btn-outline btn-sm"
             >
               View on Explorer
-            </Button>
+            </button>
           )}
           
           {statusContent.showClose && (
-            <Button
+            <button
               onClick={onClose}
               className="btn btn-primary btn-sm"
             >
               Done
-            </Button>
+            </button>
           )}
         </div>
       </div>

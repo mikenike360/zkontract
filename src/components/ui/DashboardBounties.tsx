@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/button';
 import ProposalItem from '@/components/ui/ProposalItem';
+import ResizableCard from '@/components/ui/ResizableCard';
 import { ProposalData, BountyData } from '@/types';
 // Removed handleDeleteBounty import as we now use escrow-based cancel functionality
 
@@ -151,9 +152,13 @@ export default function DashboardBounties({
               );
 
               return (
-                <div
+                <ResizableCard
                   key={bounty.id}
-                  className="group bg-base-100 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-base-300 overflow-hidden"
+                  storageKey={`dashboard-bounty-${bounty.id}`}
+                  defaultHeight={400}
+                  minHeight={300}
+                  maxHeight={700}
+                  className="group hover:shadow-xl transition-all duration-300"
                 >
                   {/* Card Header */}
                   <div className="bg-base-200 p-4 border-b border-base-300">
@@ -296,9 +301,7 @@ export default function DashboardBounties({
                           onClick={() => onCancelBounty(bounty)}
                           className="btn btn-warning btn-sm hover:btn-warning/80 transition-all duration-200 font-medium shadow-md"
                         >
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+
                           Cancel Bounty & Refund Escrow
                         </Button>
                       </div>
@@ -319,7 +322,7 @@ export default function DashboardBounties({
                       </div>
                     )}
                   </div>
-                </div>
+                </ResizableCard>
               );
             })}
           </div>
@@ -380,19 +383,19 @@ function renderProposalButtons({
   switch (status) {
     case 'accepted':
       return (
-        <div className="mb-4 flex space-x-2">
-          <span className="text-success text-sm">✅ Proposal Accepted</span>
+        <div className="mb-4 flex justify-center">
+          <span className="text-success text-sm font-medium">✅ Proposal Accepted</span>
         </div>
       );
     case 'denied':
       return (
-        <div className="mb-4">
-          <span className="text-error text-sm">❌ Proposal Denied</span>
+        <div className="mb-4 flex justify-center">
+          <span className="text-error text-sm font-medium">❌ Proposal Denied</span>
         </div>
       );
     case 'processing':
       return (
-        <div className="mb-4">
+        <div className="mb-4 flex justify-center">
           <Button className="btn btn-info btn-sm" disabled>
             Processing...
           </Button>
@@ -402,7 +405,7 @@ function renderProposalButtons({
     case 'initial':
     default:
       return isCreator ? (
-        <div className="mb-4 flex space-x-2">
+        <div className="mb-4 space-y-2">
           <Button
             onClick={async () => {
               setProposalLoading(proposal.proposalId, true);
@@ -416,7 +419,7 @@ function renderProposalButtons({
               }
             }}
             disabled={hasAcceptedProposal}
-            className={`btn btn-sm ${
+            className={`btn btn-sm w-full ${
               hasAcceptedProposal 
                 ? 'btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed' 
                 : 'btn-primary'
@@ -437,7 +440,7 @@ function renderProposalButtons({
               }
             }}
             disabled={hasAcceptedProposal}
-            className={`btn btn-sm ${
+            className={`btn btn-sm w-full ${
               hasAcceptedProposal 
                 ? 'btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed' 
                 : 'btn-error'
@@ -447,8 +450,8 @@ function renderProposalButtons({
           </Button>
         </div>
       ) : (
-        <div className="mb-4">
-          <span className="text-info text-sm">⏳ Awaiting creator response</span>
+        <div className="mb-4 flex justify-center">
+          <span className="text-info text-sm font-medium">⏳ Awaiting creator response</span>
         </div>
       );
   }

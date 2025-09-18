@@ -174,93 +174,179 @@ function PostBountyPage() {
         title="zKontract | Post a Bounty"
         description="Post a new bounty to the zKontract system."
       />
-      <div className="text-primary-content mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 mt-12">
-        <h1 className="text-2xl font-bold text-primary-content text-center mb-8">
-          Post a Bounty
-        </h1>
-        <form
-          onSubmit={handleSubmit}
-          className="bg-primary-content p-6 rounded-lg shadow-lg"
-        >
-          <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-primary">
-              Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
-            />
+      <div className="min-h-screen bg-base-100">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 mt-20 sm:mt-28">
+          {/* Header Section */}
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
+              <svg className="w-8 h-8 text-primary-content" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-base-content mb-3">
+              Post a New Bounty
+            </h1>
+            <p className="text-lg font-medium text-base-content/80 max-w-2xl mx-auto">
+              Create a bounty to find talented developers for your project. Set clear requirements and competitive rewards to attract the best proposals.
+            </p>
           </div>
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-primary">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm overflow-auto resize"
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="reward" className="block text-sm font-medium text-primary">
-              Reward (ALEO)
-            </label>
-            <input
-              type="number"
-              id="reward"
-              name="reward"
-              value={formData.reward}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="deadline" className="block text-sm font-medium text-primary">
-              Deadline
-            </label>
-            <input
-              type="date"
-              id="deadline"
-              name="deadline"
-              value={formData.deadline}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm"
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full py-2 px-4 bg-primary text-primary-content rounded-md shadow hover:bg-accent"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Submitting...' : 'Post Bounty'}
-          </Button>
-          {errorMessage && (
-            <p className="mt-4 text-red-500 text-center">{errorMessage}</p>
-          )}
-        </form>
-        <div className="mb-6">
-          <BackArrow />
-        </div>
 
-        {/* Transaction Progress Modal */}
-        <TransactionModal
-          isOpen={modalState.isOpen}
-          onClose={hideTransactionModal}
-          status={modalState.status}
-          title={modalState.title}
-          txId={modalState.txId}
-          errorMessage={modalState.errorMessage}
-        />
+          {/* Form Card */}
+          <div className="bg-base-100 border border-base-300 rounded-2xl shadow-lg p-6 sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Bounty Title Section */}
+              <div className="space-y-2">
+                <label htmlFor="title" className="block text-sm font-bold text-base-content">
+                  Bounty Title *
+                </label>
+                <p className="text-sm font-medium text-base-content/80 mb-3">
+                  Choose a clear, descriptive title that summarizes what you need done
+                </p>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Smart Contract Security Audit for DeFi Protocol"
+                  className="input input-bordered w-full bg-base-100 border-base-300 text-base-content placeholder-base-content/50 focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {/* Description Section */}
+              <div className="space-y-2">
+                <label htmlFor="description" className="block text-sm font-bold text-base-content">
+                  Detailed Description *
+                </label>
+                <p className="text-sm font-medium text-base-content/80 mb-3">
+                  Provide comprehensive details about the work, requirements, deliverables, and timeline
+                </p>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={8}
+                  placeholder="Describe the scope of work, specific requirements, expected deliverables, timeline, and any additional context that would help developers understand what you need..."
+                  className="textarea textarea-bordered w-full bg-base-100 border-base-300 text-base-content placeholder-base-content/50 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                />
+              </div>
+
+              {/* Reward and Deadline Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Reward Section */}
+                <div className="space-y-2">
+                  <label htmlFor="reward" className="block text-sm font-bold text-base-content">
+                    Reward Amount *
+                  </label>
+                  <p className="text-sm font-medium text-base-content/80 mb-3">
+                    Set a competitive reward in ALEO tokens
+                  </p>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      id="reward"
+                      name="reward"
+                      value={formData.reward}
+                      onChange={handleInputChange}
+                      required
+                      min="0"
+                      step="0.001"
+                      placeholder="0.000"
+                      className="input input-bordered w-full bg-base-100 border-base-300 text-base-content placeholder-base-content/50 focus:border-primary focus:ring-1 focus:ring-primary pr-16"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <span className="text-base-content/80 text-sm font-medium">ALEO</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Deadline Section */}
+                <div className="space-y-2">
+                  <label htmlFor="deadline" className="block text-sm font-bold text-base-content">
+                    Submission Deadline *
+                  </label>
+                  <p className="text-sm font-medium text-base-content/80 mb-3">
+                    When should proposals be submitted by?
+                  </p>
+                  <input
+                    type="date"
+                    id="deadline"
+                    name="deadline"
+                    value={formData.deadline}
+                    onChange={handleInputChange}
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                    className="input input-bordered w-full bg-base-100 border-base-300 text-base-content focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Tips Section */}
+              <div className="bg-info/10 border border-info/20 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-info mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-bold text-base-content mb-2">Tips for Better Bounties</h4>
+                    <ul className="text-sm font-medium text-base-content/80 space-y-1">
+                      <li>• Be specific about requirements and deliverables</li>
+                      <li>• Set realistic deadlines to attract quality proposals</li>
+                      <li>• Offer competitive rewards for the scope of work</li>
+                      <li>• Include any special requirements or preferences</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  className="w-full btn btn-primary btn-lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm mr-2"></span>
+                      Posting Bounty...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Post Bounty
+                    </>
+                  )}
+                </Button>
+                {errorMessage && (
+                  <div className="mt-4 p-3 bg-error/10 border border-error/20 rounded-lg">
+                    <p className="text-error text-sm font-medium">{errorMessage}</p>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
+
+          {/* Back Button */}
+          <div className="mt-8 flex justify-center">
+            <BackArrow />
+          </div>
+
+          {/* Transaction Progress Modal */}
+          <TransactionModal
+            isOpen={modalState.isOpen}
+            onClose={hideTransactionModal}
+            status={modalState.status}
+            title={modalState.title}
+            txId={modalState.txId}
+            errorMessage={modalState.errorMessage}
+          />
+        </div>
       </div>
     </>
   );

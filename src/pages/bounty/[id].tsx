@@ -36,6 +36,13 @@ const fetchBounty = async (url: string) => {
   return res.json() as Promise<Bounty>;
 };
 
+// Helper function to format reward from microcredits to ALEO
+const formatReward = (reward: string): string => {
+  const rewardNum = parseFloat(reward);
+  const aleoAmount = rewardNum / 1000000; // Convert microcredits to ALEO
+  return `${aleoAmount.toLocaleString()} ALEO`;
+};
+
 const BountyPage = () => {
   const router = useRouter();
   const { id } = router.query;
@@ -183,88 +190,175 @@ const BountyPage = () => {
         title={`zKontract | ${bounty.title}`}
         description={`Details of bounty: ${bounty.title}`}
       />
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-28">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 mt-20 sm:mt-28">
 
         {/* Card Container */}
-        <div className="card bg-secondary shadow-xl p-8 flex flex-col resize overflow-auto">
-          <div className="flex flex-col gap-6 flex-grow">
-            {/* Header: Title and Description */}
-            <div>
-              <h1 className="text-3xl font-bold text-primary-content">
-                {bounty.title}
-              </h1>
-              <p className="mt-2 text-primary-content">{bounty.description}</p>
+        <div className="card bg-base-100 border border-base-300 shadow-xl p-0 flex flex-col resize overflow-auto">
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-4 sm:p-6 border-b border-base-300">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="badge badge-primary font-mono text-xs">
+                  ID: {bounty.id}
+                </div>
+                <div className="badge badge-success gap-2">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  OPEN
+                </div>
+              </div>
+              <div className="text-sm text-base-content/60 font-medium hidden sm:block">
+                🎯 Bounty Details
+              </div>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-base-content mb-3 leading-tight">
+              {bounty.title}
+            </h1>
+            <div className="prose max-w-none">
+              <p className="text-base-content/80 text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                {bounty.description}
+              </p>
             </div>
           </div>
-          {/* Footer: Reward and Deadline */}
-          <div className="flex justify-between items-center mt-6 pt-4">
-            <div className="w-1/2 text-center text-lg font-medium text-green-600">
-              Reward: {bounty.reward}
+          
+          {/* Content Section */}
+          <div className="p-4 sm:p-6 flex-grow">
+            {/* Key Information Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Reward Card */}
+              <div className="bg-success/5 border border-success/20 rounded-lg p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-success/20 rounded-full flex items-center justify-center">
+                    <span className="text-success text-lg sm:text-xl">💰</span>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-medium text-base-content/70">Total Reward</div>
+                    <div className="text-xl sm:text-2xl font-bold text-success">
+                      {formatReward(bounty.reward)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-base-content/60">
+                  Payment will be released upon proposal acceptance
+                </div>
+              </div>
+
+              {/* Deadline Card */}
+              <div className="bg-warning/5 border border-warning/20 rounded-lg p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-warning/20 rounded-full flex items-center justify-center">
+                    <span className="text-warning text-lg sm:text-xl">📅</span>
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-medium text-base-content/70">Submission Deadline</div>
+                    <div className="text-lg sm:text-xl font-bold text-base-content">
+                      {bounty.deadline}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-base-content/60">
+                  Submit your proposal before this date
+                </div>
+              </div>
             </div>
-            <div className="w-1/2 text-center text-lg text-primary-content">
-              Deadline: {bounty.deadline}
+
+            {/* Instructions Section */}
+            <div className="mt-6 sm:mt-8 bg-info/5 border border-info/20 rounded-lg p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-info/20 rounded-full flex items-center justify-center">
+                  <span className="text-info text-sm">📋</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-base-content">How to Submit</h3>
+              </div>
+              <div className="space-y-3 text-sm text-base-content/80">
+                <div className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 bg-info rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Write a detailed proposal explaining your approach</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 bg-info rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Optionally attach relevant files (PDF, images)</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 bg-info rounded-full mt-2 flex-shrink-0"></span>
+                  <span>Only one proposal per bounty is allowed</span>
+                </div>
+              </div>
             </div>
           </div>
 
 
         </div>
-        {/* Button outside the card */}
-        <div className="flex justify-center mt-6">
+        
+        {/* Action Section */}
+        <div className="mt-8 text-center">
           {isCheckingProposal ? (
-            <button
-              disabled
-              className="py-3 px-6 bg-gray-400 text-gray-600 rounded-md shadow cursor-not-allowed"
-            >
-              Checking...
-            </button>
+            <div className="inline-flex items-center gap-3 bg-base-200 px-6 py-4 rounded-lg">
+              <span className="loading loading-spinner loading-sm"></span>
+              <span className="text-base-content font-medium">Checking your proposal status...</span>
+            </div>
           ) : hasExistingProposal ? (
-            <button
-              disabled
-              className="py-3 px-6 bg-gray-400 text-gray-600 rounded-md shadow cursor-not-allowed"
-            >
-              Proposal Already Submitted
-            </button>
+            <div className="bg-success/10 border border-success/20 rounded-lg p-6 max-w-md mx-auto">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-success/20 rounded-full flex items-center justify-center">
+                  <span className="text-success text-sm">✓</span>
+                </div>
+                <span className="text-lg font-semibold text-success">Proposal Submitted</span>
+              </div>
+              <p className="text-sm text-base-content/70">
+                You've already submitted a proposal for this bounty. Check your dashboard for updates.
+              </p>
+            </div>
           ) : (
-            <button
-              onClick={handleOpenModal}
-              className="py-3 px-6 bg-secondary text-secondary-content rounded-md shadow hover:opacity-75"
-            >
-              Submit A Proposal
-            </button>
+            <div className="space-y-4">
+              <button
+                onClick={handleOpenModal}
+                className="btn btn-primary btn-lg gap-2 px-8"
+              >
+                <span className="text-lg">📝</span>
+                Submit Your Proposal
+              </button>
+              <p className="text-sm text-base-content/60">
+                Ready to take on this challenge? Submit your proposal now!
+              </p>
+            </div>
           )}
         </div>
-          {/* Back Arrow */}
-          <div className="mt-4">
-            <BackArrow />
+
+        {/* Navigation */}
+        <div className="mt-8 flex justify-between items-center">
+          <BackArrow />
+          <div className="text-xs text-base-content/50">
+            Bounty #{bounty.id}
           </div>
+        </div>
 
       </div>
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-lg font-bold text-primary-content mb-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-base-100 border border-base-300 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h2 className="text-lg font-bold text-base-content mb-4">
               Submit Proposal
             </h2>
             <textarea
               value={proposal}
               onChange={(e) => setProposal(e.target.value)}
               placeholder="Write your proposal here..."
-              className="w-full p-3 border rounded-md text-black"
+              className="w-full p-3 border border-base-300 rounded-md bg-base-100 text-base-content focus:border-primary focus:outline-none"
             />
             <div className="mt-4">
-              <label className="block text-sm font-medium text-primary-content">
+              <label className="block text-sm font-medium text-base-content">
                 Attach a File (Optional)
               </label>
-              <div className="mt-1 text-xs text-primary-content opacity-70">
+              <div className="mt-1 text-xs text-base-content/70">
                 Allowed: {getFileTypeDescription(DEFAULT_FILE_CONFIG.allowedTypes)} | Max: {formatFileSize(DEFAULT_FILE_CONFIG.maxSizeInBytes)}
               </div>
               <input
                 type="file"
                 accept={DEFAULT_FILE_CONFIG.allowedTypes.join(',')}
                 onChange={handleFileUpload}
-                className="mt-2 block w-full text-sm text-primary-content"
+                className="mt-2 block w-full text-sm text-base-content file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-primary file:text-primary-content hover:file:bg-primary-focus"
               />
               {uploadedFile && (
                 <>
@@ -283,20 +377,20 @@ const BountyPage = () => {
                 </>
               )}
             </div>
-            <div className="mt-4 flex justify-between">
+            <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={handleCloseModal}
-                className="px-4 py-2 bg-accent text-primary-content rounded-md hover:opacity-75"
+                className="btn btn-outline"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitProposal}
                 disabled={isSubmittingProposal || (uploadedFile ? !validateFile(uploadedFile).isValid : false)}
-                className={`px-4 py-2 rounded-md ${
+                className={`btn ${
                   isSubmittingProposal || (uploadedFile ? !validateFile(uploadedFile).isValid : false)
-                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                    : 'bg-accent text-primary-content hover:opacity-75'
+                    ? 'btn-disabled'
+                    : 'btn-primary'
                 }`}
               >
                 {isSubmittingProposal ? 'Submitting...' : 'Submit'}
@@ -338,3 +432,4 @@ BountyPage.getLayout = function getLayout(page) {
 };
 
 export default BountyPage;
+

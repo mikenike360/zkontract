@@ -37,29 +37,86 @@ export async function submitProposal({
   // Generate a unique proposalId (the contract uses bountyId * 1_000_000 + proposalId)
   const proposalId = Math.floor(Date.now() % 1000000);
 
+  // Validate inputs
+  if (!/^aleo1[a-z0-9]{58}$/.test(publicKey)) {
+    throw new Error('Invalid public key format');
+  }
+  
   const inputs = [
-    publicKey,             // caller
-    `${bountyId}u64`,      // bounty_id
-    `${proposalId}u64`,    // proposal_id
-    publicKey,             // proposer_address
+    publicKey,                    // caller (address)
+    `${bountyId}u64`,            // bounty_id (u64)
+    `${proposalId}u64`,          // proposal_id (u64)  
+    publicKey,                   // proposer_address (address)
   ];
+  
+  console.log('Formatted inputs:', inputs);
 
   const fee = getFeeForFunction(SUBMIT_PROPOSAL_FUNCTION);
   console.log('Calculated fee (in micro credits):', fee);
 
-  // Create the transaction (fee is hard-coded here as 1_000_000 microcredits)
+  console.log('Transaction inputs:', {
+    address: publicKey,
+    network: CURRENT_NETWORK,
+    programId: BOUNTY_PROGRAM_ID,
+    functionName: SUBMIT_PROPOSAL_FUNCTION,
+    inputs: inputs,
+    fee: fee
+  });
+
+  // Create the transaction using the official Transaction class
   const proposalTx = Transaction.createTransaction(
     publicKey,
     CURRENT_NETWORK,
     BOUNTY_PROGRAM_ID,
     SUBMIT_PROPOSAL_FUNCTION,
     inputs,
-    fee, // fee in microcredits; adjust if needed
+    fee,
     false
   );
 
+  console.log('Created transaction:', proposalTx);
+
   // Request transaction execution via the wallet adapter
-  const txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
+  let txId: string;
+  try {
+    // Check which wallet adapter is being used
+    const walletName = wallet.adapter.name || 'unknown';
+    console.log('Using wallet adapter:', walletName);
+    
+    if (walletName.toLowerCase().includes('puzzle')) {
+      // Puzzle Wallet might not be fully compatible with direct program transactions yet
+      console.log('Detected Puzzle Wallet');
+      
+      // Try the standard Leo transaction format first
+      try {
+        console.log('Trying standard transaction format with Puzzle Wallet');
+        txId = await wallet.adapter.requestTransaction(proposalTx);
+      } catch (puzzleError) {
+        console.error('Standard format failed with Puzzle Wallet:', puzzleError);
+        
+        // If that fails, provide a helpful error message
+        throw new Error(
+          'Puzzle Wallet is not yet fully supported for this transaction type. ' +
+          'Please use Leo Wallet, Fox Wallet, or Soter Wallet for submitting proposals. ' +
+          'Puzzle Wallet support is coming soon!'
+        );
+      }
+    } else {
+      // Leo Wallet and other wallets use the standard format
+      console.log('Using standard transaction format for', walletName);
+      txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
+    }
+    
+    if (!txId) {
+      throw new Error('Transaction failed - no transaction ID returned');
+    }
+    console.log('Transaction ID received:', txId);
+  } catch (error) {
+    console.error('Transaction request failed:', error);
+    console.error('Wallet adapter name:', wallet.adapter.name);
+    throw new Error(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+  
   console.log('Proposal transaction submitted:', txId);
 
   // Poll for finalization

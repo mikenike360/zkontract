@@ -441,58 +441,85 @@ export default function UserDashboard() {
         title="zKontract | My Dashboard"
         description="View or manage your bounties and proposals."
       />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 mt-24 sm:mt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 mt-20 sm:mt-28">
+        
         {/* Enhanced Header Section */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 mb-6">
-            <div className="bg-blue-500 p-3 rounded-full shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+              <span className="text-primary text-2xl">📊</span>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-base-content">
-                My Dashboard
-              </h1>
-              <p className="text-lg font-medium text-base-content/90 mt-1">
-                Manage your bounties and proposals
-              </p>
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-base-content">
+              My Dashboard
+            </h1>
           </div>
-
-          {/* Dashboard Stats */}
+          <p className="text-base-content/70 text-lg max-w-2xl mx-auto">
+            Manage your bounties and track your proposals
+          </p>
+          
+          {/* Stats Section */}
           {data && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-8">
-              <div className="bg-base-100 border border-base-300 rounded-xl p-4 shadow-md">
-                <div className="text-2xl font-bold text-base-content">{data.myBounties.length}</div>
-                <div className="text-sm font-medium text-base-content/90">Posted Bounties</div>
-              </div>
-              <div className="bg-base-100 border border-base-300 rounded-xl p-4 shadow-md">
-                <div className="text-2xl font-bold text-base-content">{data.myProposals.length}</div>
-                <div className="text-sm font-medium text-base-content/90">Submitted Proposals</div>
-              </div>
-              <div className="bg-base-100 border border-base-300 rounded-xl p-4 shadow-md">
-                <div className="text-2xl font-bold text-base-content">
-                  {data.myProposals.filter(p => p.status === 'accepted').length}
+            <div className="flex justify-center mt-8">
+              <div className="stats stats-horizontal shadow-lg bg-base-100 border border-base-300">
+                <div className="stat">
+                  <div className="stat-figure text-primary">
+                    <span className="text-2xl">📋</span>
+                  </div>
+                  <div className="stat-title">Posted Bounties</div>
+                  <div className="stat-value text-primary">{data.myBounties.length}</div>
+                  <div className="stat-desc">Your active bounties</div>
                 </div>
-                <div className="text-sm font-medium text-base-content/90">Accepted Proposals</div>
+                
+                <div className="stat">
+                  <div className="stat-figure text-success">
+                    <span className="text-2xl">📝</span>
+                  </div>
+                  <div className="stat-title">Submitted Proposals</div>
+                  <div className="stat-value text-success">{data.myProposals.length}</div>
+                  <div className="stat-desc">Your applications</div>
+                </div>
+                
+                <div className="stat">
+                  <div className="stat-figure text-warning">
+                    <span className="text-2xl">✅</span>
+                  </div>
+                  <div className="stat-title">Accepted Proposals</div>
+                  <div className="stat-value text-warning">{data.myProposals.filter(p => p.status === 'accepted').length}</div>
+                  <div className="stat-desc">Successful applications</div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-lg text-info">Loading your dashboard...</p>
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <div className="loading loading-spinner loading-lg text-primary mb-4"></div>
+              <h3 className="text-lg font-semibold text-base-content mb-2">Loading Dashboard</h3>
+              <p className="text-base-content/70">Fetching your bounties and proposals...</p>
             </div>
           </div>
         )}
+
         {error && (
-          <div className="bg-error/10 border border-error/30 rounded-xl p-6 text-center mb-8">
-            <div className="text-error text-lg font-medium">⚠️ Error loading dashboard</div>
-            <p className="text-error/70 mt-2">{error?.message}</p>
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center max-w-md">
+              <div className="text-6xl mb-4">😕</div>
+              <h3 className="text-xl font-semibold text-base-content mb-2">Unable to Load Dashboard</h3>
+              <p className="text-base-content/70 mb-4">
+                We encountered an error while loading your dashboard data.
+              </p>
+              <div className="bg-error/10 border border-error/20 rounded-lg p-4 mb-4">
+                <p className="text-error text-sm font-medium">{error?.message}</p>
+              </div>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="btn btn-primary btn-sm"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         )}
 

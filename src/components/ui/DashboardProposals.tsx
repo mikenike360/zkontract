@@ -1,5 +1,6 @@
 // src/components/DashboardProposals.tsx
 import ProposalItem from '@/components/ui/ProposalItem';
+import ResizableCard from '@/components/ui/ResizableCard';
 import { ProposalData } from '@/components/ui/ProposalItem';
 import { BountyData } from '@/types';
 import { useState, useEffect } from 'react';
@@ -152,7 +153,14 @@ export default function DashboardProposals({ proposals, onDeleteProposal, bounti
       {proposals.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-base-content">
           {Object.entries(proposalsByBounty).map(([bountyId, proposals]) => (
-            <div key={bountyId} className="group bg-base-100 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-base-300 overflow-hidden">
+            <ResizableCard
+              key={bountyId}
+              storageKey={`dashboard-proposal-${bountyId}`}
+              defaultHeight={350}
+              minHeight={250}
+              maxHeight={600}
+              className="group hover:shadow-xl transition-all duration-300"
+            >
               {/* Card Header */}
               <div className="bg-base-200 p-4 border-b border-base-300">
                 <div className="flex justify-between items-center">
@@ -200,7 +208,7 @@ export default function DashboardProposals({ proposals, onDeleteProposal, bounti
                   ))}
                 </div>
               </div>
-            </div>
+            </ResizableCard>
           ))}
         </div>
       ) : (

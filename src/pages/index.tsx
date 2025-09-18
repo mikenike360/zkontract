@@ -37,12 +37,12 @@ const MainPage: NextPageWithLayout = () => {
       <div 
         className="fixed inset-0 pointer-events-none"
         style={{
-          zIndex: 1,
+          zIndex: -1,
           background: `
-            radial-gradient(circle at 20% 20%, rgba(41, 98, 255, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(244, 114, 182, 0.2) 0%, transparent 50%),
-            linear-gradient(135deg, rgba(41, 98, 255, 0.1) 0%, rgba(168, 85, 247, 0.1) 50%, rgba(244, 114, 182, 0.1) 100%)
+            radial-gradient(circle at 20% 20%, rgba(41, 98, 255, 0.8) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.8) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(244, 114, 182, 0.6) 0%, transparent 50%),
+            linear-gradient(135deg, rgba(41, 98, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(244, 114, 182, 0.3) 100%)
           `,
           animation: 'backgroundFlow 20s ease-in-out infinite'
         }}
@@ -61,11 +61,11 @@ const MainPage: NextPageWithLayout = () => {
       `}</style>
 
       {/* Main Hero Section */}
-      <div className="fixed inset-0 bg-primary bg-opacity-80 z-10 flex flex-col items-center justify-center px-4 py-16">
-        <h1 className="text-5xl font-extrabold text-center tracking-tight text-primary-content sm:text-6xl">
+      <div className="fixed inset-0 z-10 flex flex-col items-center justify-center px-4 py-16">
+        <h1 className="text-5xl font-extrabold text-center tracking-tight text-white sm:text-6xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
           zKontract
         </h1>
-        <p className="mt-4 text-lg text-center text-primary-content max-w-lg">
+        <p className="mt-4 text-lg text-center text-white max-w-lg" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
           A Zero Knowledge Bounty Board – Hire and Work Anonymously
         </p>
 

@@ -119,21 +119,78 @@ export default function GLSLBackground() {
     const setupBasicWebGL = () => {
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) {
-        console.log('WebGL not available');
+        console.log('WebGL not available, using canvas fallback');
+        setupCanvasFallback();
         return;
       }
       
-      // Set canvas size
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      console.log('Using WebGL fallback animation');
       
-      // Simple blue background that changes over time
+      // Set canvas size to match window
+      const updateSize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      };
+      updateSize();
+      window.addEventListener('resize', updateSize);
+      
+      // More visible animated background
       let time = 0;
       const animate = () => {
-        time += 0.01;
-        const blue = 0.2 + 0.3 * Math.sin(time);
-        gl.clearColor(0.1, 0.2, blue, 1.0);
+        time += 0.02;
+        
+        // Create a gradient effect that changes over time
+        const r = 0.1 + 0.3 * Math.sin(time * 0.5);
+        const g = 0.2 + 0.4 * Math.sin(time * 0.7 + 1);
+        const b = 0.3 + 0.4 * Math.sin(time * 0.9 + 2);
+        
+        gl.clearColor(r, g, b, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        requestAnimationFrame(animate);
+      };
+      animate();
+    };
+
+    const setupCanvasFallback = () => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.log('Canvas 2D not available');
+        return;
+      }
+      
+      console.log('Using Canvas 2D fallback animation');
+      
+      // Set canvas size
+      const updateSize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      updateSize();
+      window.addEventListener('resize', updateSize);
+      
+      // Animated gradient background using Canvas 2D
+      let time = 0;
+      const animate = () => {
+        time += 0.02;
+        
+        // Create animated gradient
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        
+        const r1 = Math.floor(100 + 100 * Math.sin(time * 0.5));
+        const g1 = Math.floor(150 + 100 * Math.sin(time * 0.7 + 1));
+        const b1 = Math.floor(200 + 55 * Math.sin(time * 0.9 + 2));
+        
+        const r2 = Math.floor(50 + 50 * Math.sin(time * 0.3 + 1));
+        const g2 = Math.floor(100 + 50 * Math.sin(time * 0.8 + 2));
+        const b2 = Math.floor(150 + 50 * Math.sin(time * 1.1 + 3));
+        
+        gradient.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
+        gradient.addColorStop(1, `rgb(${r2}, ${g2}, ${b2})`);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
         requestAnimationFrame(animate);
       };
       animate();

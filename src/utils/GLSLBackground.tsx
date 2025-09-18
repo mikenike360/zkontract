@@ -109,97 +109,166 @@ export default function GLSLBackground() {
         const GlslCanvas = await import('glslCanvas');
         const sandbox = new (GlslCanvas.default || GlslCanvas)(canvas);
         sandbox.load(FRAGMENT_SHADER);
+        console.log('GLSL Canvas loaded successfully');
+        
+        // Return cleanup function for GLSL
+        return () => {
+          // glslCanvas cleanup if needed
+        };
       } catch (error) {
-        console.log('glslCanvas not available, using fallback');
+        console.log('glslCanvas not available, using WebGL fallback');
         // Use a basic WebGL fallback or simple animation
-        setupBasicWebGL();
+        return setupBasicWebGL();
       }
     };
 
     const setupBasicWebGL = () => {
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      // Try to get WebGL context with specific options to handle software fallback
+      const contextOptions = {
+        alpha: true,
+        depth: false,
+        stencil: false,
+        antialias: true,
+        premultipliedAlpha: false,
+        preserveDrawingBuffer: false,
+        powerPreference: 'default', // Accept software rendering
+        failIfMajorPerformanceCaveat: false // Don't fail on software rendering
+      };
+      
+      let gl = canvas.getContext('webgl2', contextOptions);
       if (!gl) {
-        console.log('WebGL not available, using canvas fallback');
+        gl = canvas.getContext('webgl', contextOptions);
+      }
+      if (!gl) {
+        gl = canvas.getContext('experimental-webgl', contextOptions);
+      }
+      
+      if (!gl) {
+        console.log('WebGL not available, trying canvas fallback');
         setupCanvasFallback();
         return;
       }
       
-      console.log('Using WebGL fallback animation');
+      console.log('WebGL context obtained:', gl.getParameter(gl.VERSION));
+      console.log('WebGL renderer:', gl.getParameter(gl.RENDERER));
       
-      // Set canvas size to match window
+      // Set up canvas sizing
       const updateSize = () => {
+        const rect = canvas.getBoundingClientRect();
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         gl.viewport(0, 0, canvas.width, canvas.height);
       };
       updateSize();
-      window.addEventListener('resize', updateSize);
       
-      // More visible animated background
+      // Listen for resize events
+      const resizeHandler = () => updateSize();
+      window.addEventListener('resize', resizeHandler);
+      
+      // Enhanced animated background with more complex colors
       let time = 0;
+      let animationFrame: number;
+      
       const animate = () => {
-        time += 0.02;
+        time += 0.016; // ~60fps timing
         
-        // Create a gradient effect that changes over time
-        const r = 0.1 + 0.3 * Math.sin(time * 0.5);
-        const g = 0.2 + 0.4 * Math.sin(time * 0.7 + 1);
-        const b = 0.3 + 0.4 * Math.sin(time * 0.9 + 2);
+        // Create flowing color pattern
+        const r = 0.1 + 0.4 * Math.sin(time * 0.8) * Math.cos(time * 0.3);
+        const g = 0.2 + 0.4 * Math.sin(time * 1.2 + 1.5) * Math.cos(time * 0.7);
+        const b = 0.3 + 0.5 * Math.sin(time * 0.9 + 3.0) * Math.cos(time * 0.5);
         
         gl.clearColor(r, g, b, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        requestAnimationFrame(animate);
+        
+        animationFrame = requestAnimationFrame(animate);
       };
+      
       animate();
+      
+      // Return cleanup function
+      return () => {
+        window.removeEventListener('resize', resizeHandler);
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+        }
+      };
     };
 
     const setupCanvasFallback = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        console.log('Canvas 2D not available');
+        console.log('Canvas 2D not available either');
         return;
       }
       
-      console.log('Using Canvas 2D fallback animation');
+      console.log('Using Canvas 2D fallback');
       
-      // Set canvas size
+      // Set up canvas sizing
       const updateSize = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       };
       updateSize();
-      window.addEventListener('resize', updateSize);
       
-      // Animated gradient background using Canvas 2D
+      const resizeHandler = () => updateSize();
+      window.addEventListener('resize', resizeHandler);
+      
+      // Animated gradient background
       let time = 0;
+      let animationFrame: number;
+      
       const animate = () => {
-        time += 0.02;
+        time += 0.016;
         
-        // Create animated gradient
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        // Create animated radial gradient similar to your original CSS
+        const centerX = canvas.width * (0.5 + 0.1 * Math.sin(time * 0.3));
+        const centerY = canvas.height * (0.5 + 0.1 * Math.cos(time * 0.4));
+        const radius = Math.min(canvas.width, canvas.height) * (0.8 + 0.2 * Math.sin(time * 0.5));
         
-        const r1 = Math.floor(100 + 100 * Math.sin(time * 0.5));
-        const g1 = Math.floor(150 + 100 * Math.sin(time * 0.7 + 1));
-        const b1 = Math.floor(200 + 55 * Math.sin(time * 0.9 + 2));
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
         
-        const r2 = Math.floor(50 + 50 * Math.sin(time * 0.3 + 1));
-        const g2 = Math.floor(100 + 50 * Math.sin(time * 0.8 + 2));
-        const b2 = Math.floor(150 + 50 * Math.sin(time * 1.1 + 3));
+        // Dynamic colors similar to your GLSL shader
+        const r1 = Math.floor(60 + 60 * Math.sin(time * 0.7));
+        const g1 = Math.floor(100 + 100 * Math.sin(time * 0.9 + 1));
+        const b1 = Math.floor(180 + 75 * Math.sin(time * 1.1 + 2));
         
-        gradient.addColorStop(0, `rgb(${r1}, ${g1}, ${b1})`);
-        gradient.addColorStop(1, `rgb(${r2}, ${g2}, ${b2})`);
+        const r2 = Math.floor(20 + 40 * Math.sin(time * 0.5 + 1));
+        const g2 = Math.floor(40 + 60 * Math.sin(time * 0.8 + 2));
+        const b2 = Math.floor(80 + 80 * Math.sin(time * 1.2 + 3));
+        
+        gradient.addColorStop(0, `rgba(${r1}, ${g1}, ${b1}, 0.8)`);
+        gradient.addColorStop(0.5, `rgba(${Math.floor((r1+r2)/2)}, ${Math.floor((g1+g2)/2)}, ${Math.floor((b1+b2)/2)}, 0.6)`);
+        gradient.addColorStop(1, `rgba(${r2}, ${g2}, ${b2}, 0.4)`);
         
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        requestAnimationFrame(animate);
+        animationFrame = requestAnimationFrame(animate);
       };
+      
       animate();
+      
+      // Return cleanup function
+      return () => {
+        window.removeEventListener('resize', resizeHandler);
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+        }
+      };
     };
 
-    setupGLSL();
+    let cleanupFunction: (() => void) | undefined;
+
+    const initializeBackground = async () => {
+      cleanupFunction = await setupGLSL();
+    };
+
+    initializeBackground();
 
     return () => {
-      // cleanup if needed
+      if (cleanupFunction) {
+        cleanupFunction();
+      }
     };
   }, []);
 

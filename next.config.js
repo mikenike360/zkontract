@@ -11,6 +11,7 @@ module.exports = withPWA({
     disable: process.env.NODE_ENV === 'development',
     runtimeCaching,
   },
+  transpilePackages: ['aleo-adapters'],
   env: {
     URL: process.env.URL,
     TWITTER: process.env.TWITTER,
@@ -37,6 +38,16 @@ module.exports = withPWA({
       /Skipped not serializable cache item/,
       /No serializer registered for Warning/,
     ];
+    
+    // Add transpilation for ES modules in aleo-adapters
+    config.module.rules.push({
+      test: /\.m?js$/,
+      include: /node_modules[/\\]aleo-adapters/,
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false,
+      },
+    });
     const fallback = config.resolve.fallback || {};
     Object.assign(fallback, {
       stream: require.resolve('stream-browserify'),

@@ -10,11 +10,16 @@ import { ThemeProvider } from 'next-themes';
 // Import Aleo Wallet Adapter dependencies
 import { WalletProvider } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui';
-import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo';
 import {
   DecryptPermission,
   WalletAdapterNetwork,
 } from '@demox-labs/aleo-wallet-adapter-base';
+import { 
+  LeoWalletAdapter, 
+  PuzzleWalletAdapter,
+  FoxWalletAdapter,
+  SoterWalletAdapter 
+} from 'aleo-adapters';
 
 // Import global styles and wallet modal styles
 import 'swiper/css';
@@ -30,6 +35,21 @@ const wallets = [
   new LeoWalletAdapter({
     appName: 'zKontract',
   }),
+  new PuzzleWalletAdapter({
+    programIdPermissions: {
+      [WalletAdapterNetwork.MainnetBeta]: ['zkontract_v4.aleo', 'zk_escrow_v3.aleo'],
+      [WalletAdapterNetwork.TestnetBeta]: ['zkontract_v4.aleo', 'zk_escrow_v3.aleo']
+    },
+    appName: 'zKontract',
+    appDescription: 'A decentralized bounty platform on Aleo blockchain',
+    appIconUrl: '/favicon.ico'
+  }),
+  new FoxWalletAdapter({
+    appName: 'zKontract',
+  }),
+  new SoterWalletAdapter({
+    appName: 'zKontract',
+  })
 ];
 
 type AppPropsWithLayout = AppProps & {

@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import GlslCanvas from 'glslCanvas';
+
+// Use dynamic import for glslCanvas to handle ESM issues
+let GlslCanvas: any;
 
 const FRAGMENT_SHADER = `
 #ifdef GL_ES
@@ -98,27 +100,27 @@ void main() {
 `;
 
 export default function GLSLBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Initialize glslCanvas with WebGL1
-    const sandbox = new GlslCanvas(canvas);
-    sandbox.load(FRAGMENT_SHADER);
-
-    return () => {
-      // optional cleanup if needed
-    };
-  }, []);
-
+  // Simplified version for debugging
   return (
-    <canvas
-      ref={canvasRef}
-      width={1920} // or lower for performance
-      height={1080}
-      className="fixed top-0 left-0 w-full h-full pt-24"
-    />
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 1,
+        pointerEvents: 'none',
+        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontSize: '24px',
+        fontWeight: 'bold'
+      }}
+    >
+      GLSL Background Component Loaded
+    </div>
   );
 }

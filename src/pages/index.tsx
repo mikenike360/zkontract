@@ -5,15 +5,10 @@ import Button from '@/components/ui/button';
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react';
 import { WalletNotConnectedError } from '@demox-labs/aleo-wallet-adapter-base';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
 import { CURRENT_NETWORK } from '@/types';
 import AlertModal from '@/components/ui/AlertModal';
 import { useAlertModal } from '@/hooks/useAlertModal';
-
-// Dynamically import GLSLBackground (no SSR)
-const GLSLBackground = dynamic(() => import('../utils/GLSLBackground'), {
-  ssr: false,
-});
+// import GLSLBackground from '@/utils/GLSLBackground';
 
 const MainPage: NextPageWithLayout = () => {
   const { publicKey } = useWallet();
@@ -38,8 +33,32 @@ const MainPage: NextPageWithLayout = () => {
         description="Hire and Work Anonymously"
       />
 
-      {/* Render the GLSL background behind everything */}
-      <GLSLBackground />
+      {/* Beautiful animated CSS background */}
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 1,
+          background: `
+            radial-gradient(circle at 20% 20%, rgba(41, 98, 255, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(244, 114, 182, 0.2) 0%, transparent 50%),
+            linear-gradient(135deg, rgba(41, 98, 255, 0.1) 0%, rgba(168, 85, 247, 0.1) 50%, rgba(244, 114, 182, 0.1) 100%)
+          `,
+          animation: 'backgroundFlow 20s ease-in-out infinite'
+        }}
+      />
+      <style jsx>{`
+        @keyframes backgroundFlow {
+          0%, 100% { 
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+          }
+          50% { 
+            opacity: 0.8;
+            transform: scale(1.1) rotate(2deg);
+          }
+        }
+      `}</style>
 
       {/* Main Hero Section */}
       <div className="fixed inset-0 bg-primary bg-opacity-80 z-10 flex flex-col items-center justify-center px-4 py-16">

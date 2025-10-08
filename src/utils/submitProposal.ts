@@ -8,6 +8,7 @@ import { CURRENT_NETWORK } from '@/types';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+import { signRequest } from '@/utils/signing';
 
 const SUBMIT_PROPOSAL_FUNCTION = 'submit_proposal';
 
@@ -173,6 +174,9 @@ export async function submitProposal({
     ...(fileUrl ? { fileUrl, fileName } : {}),
   };
 
+  // Sign the request for authentication
+  const auth = await signRequest(wallet, 'upload_proposal', { proposalId });
+
   // Upload the proposal metadata via /api/upload-proposal
   const metaRes = await fetch('/api/upload-proposal', {
     method: 'POST',
@@ -180,8 +184,13 @@ export async function submitProposal({
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      caller: publicKey,
       proposalId: proposalId.toString(),
       metadata: JSON.stringify(completeMetadata),
+      signature: auth.signature,
+      message: auth.message,
+      timestamp: auth.timestamp,
+      nonce: auth.nonce,
     }),
   });
   const metaData = await metaRes.json();

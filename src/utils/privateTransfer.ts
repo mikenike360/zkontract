@@ -9,6 +9,7 @@ export const TRANSFER_PRIVATE_FUNCTION = 'transfer_private';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+import { signRequest } from '@/utils/signing';
 
 /**
  * Executes a private transfer of credits to a target address, then updates the reward state via the API.
@@ -120,14 +121,27 @@ export async function privateTransfer(
     setTxStatus('Private transfer finalized.');
   }
 
+  // Sign the request for authentication
+  const rewardSent = true;
+  const auth = await signRequest(wallet, 'update_proposal_reward', {
+    bountyId,
+    proposalId,
+    rewardSent,
+  });
+
   // 8. Call the API route to update the reward status
   const rewardResponse = await fetch('/api/update-proposal-reward', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      caller: publicKey,
       bountyId,
       proposalId,
-      rewardSent: true,
+      rewardSent,
+      signature: auth.signature,
+      message: auth.message,
+      timestamp: auth.timestamp,
+      nonce: auth.nonce,
     }),
   });
 

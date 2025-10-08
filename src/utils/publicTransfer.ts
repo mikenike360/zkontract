@@ -8,6 +8,7 @@ export const TRANSFER_PUBLIC_FUNCTION = 'transfer_public';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+import { signRequest } from '@/utils/signing';
 
 /**
  * Executes a public transfer of credits to a target address,
@@ -76,14 +77,27 @@ export async function publicTransfer(
 
   setTxStatus('Public transfer finalized.');
 
+  // Sign the request for authentication
+  const rewardSent = true;
+  const auth = await signRequest(wallet, 'update_proposal_reward', {
+    bountyId,
+    proposalId,
+    rewardSent,
+  });
+
   // 5. Call the API route to update the reward status
   const rewardResponse = await fetch('/api/update-proposal-reward', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      caller: publicKey,
       bountyId,
       proposalId,
-      rewardSent: true,
+      rewardSent,
+      signature: auth.signature,
+      message: auth.message,
+      timestamp: auth.timestamp,
+      nonce: auth.nonce,
     }),
   });
 

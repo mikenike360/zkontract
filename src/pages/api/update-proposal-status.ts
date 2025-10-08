@@ -1,6 +1,8 @@
 // pages/api/update-proposal-status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
+import { validateId, isValidProposalStatus, checkRateLimit } from '@/utils/validation';
+import { validateAuthRequest, verifyBountyOwnership, verifyMessageContent } from '@/utils/auth';
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -14,13 +16,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { bountyId, proposalId, newStatus } = req.body;
-    if (!bountyId || !proposalId || !newStatus) {
-      return res.status(400).json({ error: 'Missing fields' });
+    const { bountyId, proposalId, newStatus, caller, signature, message, timestamp, nonce } = req.body;
+    
+    // Rate limiting
+    const clientIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
+    const rateLimit = checkRateLimit(`update-status-${clientIp}`, 20, 60000); // 20 requests per minute
+    if (!rateLimit.allowed) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
+    
+    if (!bountyId || !proposalId || !newStatus || !caller) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Validate IDs
+    const bountyIdValidation = validateId(bountyId, 'bountyId');
+    if (!bountyIdValidation.valid) {
+      return res.status(400).json({ error: bountyIdValidation.error });
+    }
+    
+    const proposalIdValidation = validateId(proposalId, 'proposalId');
+    if (!proposalIdValidation.valid) {
+      return res.status(400).json({ error: proposalIdValidation.error });
+    }
+    
+    // Validate status
+    if (!isValidProposalStatus(newStatus)) {
+      return res.status(400).json({ error: 'Invalid proposal status' });
+    }
+    
+    // ✅ AUTHENTICATION: Verify signature and authorization
+    if (!signature || !message || timestamp === undefined || !nonce) {
+      return res.status(401).json({ error: 'Missing authentication parameters' });
+    }
+    
+    const authResult = await validateAuthRequest({
+      signature,
+      message,
+      timestamp,
+      nonce,
+      address: caller,
+    });
+    
+    if (!authResult.valid) {
+      return res.status(401).json({ error: authResult.error || 'Authentication failed' });
+    }
+    
+    // Verify the message contains the correct action and data
+    if (!verifyMessageContent(message, 'update_proposal_status', { bountyId, proposalId, newStatus })) {
+      return res.status(400).json({ error: 'Message content mismatch' });
+    }
+    
+    // ✅ AUTHORIZATION: Only bounty creator can update proposal status
+    const isOwner = await verifyBountyOwnership(caller, bountyIdValidation.value!);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Not authorized to update this proposal' });
     }
 
     const bucket = 'zkontract'; // your real bucket name
-    const key = `metadata/proposals/${bountyId}/${proposalId}.json`;
+    const key = `metadata/proposals/${bountyIdValidation.value}/${proposalIdValidation.value}.json`;
 
     
 
@@ -46,6 +100,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ message: `Proposal status set to ${newStatus}` });
   } catch (error) {
     console.error('Error updating proposal status:', error);
-    return res.status(500).json({ error: 'Failed to update proposal status' });
+    return res.status(500).json({ error: 'Failed to process update request' });
   }
 }

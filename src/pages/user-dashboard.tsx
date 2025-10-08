@@ -423,6 +423,7 @@ export default function UserDashboard() {
         caller: publicKey,
         bountyId,
         proposalId,
+        wallet,
       });
       showSuccess('Proposal Deleted', 'Proposal deleted successfully.');
       mutate();

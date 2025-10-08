@@ -8,15 +8,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed. Use GET.' });
   }
 
-  const { bucketName, key } = req.query;
-
-  if (!bucketName || typeof bucketName !== 'string') {
-    return res.status(400).json({ error: 'Missing or invalid "bucketName" query parameter.' });
-  }
+  const { key } = req.query;
 
   if (!key || typeof key !== 'string') {
     return res.status(400).json({ error: 'Missing or invalid "key" query parameter.' });
   }
+
+  // Sanitize key to prevent path traversal
+  if (key.includes('..') || key.startsWith('/')) {
+    return res.status(400).json({ error: 'Invalid key format.' });
+  }
+
+  // Hardcode bucket name for security - never accept from user input
+  const bucketName = 'zkontract';
 
   try {
     const content = await getObjectContent(bucketName, key);
@@ -33,13 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: any) {
     console.error('Error fetching object content:', error);
     if (error.code === 'NoSuchKey') {
-      return res.status(404).json({ error: 'The specified key does not exist in the bucket.' });
-    } else if (error.code === 'NoSuchBucket') {
-      return res.status(404).json({ error: 'The specified bucket does not exist.' });
-    } else if (error.code === 'AccessDenied') {
-      return res.status(403).json({ error: 'Access denied. Check your AWS credentials and permissions.' });
+      return res.status(404).json({ error: 'Resource not found.' });
+    } else if (error.code === 'NoSuchBucket' || error.code === 'AccessDenied') {
+      // Log detailed error server-side but return generic message
+      return res.status(500).json({ error: 'Failed to retrieve resource.' });
     } else {
-      return res.status(500).json({ error: 'Failed to retrieve object content.' });
+      return res.status(500).json({ error: 'Failed to retrieve resource.' });
     }
   }
 }
+

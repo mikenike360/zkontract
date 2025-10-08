@@ -9,6 +9,7 @@ import { CURRENT_NETWORK } from '@/types';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+import { signRequest } from '@/utils/signing';
 
 export const ACCEPT_PROPOSAL_FUNCTION = 'accept_proposal';
 
@@ -83,14 +84,27 @@ export async function handleAcceptProposal(
       throw new Error('accept_proposal transaction not finalized in time.');
     }
 
+    // Sign the request for authentication
+    const newStatus = 'accepted';
+    const auth = await signRequest(wallet, 'update_proposal_status', {
+      bountyId: bounty.id,
+      proposalId: proposal.proposalId,
+      newStatus,
+    });
+
     // Update DB
     const response = await fetch('/api/update-proposal-status', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        caller: publicKey,
         bountyId: bounty.id,
         proposalId: proposal.proposalId,
-        newStatus: 'accepted',
+        newStatus,
+        signature: auth.signature,
+        message: auth.message,
+        timestamp: auth.timestamp,
+        nonce: auth.nonce,
       }),
     });
 

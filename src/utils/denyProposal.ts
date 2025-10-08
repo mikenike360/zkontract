@@ -8,6 +8,7 @@ import { BOUNTY_PROGRAM_ID } from '@/types';
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
 import { CURRENT_NETWORK } from '@/types';
+import { signRequest } from '@/utils/signing';
 
 export const DENY_PROPOSAL_FUNCTION = 'deny_proposal';
 
@@ -74,15 +75,28 @@ export async function handleDenyProposal(
       throw new Error('deny_proposal transaction not finalized in time.');
     }
 
+    // Sign the request for authentication
+    const newStatus = 'denied';
+    const auth = await signRequest(wallet, 'update_proposal_status', {
+      bountyId: bounty.id,
+      proposalId: proposal.proposalId,
+      newStatus,
+    });
+
     // Update status in your DB
     setTxStatus('Updating proposal status...');
     const updateResponse = await fetch('/api/update-proposal-status', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        caller: publicKey,
         bountyId: bounty.id,
         proposalId: proposal.proposalId,
-        newStatus: 'denied',
+        newStatus,
+        signature: auth.signature,
+        message: auth.message,
+        timestamp: auth.timestamp,
+        nonce: auth.nonce,
       }),
     });
 

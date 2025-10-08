@@ -62,16 +62,24 @@ export default async function handler(
       // Check contract status first (same as dashboard logic)
       let isBountyCompleted = false;
       try {
-        console.log(`Checking contract status for bounty ${bountyData.id}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Checking contract status for bounty ${bountyData.id}`);
+        }
         const contractData = await readBountyMappings(bountyData.id.toString());
-        console.log(`Bounty ${bountyData.id} contract status:`, contractData.status);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Bounty ${bountyData.id} contract status:`, contractData.status);
+        }
         isBountyCompleted = contractData.status === "1" || contractData.status === "1u8";
         if (isBountyCompleted) {
-          console.log(`Bounty ${bountyData.id} is completed on-chain, hiding from board`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Bounty ${bountyData.id} is completed on-chain, hiding from board`);
+          }
           continue; // Skip this bounty
         }
       } catch (contractError) {
-        console.log(`Could not fetch contract status for bounty ${bountyData.id}, checking proposals instead`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Could not fetch contract status for bounty ${bountyData.id}, checking proposals instead`);
+        }
       }
 
       // Fetch all proposals for this bounty to check if any are accepted (fallback)
@@ -99,15 +107,19 @@ export default async function handler(
 
         const proposalData = JSON.parse(proposalDataObj.Body.toString());
         
-        // Debug logging
-        console.log(`Bounty ${bountyData.id}, Proposal ${proposalData.proposalId}: status = "${proposalData.status}"`);
+        // Debug logging (dev only)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Bounty ${bountyData.id}, Proposal ${proposalData.proposalId}: status = "${proposalData.status}"`);
+        }
         
         // Use the same logic as dashboard - normalize status
         const normalizedStatus = proposalData.status?.toLowerCase().trim() || 'initial';
         
         // Check if this proposal is accepted (same logic as dashboard getEffectiveStatus)
         if (normalizedStatus === 'accepted') {
-          console.log(`Found accepted proposal for bounty ${bountyData.id}, hiding from board`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Found accepted proposal for bounty ${bountyData.id}, hiding from board`);
+          }
           hasAcceptedProposal = true;
           break; // No need to check more proposals
         }

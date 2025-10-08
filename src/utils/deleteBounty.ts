@@ -9,6 +9,7 @@ import { BOUNTY_PROGRAM_ID } from '@/types';
 import { getFeeForFunction } from '@/utils/feeCalculator';
 
 import { CURRENT_NETWORK } from '@/types';
+import { signRequest } from '@/utils/signing';
 
 const DELETE_BOUNTY_FUNCTION = 'delete_bounty';
 
@@ -63,11 +64,21 @@ export async function handleDeleteBounty(
     
     setTxStatus("Called delete_bounty transaction...");
 
+    // Sign the API request for authentication
+    const auth = await signRequest(wallet, 'delete_bounty', { bountyId: bounty.id });
+
     // Now call the API endpoint to remove the bounty metadata.
     const res = await fetch("/api/delete-bounty", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ caller: publicKey, bountyId: bounty.id }),
+      body: JSON.stringify({ 
+        caller: publicKey, 
+        bountyId: bounty.id,
+        signature: auth.signature,
+        message: auth.message,
+        timestamp: auth.timestamp,
+        nonce: auth.nonce,
+      }),
     });
     if (!res.ok) {
       const errorData = await res.json();

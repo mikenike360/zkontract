@@ -70,7 +70,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           <WalletProvider
             wallets={wallets}
             decryptPermission={DecryptPermission.UponRequest}
-            network={WalletAdapterNetwork.TestnetBeta}
+            network={WalletAdapterNetwork.MainnetBeta}
             autoConnect
             
           >

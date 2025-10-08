@@ -21,6 +21,7 @@ import { BOUNTY_PROGRAM_ID } from '@/types';
 
 // Import the fee calculator function
 import { getFeeForFunction } from '@/utils/feeCalculator';
+import { signRequest } from '@/utils/signing';
 
 const POST_BOUNTY_FUNCTION = 'post_bounty';
 
@@ -135,12 +136,20 @@ function PostBountyPage() {
           creatorAddress: publicKey,
         };
         
+        // Sign the request for authentication
+        const auth = await signRequest(wallet, 'upload_bounty', { bountyId: newBountyId });
+        
         const response = await fetch('/api/upload-bounty', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            caller: publicKey,
             bountyId: newBountyId,
             metadata,
+            signature: auth.signature,
+            message: auth.message,
+            timestamp: auth.timestamp,
+            nonce: auth.nonce,
           }),
         });
 

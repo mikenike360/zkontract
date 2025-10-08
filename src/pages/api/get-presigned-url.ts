@@ -20,12 +20,14 @@ export default async function handler(
 
   // Use the correct environment variable name here
   const bucketName = process.env.AWS_S3_BUCKET_NAME || 'zkontract';
-  console.log("Using bucket:", bucketName);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Using bucket:", bucketName);
+  }
 
   const params = {
     Bucket: bucketName,
     Key: key,
-    Expires: 60, // URL expires in 60 seconds
+    Expires: 900, // URL expires in 15 minutes (better UX while maintaining security)
   };
 
   try {
@@ -33,6 +35,6 @@ export default async function handler(
     res.status(200).json({ url });
   } catch (error) {
     console.error('Error generating presigned URL', error);
-    res.status(500).json({ error: 'Could not generate URL' });
+    res.status(500).json({ error: 'Failed to process request' });
   }
 }

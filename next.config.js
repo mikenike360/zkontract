@@ -19,17 +19,39 @@ module.exports = withPWA({
     RPC_URL: process.env.RPC_URL,
   },
   reactStrictMode: true,
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+    ];
+  },
   // Allow cross-origin requests from network IP in development
   ...(process.env.NODE_ENV === 'development' && {
     allowedDevOrigins: ['192.168.88.17'],
-  }),
-  ...(process.env.NODE_ENV === 'production' && {
-    typescript: {
-      ignoreBuildErrors: true,
-    },
-    eslint: {
-      ignoreDuringBuilds: true,
-    },
   }),
   webpack: (config, options) => {
     config.ignoreWarnings = [

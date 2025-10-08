@@ -1,7 +1,7 @@
 
-import zk_escrow_v3.aleo;
+import zk_escrow_v2.aleo;
 
-program zkontract_v4.aleo {
+program zkontract_v2.aleo {
 
     const contract_owner: address = aleo1xh0ncflwkfzga983lwujsha729c8nwu7phfn8aw7h3gahhj0ms8qytrxec;
 
@@ -63,7 +63,7 @@ program zkontract_v4.aleo {
 
         // Create escrow for this bounty - set creator as both sender and temporary recipient
         // When proposal is accepted, we'll create a new escrow with the actual proposer as recipient
-        let escrow_future: Future = zk_escrow_v3.aleo/create_escrow(bounty_id, creator_address, payment_amount);
+        let escrow_future: Future = zk_escrow_v2.aleo/create_escrow(bounty_id, creator_address, payment_amount);
         
         // Return combined future
         return finalize_post_bounty(escrow_future, bounty_id, creator_address, payment_amount);
@@ -158,7 +158,7 @@ program zkontract_v4.aleo {
         let composite_proposal_id: u64 = bounty_id * 1000000u64 + proposal_id;
 
         // Release escrow to proposer - only the original sender (creator) can call release
-        let release_future: Future = zk_escrow_v3.aleo/release(bounty_id, payment_amount, proposer_address);
+        let release_future: Future = zk_escrow_v2.aleo/release(bounty_id, payment_amount, proposer_address);
         
         // Return combined future
         return finalize_accept_proposal(release_future, bounty_id, composite_proposal_id);
@@ -230,7 +230,7 @@ program zkontract_v4.aleo {
         assert(payment_amount > 0u64); // Ensure payment amount is positive
         
         // Cancel escrow - return funds to the bounty creator
-        let cancel_future: Future = zk_escrow_v3.aleo/cancel(bounty_id, payment_amount, caller);
+        let cancel_future: Future = zk_escrow_v2.aleo/cancel(bounty_id, payment_amount, caller);
         
         return finalize_cancel_bounty_escrow(cancel_future, bounty_id, caller);
     }

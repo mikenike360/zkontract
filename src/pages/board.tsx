@@ -267,7 +267,7 @@ const BoardPage: NextPageWithLayout = () => {
   );
 };
 
-BoardPage.getLayout = function getLayout(page) {
+BoardPage.getLayout = function getLayout(page: React.ReactElement) {
   return <Layout>{page}</Layout>;
 };
 

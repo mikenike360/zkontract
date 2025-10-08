@@ -47,7 +47,7 @@ export async function fetchMappingValueRaw(
       );
     }
 
-    return result;
+    return result.value || result;
   } catch (error) {
     console.error(`Failed to fetch mapping "${mappingName}" with key "${key}":`, error);
     throw error;
@@ -90,9 +90,9 @@ export async function readBountyMappings(bountyId: string) {
   const statusResult = await fetchMappingValueRaw('bounty_status', bountyId);
 
   return {
-    creator: creatorResult?.value ?? creatorResult ?? null,  
-    payment: paymentResult?.value ?? paymentResult ?? null,  
-    status: statusResult?.value ?? statusResult ?? null,   
+    creator: creatorResult ?? null,  
+    payment: paymentResult ?? null,  
+    status: statusResult ?? null,   
   };
 }
 

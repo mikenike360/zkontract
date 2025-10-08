@@ -80,7 +80,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const colorClassNames = colors[color];
     const sizeClassNames = sizes[size];
     const buttonRef = useRef<HTMLButtonElement>(null);
-    useImperativeHandle(ref, () => buttonRef.current);
+    useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
     function dripCompletedHandle() {
       setDripShow(false);
       setDripX(0);

@@ -427,7 +427,7 @@ const BountyPage = () => {
   );
 };
 
-BountyPage.getLayout = function getLayout(page) {
+BountyPage.getLayout = function getLayout(page: React.ReactElement) {
   return <Layout>{page}</Layout>;
 };
 

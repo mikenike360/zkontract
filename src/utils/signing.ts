@@ -24,8 +24,6 @@
  * }
  */
 
-import type { WalletAdapter } from '@demox-labs/aleo-wallet-adapter-base';
-
 export interface SignedRequest {
   signature: string;
   message: string;
@@ -41,7 +39,7 @@ export interface SignedRequest {
  * @returns Signed request object to include in API call
  */
 export async function signRequest(
-  wallet: WalletAdapter | null,
+  wallet: any,
   action: string,
   data: Record<string, any>
 ): Promise<SignedRequest> {
@@ -89,7 +87,7 @@ export async function signRequest(
  * @param data - Request data
  */
 export async function makeAuthenticatedRequest(
-  wallet: WalletAdapter | null,
+  wallet: any,
   publicKey: string | null,
   endpoint: string,
   action: string,

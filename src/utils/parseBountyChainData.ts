@@ -1,6 +1,16 @@
 // utils/parseBountyChainData.ts
 
-import { BountyStatusCode, BountyStatusLabels } from './constants';
+// Enum representing bounty statuses
+enum BountyStatusCode {
+  Open = 0,
+  Completed = 1,
+}
+
+// Mapping from status codes to human-readable labels
+const BountyStatusLabels: Record<BountyStatusCode, string> = {
+  [BountyStatusCode.Open]: 'Open',
+  [BountyStatusCode.Completed]: 'Completed',
+};
 
 interface RawChainData {
   creator: string;  // e.g., "aleo1dv6fre2y82gzw58aqga20v8mkjcjm8dj77s8fjfnnflcuhhx6y8qp9ml66"

@@ -418,6 +418,11 @@ export default function UserDashboard() {
 
   // Separate function for the actual deletion action
   async function deleteProposalAction(bountyId: number, proposalId: number) {
+    if (!publicKey) {
+      showError('Wallet Not Connected', 'Please connect your wallet to delete proposals.');
+      return;
+    }
+    
     try {
       await handleDeleteProposal({
         caller: publicKey,

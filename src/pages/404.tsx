@@ -34,7 +34,7 @@ const ErrorPage: NextPageWithLayout = () => {
   );
 };
 
-ErrorPage.getLayout = function getLayout(page) {
+ErrorPage.getLayout = function getLayout(page: React.ReactElement) {
   return (
     <Layout>
       {page}

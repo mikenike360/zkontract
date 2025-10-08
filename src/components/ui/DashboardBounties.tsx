@@ -141,7 +141,7 @@ export default function DashboardBounties({
               // Also check if the bounty has an accepted proposal (fallback)
               const hasAcceptedProposal = bounty.proposals?.some(
                 (p) => getEffectiveStatus(p, proposalStages) === 'accepted'
-              );
+              ) ?? false;
 
               // Use contract status as primary source, fallback to proposal status
               const bountyIsClosed = isBountyCompleted || hasAcceptedProposal;

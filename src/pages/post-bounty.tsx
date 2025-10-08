@@ -137,7 +137,7 @@ function PostBountyPage() {
         };
         
         // Sign the request for authentication
-        const auth = await signRequest(wallet, 'upload_bounty', { bountyId: newBountyId });
+        const auth = await signRequest(wallet.adapter, 'upload_bounty', { bountyId: newBountyId });
         
         const response = await fetch('/api/upload-bounty', {
           method: 'POST',

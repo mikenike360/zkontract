@@ -41,7 +41,7 @@ export function isValidAleoAddress(address: string): boolean {
   return typeof address === 'string' && 
          address.startsWith('aleo1') && 
          address.length === 63 &&
-         /^aleo1[a-z0-9]{59}$/.test(address);
+         /^aleo1[a-zA-Z0-9]{59}$/.test(address);
 }
 
 /**

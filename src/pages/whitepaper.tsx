@@ -94,15 +94,38 @@ Freelancers and startups can interact without fear of idea theft or data leaks.
 - Bounty/proposal submission
 - S3-based file upload support
 
-### Phase 2: Mainnet Deployment & Reputation System 🛠️ (in progress)
-- Launch on Aleo mainnet
-- Implement basic reputation tracking
-- Add enhanced moderation tools
+### Phase 2: Mainnet Deployment & Escrow System ✅
+- Launch on Aleo mainnet (LIVE)
+- Smart contract escrow for rewards
+- Wallet-authenticated API security
+- File upload and proposal management
 
-### Phase 3: DAO Governance & Ecosystem Growth 🧠
+### Phase 3: Reputation System & Advanced Features 🛠️ (in progress)
+- Implement reputation tracking
+- Enhanced moderation tools
+- User analytics dashboard
+
+### Phase 4: DAO Governance & Ecosystem Growth 🧠
 - Transition to decentralized governance
 - Token incentives
-- Third-party integrations & analytics
+- Third-party integrations & advanced analytics
+
+## Current Status
+
+zKontract is **live on Aleo Mainnet** with full bounty posting, proposal submission, and escrow functionality. The platform currently features:
+
+- ✅ Smart contracts deployed on Aleo mainnet (\`zkontract_v2.aleo\`)
+- ✅ Wallet-authenticated API calls for secure metadata uploads
+- ✅ AWS S3 integration for encrypted file storage
+- ✅ Zero-knowledge proofs for private transactions
+- ✅ Smart contract escrow for secure reward management
+- ✅ Accept/deny proposal workflows with on-chain verification
+
+**Coming Soon:**
+- Reputation system for users
+- Enhanced moderation tools  
+- User analytics dashboard
+- DAO governance model
 
 ## Conclusion
 zKontract merges **privacy, decentralization, and usability** into a new framework for trust-minimized bounty workflows. Built entirely open-source and powered by Aleo’s ZK tech, it gives both bounty posters and developers complete control, anonymity, and security.

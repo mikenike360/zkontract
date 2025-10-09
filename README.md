@@ -1,18 +1,24 @@
 # zKontract
 
-**zKontract** is a decentralized, zero-knowledge-powered bounty board built on the Aleo blockchain. It enables anonymous and verifiable collaboration between bounty posters and developers, using Aleo’s privacy-preserving smart contracts and decentralized file storage.
+**zKontract** is a decentralized, zero-knowledge-powered bounty board **live on Aleo Mainnet**. It enables anonymous and verifiable collaboration between bounty posters and developers, using Aleo's privacy-preserving smart contracts and secure file storage.
 
 ---
 
 ## 🚀 Features
 
+### ✅ Live on Mainnet
 - 🛠 Post & manage bounties anonymously
 - 🔐 Submit private proposals using Aleo zk-programs
 - 📁 Upload and download attachments via Amazon S3
-- 💸 Handle reward payments using private or public Aleo transfers
+- 💸 Smart contract escrow for secure reward management
 - 🧾 Accept/deny proposals with full on-chain transparency
-- 🔍 Decentralized moderation (coming soon)
-- ⚖️ Escrow-based reward system with dispute resolution (coming soon)
+- 🔒 Wallet-authenticated API security for all operations
+
+### 🛠️ Coming Soon
+- 🔍 Reputation system for users
+- ⚖️ Enhanced moderation tools
+- 📊 User analytics dashboard
+- 🏛️ DAO governance
 
 ---
 
@@ -42,13 +48,14 @@
 
 3. **Configure environment variables** (`.env.local`)
    ```env
-   NEXT_PUBLIC_CONTRACT_ID=zkontract.aleo
-   NEXT_PUBLIC_NETWORK=mainnet
-
-   AWS_ACCESS_KEY_ID=...
-   AWS_SECRET_ACCESS_KEY=...
-   AWS_REGION=...
+   # AWS S3 Configuration (required for file uploads)
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=us-east-1
    AWS_BUCKET_NAME=zkontract
+   
+   # Contract is configured in src/types/index.ts
+   # Current: zkontract_v2.aleo on Mainnet
    ```
 
 4. **Run the dev server**
@@ -70,10 +77,19 @@
 
 ## ✨ Deployment
 
-This project is ready for Aleo mainnet. To deploy:
-- Push to `main` branch
-- Deploy on your platform of choice (Vercel, etc.)
-- Point domain (e.g. `zkontract.xyz`) to production frontend
+**zKontract is live on Aleo Mainnet!** 🎉
+
+The platform is deployed at [zkontract.app](https://zkontract.app) using:
+- **Smart Contract**: `zkontract_v2.aleo` on Aleo Mainnet
+- **Frontend**: Vercel
+- **Storage**: AWS S3
+- **Network**: Aleo Mainnet (`https://mainnet.aleorpc.com`)
+
+To deploy your own instance:
+1. Fork this repository
+2. Configure AWS S3 credentials in environment variables
+3. Deploy to Vercel or your preferred platform
+4. Update the contract address in `src/types/index.ts` if using a different contract
 
 ---
 

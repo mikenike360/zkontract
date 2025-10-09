@@ -39,9 +39,16 @@ export async function submitProposal({
   const proposalId = Math.floor(Date.now() % 1000000);
 
   // Validate inputs
-  if (!/^aleo1[a-z0-9]{58}$/.test(publicKey)) {
+  console.log('[submitProposal] Validating publicKey:', publicKey);
+  console.log('[submitProposal] publicKey length:', publicKey?.length);
+  console.log('[submitProposal] Regex test result:', /^aleo1[a-zA-Z0-9]{58}$/.test(publicKey));
+  
+  if (!/^aleo1[a-zA-Z0-9]{58}$/.test(publicKey)) {
+    console.error('[submitProposal] Public key validation FAILED for:', publicKey);
     throw new Error('Invalid public key format');
   }
+  
+  console.log('[submitProposal] Public key validation PASSED');
   
   const inputs = [
     publicKey,                    // caller (address)
@@ -75,7 +82,8 @@ export async function submitProposal({
     false
   );
 
-  console.log('Created transaction:', proposalTx);
+  console.log('Created transaction object:', proposalTx);
+  console.log('Transaction details:', JSON.stringify(proposalTx, null, 2));
 
   // Request transaction execution via the wallet adapter
   let txId: string;
@@ -83,6 +91,10 @@ export async function submitProposal({
     // Check which wallet adapter is being used
     const walletName = wallet.adapter.name || 'unknown';
     console.log('Using wallet adapter:', walletName);
+    
+    // Check wallet connection and balance
+    console.log('Wallet publicKey:', wallet.publicKey);
+    console.log('Wallet connected:', wallet.connected);
     
     if (walletName.toLowerCase().includes('puzzle')) {
       // Puzzle Wallet might not be fully compatible with direct program transactions yet
@@ -94,6 +106,7 @@ export async function submitProposal({
         txId = await wallet.adapter.requestTransaction(proposalTx);
       } catch (puzzleError) {
         console.error('Standard format failed with Puzzle Wallet:', puzzleError);
+        console.error('Puzzle error details:', JSON.stringify(puzzleError, null, 2));
         
         // If that fails, provide a helpful error message
         throw new Error(
@@ -105,7 +118,23 @@ export async function submitProposal({
     } else {
       // Leo Wallet and other wallets use the standard format
       console.log('Using standard transaction format for', walletName);
-      txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
+      console.log('About to call requestTransaction...');
+      try {
+        txId = await (wallet.adapter as LeoWalletAdapter).requestTransaction(proposalTx);
+      } catch (txError) {
+        console.error('requestTransaction error:', txError);
+        console.error('Error type:', typeof txError);
+        console.error('Error constructor:', txError?.constructor?.name);
+        console.error('Error message:', txError instanceof Error ? txError.message : String(txError));
+        console.error('Error stack:', txError instanceof Error ? txError.stack : 'No stack');
+        
+        // Check if it's a balance or specific wallet error
+        const errorMsg = txError instanceof Error ? txError.message : String(txError);
+        if (errorMsg.includes('insufficient')) {
+          throw new Error('Insufficient balance to pay transaction fee. Please ensure your wallet has enough ALEO credits.');
+        }
+        throw txError;
+      }
     }
     
     if (!txId) {
@@ -115,6 +144,7 @@ export async function submitProposal({
   } catch (error) {
     console.error('Transaction request failed:', error);
     console.error('Wallet adapter name:', wallet.adapter.name);
+    console.error('Full error object:', error);
     throw new Error(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
   
@@ -175,7 +205,7 @@ export async function submitProposal({
   };
 
   // Sign the request for authentication
-  const auth = await signRequest(wallet, 'upload_proposal', { proposalId });
+  const auth = await signRequest(wallet.adapter, 'upload_proposal', { proposalId });
 
   // Upload the proposal metadata via /api/upload-proposal
   const metaRes = await fetch('/api/upload-proposal', {
@@ -185,7 +215,7 @@ export async function submitProposal({
     },
     body: JSON.stringify({
       caller: publicKey,
-      proposalId: proposalId.toString(),
+      proposalId: proposalId,
       metadata: JSON.stringify(completeMetadata),
       signature: auth.signature,
       message: auth.message,

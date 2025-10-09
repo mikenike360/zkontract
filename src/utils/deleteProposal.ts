@@ -15,12 +15,12 @@ export type DeleteProposalParams = {
     proposalId,
     wallet,
   }: DeleteProposalParams): Promise<any> {
-    if (!wallet) {
-      throw new Error('Wallet not connected');
-    }
+  if (!wallet) {
+    throw new Error('Wallet not connected');
+  }
 
-    // Sign the request for authentication
-    const auth = await signRequest(wallet, 'delete_bounty', { bountyId, proposalId });
+  // Sign the request for authentication
+  const auth = await signRequest(wallet.adapter, 'delete_bounty', { bountyId, proposalId });
 
     const response = await fetch('/api/delete-bounty', {
       method: 'DELETE',

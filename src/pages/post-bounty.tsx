@@ -139,18 +139,32 @@ function PostBountyPage() {
         // Sign the request for authentication
         const auth = await signRequest(wallet.adapter, 'upload_bounty', { bountyId: newBountyId });
         
+        console.log('[Post Bounty] About to upload metadata');
+        console.log('[Post Bounty] Public Key (caller):', publicKey);
+        console.log('[Post Bounty] Public Key type:', typeof publicKey);
+        console.log('[Post Bounty] Public Key length:', publicKey?.length);
+        
+        const requestBody = {
+          caller: publicKey,
+          bountyId: newBountyId,
+          metadata,
+          signature: auth.signature,
+          message: auth.message,
+          timestamp: auth.timestamp,
+          nonce: auth.nonce,
+        };
+        
+        console.log('[Post Bounty] Request body:', JSON.stringify({ 
+          caller: publicKey, 
+          bountyId: newBountyId, 
+          hasMetadata: !!metadata,
+          hasSignature: !!auth.signature 
+        }));
+        
         const response = await fetch('/api/upload-bounty', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            caller: publicKey,
-            bountyId: newBountyId,
-            metadata,
-            signature: auth.signature,
-            message: auth.message,
-            timestamp: auth.timestamp,
-            nonce: auth.nonce,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {

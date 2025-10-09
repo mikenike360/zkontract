@@ -117,14 +117,27 @@ export default function UserDashboard() {
       async (txId: string) => {
         await waitForTransactionFinalization(wallet, txId, () => {});
         
+        // Sign the request for authentication
+        const { signRequest } = await import('@/utils/signing');
+        const auth = await signRequest(wallet.adapter, 'update_proposal_status', { 
+          bountyId: bounty.id, 
+          proposalId: proposal.proposalId, 
+          newStatus: 'accepted' 
+        });
+        
         // Update proposal status in S3 database
         const response = await fetch('/api/update-proposal-status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            caller: publicKey,
             bountyId: bounty.id,
             proposalId: proposal.proposalId,
             newStatus: 'accepted',
+            signature: auth.signature,
+            message: auth.message,
+            timestamp: auth.timestamp,
+            nonce: auth.nonce,
           }),
         });
 
@@ -213,6 +226,10 @@ export default function UserDashboard() {
       async (txId: string) => {
         await waitForTransactionFinalization(wallet, txId, () => {});
         
+        // Sign the request for authentication
+        const { signRequest } = await import('@/utils/signing');
+        const auth = await signRequest(wallet.adapter, 'delete_bounty', { bountyId: bounty.id });
+        
         // Delete bounty from S3 after successful blockchain transaction
         const response = await fetch('/api/delete-bounty', {
           method: 'DELETE',
@@ -222,6 +239,10 @@ export default function UserDashboard() {
           body: JSON.stringify({
             caller: publicKey,
             bountyId: bounty.id,
+            signature: auth.signature,
+            message: auth.message,
+            timestamp: auth.timestamp,
+            nonce: auth.nonce,
           }),
         });
 
@@ -275,6 +296,10 @@ export default function UserDashboard() {
     try {
       setTxStatus('Closing bounty...');
       
+      // Sign the request for authentication
+      const { signRequest } = await import('@/utils/signing');
+      const auth = await signRequest(wallet.adapter, 'delete_bounty', { bountyId: bounty.id });
+      
       // Delete bounty from S3
       const response = await fetch('/api/delete-bounty', {
         method: 'DELETE',
@@ -284,6 +309,10 @@ export default function UserDashboard() {
         body: JSON.stringify({
           caller: publicKey,
           bountyId: bounty.id,
+          signature: auth.signature,
+          message: auth.message,
+          timestamp: auth.timestamp,
+          nonce: auth.nonce,
         }),
       });
 
@@ -345,14 +374,27 @@ export default function UserDashboard() {
       async (txId: string) => {
         await waitForTransactionFinalization(wallet, txId, () => {});
         
+        // Sign the request for authentication
+        const { signRequest } = await import('@/utils/signing');
+        const auth = await signRequest(wallet.adapter, 'update_proposal_status', { 
+          bountyId: bounty.id, 
+          proposalId: proposal.proposalId, 
+          newStatus: 'denied' 
+        });
+        
         // Update proposal status in S3 database
         const response = await fetch('/api/update-proposal-status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            caller: publicKey,
             bountyId: bounty.id,
             proposalId: proposal.proposalId,
             newStatus: 'denied',
+            signature: auth.signature,
+            message: auth.message,
+            timestamp: auth.timestamp,
+            nonce: auth.nonce,
           }),
         });
 

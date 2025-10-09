@@ -27,20 +27,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Parse JSON from the request body
     const { bountyId, metadata, caller, signature, message, timestamp, nonce } = req.body;
     
+    console.log('[API upload-bounty] Received request body:', JSON.stringify({ bountyId, caller, hasMetadata: !!metadata, hasSignature: !!signature }));
+    
     if (!bountyId || !metadata || !caller) {
+      console.log('[API upload-bounty] Missing required fields');
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
     // Validate bountyId
     const bountyIdValidation = validateId(bountyId, 'bountyId');
     if (!bountyIdValidation.valid) {
+      console.log('[API upload-bounty] Invalid bountyId:', bountyIdValidation.error);
       return res.status(400).json({ error: bountyIdValidation.error });
     }
     
     // Validate caller address
+    console.log('[API upload-bounty] About to validate caller address:', caller);
     if (!isValidAleoAddress(caller)) {
+      console.log('[API upload-bounty] Address validation FAILED');
       return res.status(400).json({ error: 'Invalid caller address format' });
     }
+    console.log('[API upload-bounty] Address validation PASSED');
     
     // ✅ AUTHENTICATION: Verify signature
     if (!signature || !message || timestamp === undefined || !nonce) {

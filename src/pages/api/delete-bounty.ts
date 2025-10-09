@@ -87,14 +87,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     // Verify the message contains the correct action and bountyId
-    if (!verifyMessageContent(message, 'delete_bounty', { bountyId })) {
-      return res.status(400).json({ error: 'Message content mismatch' });
+    const messageData: any = { bountyId };
+    if (proposalId !== undefined) {
+      messageData.proposalId = proposalId;
     }
     
-    // ✅ AUTHORIZATION: Verify bounty ownership
-    const isOwner = await verifyBountyOwnership(caller, bountyIdValidation.value!);
-    if (!isOwner) {
-      return res.status(403).json({ error: 'Not authorized to delete this bounty' });
+    if (!verifyMessageContent(message, 'delete_bounty', messageData)) {
+      return res.status(400).json({ error: 'Message content mismatch' });
     }
 
     if (proposalId) {
@@ -104,10 +103,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: proposalIdValidation.error });
       }
       
+      // For proposals: Verify the caller is the proposer by checking the proposal metadata
+      const proposalKey = `metadata/proposals/${bountyIdValidation.value}/${proposalIdValidation.value}.json`;
+      try {
+        const proposalData = await s3.getObject({
+          Bucket: BUCKET_NAME,
+          Key: proposalKey,
+        }).promise();
+        
+        if (proposalData.Body) {
+          const proposal = JSON.parse(proposalData.Body.toString('utf-8'));
+          if (proposal.proposerAddress !== caller) {
+            return res.status(403).json({ error: 'Not authorized to delete this proposal' });
+          }
+        }
+      } catch (err) {
+        // Proposal doesn't exist, that's fine - will fail gracefully on delete
+      }
+      
       // Delete a single proposal by ID
       await deleteProposal(bountyIdValidation.value!, proposalIdValidation.value!, caller);
       return res.status(200).json({ message: 'Proposal deleted successfully' });
     } else {
+      // For bounty deletion: Verify bounty ownership
+      const isOwner = await verifyBountyOwnership(caller, bountyIdValidation.value!);
+      if (!isOwner) {
+        return res.status(403).json({ error: 'Not authorized to delete this bounty' });
+      }
+      
       // Delete only the bounty metadata file
       await deleteBounty(bountyIdValidation.value!, caller);
       return res.status(200).json({ message: 'Bounty deleted successfully' });

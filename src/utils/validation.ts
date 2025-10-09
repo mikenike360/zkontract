@@ -37,11 +37,27 @@ export function sanitizeS3Key(key: string): string | null {
  * Validates an Aleo address format
  */
 export function isValidAleoAddress(address: string): boolean {
-  // Aleo addresses start with "aleo1" and are 63 characters long
-  return typeof address === 'string' && 
+  console.log('[Validation] Checking address:', address);
+  console.log('[Validation] Address type:', typeof address);
+  console.log('[Validation] Address length:', address?.length);
+  console.log('[Validation] Starts with aleo1:', address?.startsWith('aleo1'));
+  
+  const isValid = typeof address === 'string' && 
          address.startsWith('aleo1') && 
          address.length === 63 &&
-         /^aleo1[a-zA-Z0-9]{59}$/.test(address);
+         /^aleo1[a-zA-Z0-9]{58}$/.test(address);
+  
+  console.log('[Validation] Is valid:', isValid);
+  
+  if (!isValid) {
+    console.log('[Validation] Failed checks:');
+    console.log('  - Is string:', typeof address === 'string');
+    console.log('  - Starts with aleo1:', address?.startsWith('aleo1'));
+    console.log('  - Length is 63:', address?.length === 63);
+    console.log('  - Matches regex:', /^aleo1[a-zA-Z0-9]{58}$/.test(address));
+  }
+  
+  return isValid;
 }
 
 /**

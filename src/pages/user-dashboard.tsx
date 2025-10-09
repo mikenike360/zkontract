@@ -288,7 +288,7 @@ export default function UserDashboard() {
 
   // Separate function for the actual closing action
   async function closeBountyAction(bounty: BountyData) {
-    if (!publicKey) {
+    if (!publicKey || !wallet) {
       showError('Wallet Error', 'Wallet not connected.');
       return;
     }
